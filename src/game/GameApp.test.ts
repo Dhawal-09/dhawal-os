@@ -10,16 +10,34 @@ const { initMock, destroyMock, resizeMock, addChildMock, tickerAddMock } =
     tickerAddMock: vi.fn(),
   }))
 
+interface Destroyable {
+  destroy(options?: unknown): void
+}
+
 vi.mock('pixi.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('pixi.js')>()
 
   class MockApplication {
-    stage = { addChild: addChildMock }
+    private stageChild: Destroyable | null = null
+
+    stage = {
+      addChild: (child: Destroyable) => {
+        this.stageChild = child
+        addChildMock(child)
+      },
+    }
     ticker = { add: tickerAddMock }
     renderer = { resize: resizeMock }
     canvas = document.createElement('canvas')
     init = initMock
-    destroy = destroyMock
+
+    // Mirrors real Pixi's Application.destroy -> stage.destroy(options)
+    // cascade, so GameScene's own destroy() override (which tears down its
+    // real InputManager's window listeners) actually runs in these tests.
+    destroy = (rendererOptions?: unknown, options?: unknown): void => {
+      destroyMock(rendererOptions, options)
+      this.stageChild?.destroy(options)
+    }
   }
 
   return { ...actual, Application: MockApplication }
