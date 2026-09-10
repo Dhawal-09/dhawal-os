@@ -41,6 +41,7 @@ export class GameApp {
     const scene = new GameScene()
     app.stage.addChild(scene)
     app.ticker.add((ticker) => scene.update(ticker.deltaMS))
+    scene.resize(options.width, options.height)
 
     return new GameApp(app, scene)
   }
@@ -53,6 +54,7 @@ export class GameApp {
   resize(width: number, height: number): void {
     if (this.destroyed || width <= 0 || height <= 0) return
     this.app.renderer.resize(width, height)
+    this.scene.resize(width, height)
   }
 
   /** Idempotent — safe to call more than once (e.g. from React StrictMode cleanup races). */
