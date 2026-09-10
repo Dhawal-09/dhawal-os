@@ -1,4 +1,5 @@
 import { GameCanvas } from './GameCanvas'
+import { InteractionOverlay } from './InteractionOverlay'
 import './App.css'
 
 function App() {
@@ -6,6 +7,7 @@ function App() {
     <main className="app-shell">
       <h1>DHAWAL.OS</h1>
       <GameCanvas />
+      <InteractionOverlay />
     </main>
   )
 }

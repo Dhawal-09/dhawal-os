@@ -56,4 +56,38 @@ describe('KeyboardInput', () => {
 
     expect(input.isPressed('KeyW')).toBe(false)
   })
+
+  it('wasJustPressed is true exactly once per physical press, then false until released and pressed again', () => {
+    input = new KeyboardInput()
+
+    expect(input.wasJustPressed('KeyE')).toBe(false)
+
+    press('KeyE')
+    expect(input.wasJustPressed('KeyE')).toBe(true)
+    expect(input.wasJustPressed('KeyE')).toBe(false) // consumed
+
+    release('KeyE')
+    press('KeyE')
+    expect(input.wasJustPressed('KeyE')).toBe(true)
+  })
+
+  it('does not re-trigger wasJustPressed from OS key-repeat keydowns while still held', () => {
+    input = new KeyboardInput()
+
+    press('KeyE')
+    press('KeyE') // simulated repeat keydown, no keyup in between
+    press('KeyE')
+
+    expect(input.wasJustPressed('KeyE')).toBe(true)
+    expect(input.wasJustPressed('KeyE')).toBe(false)
+  })
+
+  it('clears the pending just-pressed flag on window blur', () => {
+    input = new KeyboardInput()
+
+    press('KeyE')
+    window.dispatchEvent(new Event('blur'))
+
+    expect(input.wasJustPressed('KeyE')).toBe(false)
+  })
 })

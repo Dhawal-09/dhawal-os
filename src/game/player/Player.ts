@@ -1,12 +1,12 @@
-import { Container, Graphics } from 'pixi.js'
-import type { MovementInput } from '../input/InputManager'
-import type { CollisionSystem } from '../world/CollisionSystem'
+import { Container, Graphics, Text } from 'pixi.js'
+import type { InteractableCandidate } from '../world/InteractionSystem'
 import { CollisionBody } from './CollisionBody'
 import { PlayerAnimator, type Direction } from './PlayerAnimator'
-import { PlayerController } from './PlayerController'
+import { PlayerController, type PlayerSystems } from './PlayerController'
 
 const BODY_RADIUS = 14
 const FACING_LENGTH = 18
+const PROMPT_OFFSET_Y = -26
 
 const FACING_OFFSETS: Record<Direction, readonly [number, number]> = {
   down: [0, 1],
@@ -25,8 +25,8 @@ export interface PlayerOptions {
  * PlayerController + PlayerAnimator + CollisionBody). Renders an explicit
  * dev placeholder — a tinted circle plus a facing indicator — never a
  * temporary filename. Swapping in the approved sprite sheet later only
- * touches `redraw()` below; movement, state, input, and collision are
- * untouched.
+ * touches `redraw()` below; movement, state, input, collision, and
+ * interaction are untouched.
  */
 export class Player extends Container {
   readonly controller: PlayerController
@@ -35,30 +35,42 @@ export class Player extends Container {
 
   direction: Direction = 'down'
   moving = false
+  /** Set by PlayerController each frame from InteractionSystem — Player never computes eligibility itself. */
+  interactionTarget: InteractableCandidate | null = null
 
   private readonly body = new Graphics()
   private readonly facing = new Graphics()
   private readonly debugCollider: Graphics | null = import.meta.env.DEV
     ? new Graphics()
     : null
+  /**
+   * The `[E] INTERACT` prompt (INTERACTION_SPEC.md). Plain text, not tied to
+   * any visual asset — visibility alone tracks `interactionTarget`, so it
+   * works identically for whichever object the player is near.
+   */
+  private readonly prompt = new Text({
+    text: '[E] INTERACT',
+    style: { fontFamily: 'monospace', fontSize: 12, fill: 0xffffff },
+  })
 
-  constructor(
-    input: MovementInput,
-    collisionSystem: CollisionSystem,
-    options: PlayerOptions = {},
-  ) {
+  constructor(systems: PlayerSystems, options: PlayerOptions = {}) {
     super({ label: 'Player' })
     this.position.set(options.x ?? 0, options.y ?? 0)
 
     this.addChild(this.body, this.facing)
     if (this.debugCollider) this.addChild(this.debugCollider)
 
-    this.controller = new PlayerController(this, input, collisionSystem)
+    this.prompt.anchor.set(0.5, 1)
+    this.prompt.position.set(0, PROMPT_OFFSET_Y)
+    this.prompt.visible = false
+    this.addChild(this.prompt)
+
+    this.controller = new PlayerController(this, systems)
 
     this.redraw()
   }
 
-  /** Advances input-driven movement, animation timing, and the placeholder visual. */
+  /** Advances input-driven movement, animation timing, interaction eligibility, and the placeholder visual. */
   update(deltaMS: number): void {
     this.controller.update(deltaMS)
     this.animator.update(this.direction, this.moving, deltaMS)
@@ -83,6 +95,8 @@ export class Player extends Container {
       .moveTo(0, 0)
       .lineTo(dx * FACING_LENGTH, dy * FACING_LENGTH)
       .stroke({ width: 3, color: 0xffffff })
+
+    this.prompt.visible = this.interactionTarget !== null
 
     if (this.debugCollider) {
       // Local space (origin 0,0) — this container is already positioned at

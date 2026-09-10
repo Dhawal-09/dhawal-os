@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { gameEventBridge } from './events/GameEventBridge'
 import { GameScene } from './GameScene'
 import { Player } from './player/Player'
 import { World } from './world/World'
@@ -63,6 +64,63 @@ describe('GameScene', () => {
 
     expect(scene.player.position.x).toBeGreaterThan(startX)
     expect(scene.player.direction).toBe('right')
+  })
+
+  it('end to end: approaching "projects" and pressing E emits OPEN_PROJECTS on the real event bridge', () => {
+    scene = new GameScene()
+    const received: unknown[] = []
+    const unsubscribe = gameEventBridge.subscribe((event) =>
+      received.push(event),
+    )
+
+    // Walk up toward the "projects" placeholder's row (world y=300).
+    press('KeyW')
+    for (let i = 0; i < 10; i++) scene.update(100)
+    release('KeyW')
+
+    // Then walk left into it — collision stops the player flush against
+    // it, comfortably inside its configured interaction radius.
+    press('KeyA')
+    for (let i = 0; i < 20; i++) scene.update(100)
+    release('KeyA')
+
+    expect(scene.player.interactionTarget?.id).toBe('projects')
+
+    press('KeyE')
+    scene.update(16)
+    release('KeyE')
+
+    expect(received).toEqual(['OPEN_PROJECTS'])
+    unsubscribe()
+  })
+
+  it('walking away from "projects" clears the interaction target and no longer reacts to E', () => {
+    scene = new GameScene()
+    const received: unknown[] = []
+    const unsubscribe = gameEventBridge.subscribe((event) =>
+      received.push(event),
+    )
+
+    press('KeyW')
+    for (let i = 0; i < 10; i++) scene.update(100)
+    release('KeyW')
+    press('KeyA')
+    for (let i = 0; i < 20; i++) scene.update(100)
+    release('KeyA')
+    expect(scene.player.interactionTarget?.id).toBe('projects')
+
+    // Walk back away from it.
+    press('KeyD')
+    for (let i = 0; i < 20; i++) scene.update(100)
+    release('KeyD')
+    expect(scene.player.interactionTarget).toBeNull()
+
+    press('KeyE')
+    scene.update(16)
+    release('KeyE')
+
+    expect(received).toEqual([])
+    unsubscribe()
   })
 
   it('destroy() removes its keyboard listeners (no leak across scene instances)', () => {

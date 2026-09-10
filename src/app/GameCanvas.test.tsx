@@ -3,10 +3,11 @@ import { StrictMode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { GameCanvas } from './GameCanvas'
 
-const { create, destroy, resize } = vi.hoisted(() => ({
+const { create, destroy, resize, triggerInteractTap } = vi.hoisted(() => ({
   create: vi.fn(),
   destroy: vi.fn(),
   resize: vi.fn(),
+  triggerInteractTap: vi.fn(),
 }))
 
 vi.mock('../game/GameApp', () => ({
@@ -17,10 +18,12 @@ beforeEach(() => {
   create.mockReset()
   destroy.mockReset()
   resize.mockReset()
+  triggerInteractTap.mockReset()
   create.mockImplementation(async () => ({
     canvas: document.createElement('canvas'),
     destroy,
     resize,
+    scene: { triggerInteractTap },
   }))
 })
 
@@ -83,5 +86,23 @@ describe('GameCanvas', () => {
 
     expect(await findByRole('alert')).toHaveTextContent(/unavailable/i)
     expect(errorSpy).toHaveBeenCalled()
+  })
+
+  it("wires a pointerdown on the canvas host to the game scene's tap-to-interact stub", async () => {
+    const { container, unmount } = render(<GameCanvas />)
+    const host = container.querySelector('.game-canvas-host')
+
+    await waitFor(() => {
+      expect(container.querySelector('canvas')).not.toBeNull()
+    })
+
+    host?.dispatchEvent(new Event('pointerdown', { bubbles: true }))
+    expect(triggerInteractTap).toHaveBeenCalledTimes(1)
+
+    unmount()
+
+    // No further calls once unmounted — the listener was removed, not left dangling.
+    host?.dispatchEvent(new Event('pointerdown', { bubbles: true }))
+    expect(triggerInteractTap).toHaveBeenCalledTimes(1)
   })
 })

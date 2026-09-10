@@ -6,12 +6,17 @@ export interface MovementVector {
 }
 
 /**
- * The only shape PlayerController/Player depend on — not the concrete
+ * The only shapes PlayerController/Player depend on — not the concrete
  * InputManager class. Keeps them trivially testable with a plain fake and
  * decoupled from how input is sourced/normalized.
  */
 export interface MovementInput {
   getMovementVector(): MovementVector
+}
+
+/** Edge-triggered: true once per press/tap, consumed on read — never assumes keyboard-only (a mobile tap counts too). */
+export interface InteractionInput {
+  wasInteractPressed(): boolean
 }
 
 const KEY_DIRECTIONS: Record<string, MovementVector> = {
@@ -39,8 +44,9 @@ function normalize(vector: MovementVector): MovementVector {
  * — only on `getMovementVector()`/`destroy()`, so a touch/joystick source
  * can be added later (Phase 09) without changing PlayerController.
  */
-export class InputManager implements MovementInput {
+export class InputManager implements MovementInput, InteractionInput {
   private readonly keyboard: KeyboardSource
+  private pendingTapInteract = false
 
   constructor(keyboard: KeyboardSource = new KeyboardInput()) {
     this.keyboard = keyboard
@@ -58,6 +64,20 @@ export class InputManager implements MovementInput {
     }
 
     return normalize({ x, y })
+  }
+
+  /** True once after an `E` press or a canvas tap (mobile stub — full touch UX in Phase 09). Must be called every frame to stay correctly edge-triggered. */
+  wasInteractPressed(): boolean {
+    if (this.pendingTapInteract) {
+      this.pendingTapInteract = false
+      return true
+    }
+    return this.keyboard.wasJustPressed('KeyE')
+  }
+
+  /** Wired from the game canvas's pointerdown (see GameCanvas.tsx) — the minimal mobile "tap to interact" stub PHASE-07-INTERACTION.md requires. */
+  triggerTapInteract(): void {
+    this.pendingTapInteract = true
   }
 
   destroy(): void {
