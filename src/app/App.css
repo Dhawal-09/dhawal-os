@@ -1,9 +1,10 @@
 .app-shell {
   display: flex;
-  min-height: 100svh;
+  /* A definite height (not min-height) is required so the .game-canvas-host
+     flex:1 child has a real available size to track on resize. */
+  height: 100svh;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 8px;
   text-align: center;
 }
