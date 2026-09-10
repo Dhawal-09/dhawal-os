@@ -27,10 +27,10 @@ const fixtures: WorldObject[] = [
 ]
 
 describe('World', () => {
-  it('exposes the four layer containers in back-to-front draw order', () => {
+  it('exposes the four layer containers in back-to-front draw order (a dev-only debug overlay may follow)', () => {
     const world = new World([])
 
-    expect(world.children).toEqual([
+    expect(world.children.slice(0, 4)).toEqual([
       world.backgroundLayer,
       world.objectsLayer,
       world.playerLayer,
@@ -73,5 +73,25 @@ describe('World', () => {
 
   it('constructs cleanly with an empty object list', () => {
     expect(() => new World([])).not.toThrow()
+  })
+
+  it('draws a dev-only collision debug overlay on top, for configured colliders only', () => {
+    const withCollider: WorldObject = {
+      id: 'blocking',
+      asset: 'content.blocking',
+      label: 'BLOCKING',
+      position: { x: 50, y: 50 },
+      layer: 'object',
+      collision: { x: 20, y: 20, width: 60, height: 60 },
+    }
+    const world = new World([withCollider, fixtures[1]]) // fixtures[1] has no collision
+
+    const overlay = world.children.find(
+      (child) => child.label === 'CollisionDebugOverlay',
+    )
+
+    expect(overlay).toBeDefined()
+    expect(overlay?.children).toHaveLength(1) // only the object with `collision`
+    expect(world.children.at(-1)).toBe(overlay) // drawn last (on top)
   })
 })

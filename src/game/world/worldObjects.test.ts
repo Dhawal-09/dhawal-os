@@ -24,6 +24,25 @@ describe('worldObjects', () => {
     const ids = worldObjects.map((object) => object.id)
     expect(new Set(ids).size).toBe(ids.length)
   })
+
+  it('mixes blocking and non-blocking objects — not every object is automatically solid', () => {
+    const blocking = worldObjects.filter((object) => object.collision)
+    const nonBlocking = worldObjects.filter((object) => !object.collision)
+
+    expect(blocking.length).toBeGreaterThan(0)
+    expect(nonBlocking.length).toBeGreaterThan(0)
+  })
+
+  it('every configured collider is centered on its object — collision geometry stays in sync with placement', () => {
+    for (const object of worldObjects) {
+      if (!object.collision) continue
+
+      const centerX = object.collision.x + object.collision.width / 2
+      const centerY = object.collision.y + object.collision.height / 2
+      expect(centerX).toBeCloseTo(object.position.x)
+      expect(centerY).toBeCloseTo(object.position.y)
+    }
+  })
 })
 
 describe('validateWorldObjects', () => {

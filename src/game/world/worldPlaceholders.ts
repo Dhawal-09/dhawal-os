@@ -1,4 +1,5 @@
 import { Container, Graphics, Text } from 'pixi.js'
+import type { WorldObject } from './WorldObject'
 import { WORLD_HEIGHT, WORLD_WIDTH } from './worldConstants'
 
 const GRID_STEP = 200
@@ -65,6 +66,35 @@ export function createDebugGrid(): Container {
     const label = new Text({ text: String(y), style: labelStyle })
     label.position.set(2, y + 2)
     view.addChild(label)
+  }
+
+  return view
+}
+
+/**
+ * Dev-only outline of every configured blocking collider — drawn at the
+ * collider's *actual* rect, independent of whatever the object's visual
+ * placeholder looks like (COLLISION_SPEC.md: collision is independent from
+ * rendering). The caller gates this to `import.meta.env.DEV`; it must never
+ * render in production (PERFORMANCE.md).
+ */
+export function createCollisionDebugOverlay(
+  objects: readonly WorldObject[],
+): Container {
+  const view = new Container({ label: 'CollisionDebugOverlay' })
+
+  for (const object of objects) {
+    if (!object.collision) continue
+
+    const outline = new Graphics()
+      .rect(
+        object.collision.x,
+        object.collision.y,
+        object.collision.width,
+        object.collision.height,
+      )
+      .stroke({ width: 2, color: 0xff2d2d })
+    view.addChild(outline)
   }
 
   return view

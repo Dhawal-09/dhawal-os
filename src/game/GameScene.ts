@@ -2,20 +2,21 @@ import { Container } from 'pixi.js'
 import { InputManager } from './input/InputManager'
 import { Player } from './player/Player'
 import { Camera } from './world/Camera'
+import { CollisionSystem } from './world/CollisionSystem'
 import { World } from './world/World'
 import { WORLD_HEIGHT, WORLD_WIDTH } from './world/worldConstants'
 import { worldObjects } from './world/worldObjects'
 
 /**
- * Root scene container. Owns the World, its static Camera fit, and the
- * player. Interaction/collision systems attach here starting Phase 06/07 —
- * Phase 05 only establishes the player/input foundation.
+ * Root scene container. Owns the World, its static Camera fit, collision,
+ * and the player. Interaction attaches here starting Phase 07.
  */
 export class GameScene extends Container {
   readonly world: World
   readonly player: Player
   private readonly camera: Camera
   private readonly inputManager: InputManager
+  private readonly collisionSystem: CollisionSystem
 
   constructor() {
     super({ label: 'GameScene' })
@@ -25,8 +26,14 @@ export class GameScene extends Container {
 
     this.camera = new Camera(this.world, WORLD_WIDTH, WORLD_HEIGHT)
 
+    this.collisionSystem = CollisionSystem.fromWorldObjects(
+      worldObjects,
+      WORLD_WIDTH,
+      WORLD_HEIGHT,
+    )
+
     this.inputManager = new InputManager()
-    this.player = new Player(this.inputManager, {
+    this.player = new Player(this.inputManager, this.collisionSystem, {
       x: WORLD_WIDTH / 2,
       y: WORLD_HEIGHT / 2,
     })
