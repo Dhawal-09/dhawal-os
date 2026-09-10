@@ -22,6 +22,13 @@ export function GameCanvas() {
     let resizeObserver: ResizeObserver | null = null
     let resizeFrame: number | null = null
 
+    // Minimal mobile "tap to interact" stub (INTERACTION_SPEC.md "[TAP]
+    // INTERACT"; full touch UX lands in Phase 09) — scoped to the canvas
+    // host only, not the whole window.
+    const handlePointerDown = (): void => {
+      gameApp?.scene.triggerInteractTap()
+    }
+
     const applyResize = (): void => {
       if (!gameApp) return
       gameApp.resize(host.clientWidth, host.clientHeight)
@@ -46,6 +53,7 @@ export function GameCanvas() {
 
         gameApp = app
         host.appendChild(app.canvas)
+        host.addEventListener('pointerdown', handlePointerDown)
 
         resizeObserver = new ResizeObserver(scheduleResize)
         resizeObserver.observe(host)
@@ -65,6 +73,7 @@ export function GameCanvas() {
       cancelled = true
       if (resizeFrame !== null) cancelAnimationFrame(resizeFrame)
       resizeObserver?.disconnect()
+      host.removeEventListener('pointerdown', handlePointerDown)
       gameApp?.destroy()
       gameApp = null
     }

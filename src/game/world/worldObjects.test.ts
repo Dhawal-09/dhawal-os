@@ -43,6 +43,22 @@ describe('worldObjects', () => {
       expect(centerY).toBeCloseTo(object.position.y)
     }
   })
+
+  it('every content area has a configured interaction, each with a distinct canonical action', () => {
+    const interactive = worldObjects.filter((object) => object.interaction)
+
+    expect(interactive.length).toBe(worldObjects.length)
+
+    const actions = interactive.map((object) => object.interaction!.action)
+    expect(new Set(actions).size).toBe(actions.length)
+  })
+
+  it('every interaction radius is a sane positive number, not 0 or negative', () => {
+    for (const object of worldObjects) {
+      if (!object.interaction) continue
+      expect(object.interaction.radius).toBeGreaterThan(0)
+    }
+  })
 })
 
 describe('validateWorldObjects', () => {

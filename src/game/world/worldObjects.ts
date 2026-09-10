@@ -24,6 +24,9 @@ function centeredCollider(
   }
 }
 
+/** Placeholder proximity radius (INTERACTION_SPEC.md example uses a comparable value) — independently tunable per object later. */
+const INTERACTION_RADIUS = 70
+
 /**
  * Placeholder positions for every labeled content area (see WORLD_SPEC.md
  * "Content areas represented in the world"). Positions are arbitrary until
@@ -44,6 +47,7 @@ export const worldObjects: WorldObject[] = [
     position: { x: 300, y: 300 },
     layer: 'object',
     collision: centeredCollider({ x: 300, y: 300 }),
+    interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_PROJECTS' },
   },
   {
     id: 'experience',
@@ -52,6 +56,7 @@ export const worldObjects: WorldObject[] = [
     position: { x: 720, y: 220 },
     layer: 'object',
     collision: centeredCollider({ x: 720, y: 220 }),
+    interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_EXPERIENCE' },
   },
   {
     id: 'skills',
@@ -60,6 +65,7 @@ export const worldObjects: WorldObject[] = [
     position: { x: 1140, y: 300 },
     layer: 'object',
     collision: centeredCollider({ x: 1140, y: 300 }),
+    interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_SKILLS' },
   },
   {
     id: 'education',
@@ -68,6 +74,7 @@ export const worldObjects: WorldObject[] = [
     position: { x: 300, y: 720 },
     layer: 'object',
     collision: centeredCollider({ x: 300, y: 720 }),
+    interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_EDUCATION' },
   },
   {
     id: 'certificates',
@@ -76,6 +83,7 @@ export const worldObjects: WorldObject[] = [
     position: { x: 720, y: 800 },
     layer: 'object',
     collision: centeredCollider({ x: 720, y: 800 }),
+    interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_CERTIFICATES' },
   },
   {
     id: 'resume',
@@ -84,6 +92,7 @@ export const worldObjects: WorldObject[] = [
     position: { x: 1140, y: 720 },
     layer: 'object',
     collision: centeredCollider({ x: 1140, y: 720 }),
+    interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_RESUME' },
   },
   {
     id: 'aboutMe',
@@ -92,6 +101,7 @@ export const worldObjects: WorldObject[] = [
     position: { x: 720, y: 512 },
     layer: 'object',
     // Intentionally no `collision` — an ambient/info area, not a physical obstacle.
+    interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_ABOUT' },
   },
 ]
 
