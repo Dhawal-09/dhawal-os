@@ -1,5 +1,28 @@
-import type { WorldObject } from './WorldObject'
+import type { Collider, WorldObject } from './WorldObject'
 import { WORLD_HEIGHT, WORLD_WIDTH } from './worldConstants'
+
+/**
+ * Placeholder collider footprint for content-area "furniture" — deliberately
+ * a plain local constant, not imported from the visual placeholder size in
+ * WorldObject.ts. The two happen to match for now (so the dev collision
+ * debug overlay lines up with the placeholder box) but are independently
+ * configurable, per COLLISION_SPEC.md ("collision is independent from
+ * rendering") — swapping in real furniture art later only touches the
+ * visual size, never this.
+ */
+const PLACEHOLDER_COLLIDER_SIZE = 96
+
+function centeredCollider(
+  position: { x: number; y: number },
+  size: number = PLACEHOLDER_COLLIDER_SIZE,
+): Collider {
+  return {
+    x: position.x - size / 2,
+    y: position.y - size / 2,
+    width: size,
+    height: size,
+  }
+}
 
 /**
  * Placeholder positions for every labeled content area (see WORLD_SPEC.md
@@ -7,6 +30,11 @@ import { WORLD_HEIGHT, WORLD_WIDTH } from './worldConstants'
  * the approved room layout is confirmed against the reference — see
  * PHASE-04-WORLD.md "Known risks". Adding a new area requires only a new
  * entry here plus an asset, never a core-system change.
+ *
+ * Content-area "desks" are configured as blocking (`collision` set); "About
+ * Me" is left non-blocking, as a real example of an object that
+ * intentionally does not participate in collision (per COLLISION_SPEC.md —
+ * not every visual object is automatically solid).
  */
 export const worldObjects: WorldObject[] = [
   {
@@ -15,6 +43,7 @@ export const worldObjects: WorldObject[] = [
     label: 'PROJECTS',
     position: { x: 300, y: 300 },
     layer: 'object',
+    collision: centeredCollider({ x: 300, y: 300 }),
   },
   {
     id: 'experience',
@@ -22,6 +51,7 @@ export const worldObjects: WorldObject[] = [
     label: 'EXPERIENCE',
     position: { x: 720, y: 220 },
     layer: 'object',
+    collision: centeredCollider({ x: 720, y: 220 }),
   },
   {
     id: 'skills',
@@ -29,6 +59,7 @@ export const worldObjects: WorldObject[] = [
     label: 'SKILLS',
     position: { x: 1140, y: 300 },
     layer: 'object',
+    collision: centeredCollider({ x: 1140, y: 300 }),
   },
   {
     id: 'education',
@@ -36,6 +67,7 @@ export const worldObjects: WorldObject[] = [
     label: 'EDUCATION',
     position: { x: 300, y: 720 },
     layer: 'object',
+    collision: centeredCollider({ x: 300, y: 720 }),
   },
   {
     id: 'certificates',
@@ -43,6 +75,7 @@ export const worldObjects: WorldObject[] = [
     label: 'CERTIFICATES',
     position: { x: 720, y: 800 },
     layer: 'object',
+    collision: centeredCollider({ x: 720, y: 800 }),
   },
   {
     id: 'resume',
@@ -50,6 +83,7 @@ export const worldObjects: WorldObject[] = [
     label: 'RESUME',
     position: { x: 1140, y: 720 },
     layer: 'object',
+    collision: centeredCollider({ x: 1140, y: 720 }),
   },
   {
     id: 'aboutMe',
@@ -57,6 +91,7 @@ export const worldObjects: WorldObject[] = [
     label: 'ABOUT ME',
     position: { x: 720, y: 512 },
     layer: 'object',
+    // Intentionally no `collision` — an ambient/info area, not a physical obstacle.
   },
 ]
 

@@ -1,5 +1,7 @@
 import { Container, Graphics } from 'pixi.js'
 import type { MovementInput } from '../input/InputManager'
+import type { CollisionSystem } from '../world/CollisionSystem'
+import { CollisionBody } from './CollisionBody'
 import { PlayerAnimator, type Direction } from './PlayerAnimator'
 import { PlayerController } from './PlayerController'
 
@@ -20,28 +22,38 @@ export interface PlayerOptions {
 
 /**
  * The player entity (see PLAYER_SPEC.md "Architecture": Player owns
- * PlayerController + PlayerAnimator; CollisionBody is Phase 06 — not
- * present yet). Renders an explicit dev placeholder — a tinted circle plus
- * a facing indicator — never a temporary filename. Swapping in the approved
- * sprite sheet later only touches `redraw()` below; movement, state, and
- * input are untouched.
+ * PlayerController + PlayerAnimator + CollisionBody). Renders an explicit
+ * dev placeholder — a tinted circle plus a facing indicator — never a
+ * temporary filename. Swapping in the approved sprite sheet later only
+ * touches `redraw()` below; movement, state, input, and collision are
+ * untouched.
  */
 export class Player extends Container {
   readonly controller: PlayerController
   readonly animator = new PlayerAnimator()
+  readonly collisionBody = new CollisionBody()
 
   direction: Direction = 'down'
   moving = false
 
   private readonly body = new Graphics()
   private readonly facing = new Graphics()
+  private readonly debugCollider: Graphics | null = import.meta.env.DEV
+    ? new Graphics()
+    : null
 
-  constructor(input: MovementInput, options: PlayerOptions = {}) {
+  constructor(
+    input: MovementInput,
+    collisionSystem: CollisionSystem,
+    options: PlayerOptions = {},
+  ) {
     super({ label: 'Player' })
     this.position.set(options.x ?? 0, options.y ?? 0)
 
     this.addChild(this.body, this.facing)
-    this.controller = new PlayerController(this, input)
+    if (this.debugCollider) this.addChild(this.debugCollider)
+
+    this.controller = new PlayerController(this, input, collisionSystem)
 
     this.redraw()
   }
@@ -71,5 +83,15 @@ export class Player extends Container {
       .moveTo(0, 0)
       .lineTo(dx * FACING_LENGTH, dy * FACING_LENGTH)
       .stroke({ width: 3, color: 0xffffff })
+
+    if (this.debugCollider) {
+      // Local space (origin 0,0) — this container is already positioned at
+      // the player's world position, so no extra offset is needed here.
+      const rect = this.collisionBody.getRect(0, 0)
+      this.debugCollider
+        .clear()
+        .rect(rect.x, rect.y, rect.width, rect.height)
+        .stroke({ width: 1, color: 0xff2d2d })
+    }
   }
 }
