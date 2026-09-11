@@ -4,14 +4,34 @@ import './GameCanvas.css'
 
 type Status = 'loading' | 'ready' | 'error'
 
+export interface GameCanvasProps {
+  /** Called exactly once, the moment GameApp finishes initializing successfully (PHASE-08.5 "GameApp initialization lifecycle"). */
+  onReady?: () => void
+  /** Called exactly once if GameApp initialization fails. Never called for a StrictMode phantom double-invoke. */
+  onError?: (error: unknown) => void
+}
+
 /**
  * Owns the Pixi application lifecycle: mounts the canvas, keeps it sized to
  * this host element, and tears everything down on unmount. Renders no
  * per-frame React state — `status` only changes on init success/failure.
+ * `onReady`/`onError` are optional observers for a parent that wants to
+ * drive its own application-lifecycle state (PHASE-08.5) — GameCanvas
+ * itself remains the single owner of GameApp creation/teardown.
  */
-export function GameCanvas() {
+export function GameCanvas({ onReady, onError }: GameCanvasProps = {}) {
   const hostRef = useRef<HTMLDivElement | null>(null)
   const [status, setStatus] = useState<Status>('loading')
+
+  // Refs, not deps — GameApp must initialize exactly once regardless of how
+  // many times a parent passes a new onReady/onError closure across renders.
+  // Synced in an effect (not during render) to keep the render pure.
+  const onReadyRef = useRef(onReady)
+  const onErrorRef = useRef(onError)
+  useEffect(() => {
+    onReadyRef.current = onReady
+    onErrorRef.current = onError
+  })
 
   useEffect(() => {
     const host = hostRef.current
@@ -65,10 +85,12 @@ export function GameCanvas() {
         resizeObserver.observe(host)
 
         setStatus('ready')
+        onReadyRef.current?.()
       } catch (error) {
         if (!cancelled) {
           console.error('Failed to initialize the Pixi application.', error)
           setStatus('error')
+          onErrorRef.current?.(error)
         }
       }
     }

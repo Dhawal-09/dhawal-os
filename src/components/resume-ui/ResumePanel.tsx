@@ -1,5 +1,4 @@
-/** RESUME_PDF_PATH per `docs/CONTENT.md` — the static asset path is fixed even though the file itself has not been supplied yet (see `ASSET_SPEC.md`). */
-const RESUME_PDF_PATH = '/resume.pdf'
+import { RESUME_PDF_PATH } from '../../data/resume'
 
 /**
  * Works independent of the game (INTERACTION_SPEC.md / CONTENT.md "Resume")

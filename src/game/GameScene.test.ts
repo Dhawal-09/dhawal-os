@@ -157,6 +157,38 @@ describe('GameScene', () => {
     unsubscribe()
   })
 
+  it('pauses world input for PAUSE_WORLD too (a non-panel React modal, e.g. the exit confirmation dialog)', () => {
+    scene = new GameScene()
+    const received: unknown[] = []
+    const unsubscribe = gameEventBridge.subscribe((event) =>
+      received.push(event),
+    )
+
+    gameEventBridge.emit('PAUSE_WORLD')
+    received.length = 0
+    const startX = scene.player.position.x
+
+    press('KeyD')
+    scene.update(16)
+    release('KeyD')
+    press('KeyE')
+    scene.update(16)
+    release('KeyE')
+
+    expect(scene.player.position.x).toBe(startX)
+    expect(received).toEqual([])
+
+    // The existing RETURN_TO_WORLD resume path also resumes from PAUSE_WORLD — no second pause/resume vocabulary.
+    gameEventBridge.emit('RETURN_TO_WORLD')
+    received.length = 0
+    press('KeyD')
+    scene.update(16)
+    release('KeyD')
+    expect(scene.player.position.x).toBeGreaterThan(startX)
+
+    unsubscribe()
+  })
+
   it('resumes world input after RETURN_TO_WORLD, without re-triggering from a stale keypress', () => {
     scene = new GameScene()
     const received: unknown[] = []

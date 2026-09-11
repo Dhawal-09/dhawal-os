@@ -2,7 +2,11 @@
  * Canonical Pixi <-> React events (see ARCHITECTURE.md / INTERACTION_SPEC.md).
  * The `OPEN_*` events are emitted by the game layer when a proximity
  * interaction triggers; `CLOSE_OVERLAY`/`RETURN_TO_WORLD` are emitted by
- * React when the visitor dismisses whatever opened.
+ * React when the visitor dismisses whatever opened. `PAUSE_WORLD` is the
+ * generic counterpart to `OPEN_*` for a React modal that isn't a portfolio
+ * panel (currently: the exit confirmation dialog, PHASE-08.5 follow-up) —
+ * it still resumes via the existing `RETURN_TO_WORLD`/`CLOSE_OVERLAY`, so
+ * no second pause/resume vocabulary is introduced.
  */
 export type GameEvent =
   | 'OPEN_PROJECTS'
@@ -13,6 +17,7 @@ export type GameEvent =
   | 'OPEN_RESUME'
   | 'OPEN_ABOUT'
   | 'OPEN_CONTACT'
+  | 'PAUSE_WORLD'
   | 'CLOSE_OVERLAY'
   | 'RETURN_TO_WORLD'
 
