@@ -54,7 +54,7 @@ test('the game fills the available viewport — no small centered box, no large 
   expect(hudBox).not.toBeNull()
 
   // The canvas spans essentially the full viewport width, and the full
-  // height minus the slim HUD bar — not a small centered 1440x1024 box
+  // height minus the slim HUD bar — not a small centered 1920x1440 box
   // surrounded by webpage background.
   expect(canvasBox!.width).toBeGreaterThan(viewport.width * 0.98)
   expect(canvasBox!.height).toBeGreaterThan(
@@ -67,7 +67,7 @@ test('the game fills the available viewport — no small centered box, no large 
   expect(hudBox!.height).toBeLessThan(100)
 })
 
-test('a laptop-sized viewport (1366×768, a different aspect ratio than the 1440×1024 world) still fills the screen without distortion', async ({
+test('a laptop-sized viewport (1366×768, a different aspect ratio than the 1920×1440 world) still fills the screen without distortion', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1366, height: 768 })
@@ -155,11 +155,11 @@ test('refreshing after entering the game stays in GAME — never falls back to L
   await expect(dialog).not.toBeVisible()
 
   await page.keyboard.down('w')
-  await page.waitForTimeout(1300)
+  await page.waitForTimeout(1600)
   await page.keyboard.up('w')
-  await page.keyboard.down('a')
+  await page.keyboard.down('d')
   await page.waitForTimeout(2200)
-  await page.keyboard.up('a')
+  await page.keyboard.up('d')
   await page.keyboard.press('e')
   await expect(dialog).toBeVisible()
   await expect(
@@ -266,11 +266,11 @@ test('approaching "projects" and pressing E opens the React panel end to end', a
 
   // Walk from the world center toward the "projects" placeholder.
   await page.keyboard.down('w')
-  await page.waitForTimeout(1300)
+  await page.waitForTimeout(1600)
   await page.keyboard.up('w')
-  await page.keyboard.down('a')
+  await page.keyboard.down('d')
   await page.waitForTimeout(2200)
-  await page.keyboard.up('a')
+  await page.keyboard.up('d')
 
   await page.keyboard.press('e')
 
@@ -311,11 +311,11 @@ test('closing a panel returns to the live world, and a second interaction opens 
   // player can still walk from where it was. Walk away from "About Me"
   // toward "projects".
   await page.keyboard.down('w')
-  await page.waitForTimeout(1300)
+  await page.waitForTimeout(1600)
   await page.keyboard.up('w')
-  await page.keyboard.down('a')
+  await page.keyboard.down('d')
   await page.waitForTimeout(2200)
-  await page.keyboard.up('a')
+  await page.keyboard.up('d')
 
   await page.keyboard.press('e')
   await expect(dialog).toBeVisible()

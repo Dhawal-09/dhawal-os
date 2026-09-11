@@ -52,6 +52,31 @@ describe('GameScene', () => {
     }).not.toThrow()
   })
 
+  it('resizing the viewport (cover-camera scale/offset) never changes world coordinates — player position and interaction targeting are unaffected', () => {
+    scene = new GameScene()
+
+    // Walk onto "projects" first, at whatever the initial viewport-agnostic scene state is.
+    press('KeyW')
+    for (let i = 0; i < 16; i++) scene.update(100)
+    release('KeyW')
+    press('KeyD')
+    for (let i = 0; i < 20; i++) scene.update(100)
+    release('KeyD')
+    const playerXBefore = scene.player.position.x
+    const playerYBefore = scene.player.position.y
+    expect(scene.player.interactionTarget?.id).toBe('projects')
+
+    // A camera-only concern: the visual fit strategy (contain vs. cover)
+    // and viewport size must never move anything in world space.
+    scene.resize(1920, 1080)
+    scene.resize(1366, 768)
+    scene.resize(390, 844)
+
+    expect(scene.player.position.x).toBe(playerXBefore)
+    expect(scene.player.position.y).toBe(playerYBefore)
+    expect(scene.player.interactionTarget?.id).toBe('projects')
+  })
+
   it('update() drives the player from real keyboard input, through the game loop', () => {
     scene = new GameScene()
     const startX = scene.player.position.x
@@ -73,16 +98,16 @@ describe('GameScene', () => {
       received.push(event),
     )
 
-    // Walk up toward the "projects" placeholder's row (world y=300).
+    // Walk up toward the "projects" desk's row (world y=390, PHASE 10B layout).
     press('KeyW')
-    for (let i = 0; i < 10; i++) scene.update(100)
+    for (let i = 0; i < 16; i++) scene.update(100)
     release('KeyW')
 
-    // Then walk left into it — collision stops the player flush against
+    // Then walk right into it — collision stops the player flush against
     // it, comfortably inside its configured interaction radius.
-    press('KeyA')
+    press('KeyD')
     for (let i = 0; i < 20; i++) scene.update(100)
-    release('KeyA')
+    release('KeyD')
 
     expect(scene.player.interactionTarget?.id).toBe('projects')
 
@@ -102,17 +127,17 @@ describe('GameScene', () => {
     )
 
     press('KeyW')
-    for (let i = 0; i < 10; i++) scene.update(100)
+    for (let i = 0; i < 16; i++) scene.update(100)
     release('KeyW')
-    press('KeyA')
-    for (let i = 0; i < 20; i++) scene.update(100)
-    release('KeyA')
-    expect(scene.player.interactionTarget?.id).toBe('projects')
-
-    // Walk back away from it.
     press('KeyD')
     for (let i = 0; i < 20; i++) scene.update(100)
     release('KeyD')
+    expect(scene.player.interactionTarget?.id).toBe('projects')
+
+    // Walk back away from it.
+    press('KeyA')
+    for (let i = 0; i < 20; i++) scene.update(100)
+    release('KeyA')
     expect(scene.player.interactionTarget).toBeNull()
 
     press('KeyE')
@@ -132,11 +157,11 @@ describe('GameScene', () => {
 
     // Get within range of "projects" first, same walk as the E2E path above.
     press('KeyW')
-    for (let i = 0; i < 10; i++) scene.update(100)
+    for (let i = 0; i < 16; i++) scene.update(100)
     release('KeyW')
-    press('KeyA')
+    press('KeyD')
     for (let i = 0; i < 20; i++) scene.update(100)
-    release('KeyA')
+    release('KeyD')
     expect(scene.player.interactionTarget?.id).toBe('projects')
 
     gameEventBridge.emit('OPEN_PROJECTS')
@@ -197,11 +222,11 @@ describe('GameScene', () => {
     )
 
     press('KeyW')
-    for (let i = 0; i < 10; i++) scene.update(100)
+    for (let i = 0; i < 16; i++) scene.update(100)
     release('KeyW')
-    press('KeyA')
+    press('KeyD')
     for (let i = 0; i < 20; i++) scene.update(100)
-    release('KeyA')
+    release('KeyD')
     expect(scene.player.interactionTarget?.id).toBe('projects')
 
     gameEventBridge.emit('OPEN_PROJECTS')
@@ -219,12 +244,14 @@ describe('GameScene', () => {
 
     expect(received).toEqual([])
 
-    // Movement resumes normally afterward.
+    // Movement resumes normally afterward. Away from the desk it's flush
+    // against (KeyA, not KeyD) — pressing back into the obstacle it just
+    // stopped at would stay blocked by collision, not prove input resumed.
     const startX = scene.player.position.x
-    press('KeyD')
+    press('KeyA')
     scene.update(16)
-    release('KeyD')
-    expect(scene.player.position.x).toBeGreaterThan(startX)
+    release('KeyA')
+    expect(scene.player.position.x).toBeLessThan(startX)
 
     unsubscribe()
   })

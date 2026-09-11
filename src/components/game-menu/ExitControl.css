@@ -2,7 +2,7 @@
    normal-flow item inside GameHud's top bar (see GameHud.css) rather than
    floating it separately, so it never visually collides with the HUD. */
 .exit-control {
-  min-height: 44px;
+  min-height: 22px;
   padding: 8px 16px;
   border: 1px solid var(--pixel-border, #1e5fa8);
   border-radius: 4px;
