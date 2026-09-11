@@ -1,0 +1,79 @@
+.exit-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(5, 11, 26, 0.75);
+}
+
+.exit-confirm-dialog {
+  width: 100%;
+  max-width: 360px;
+  padding: 24px;
+  border: 1px solid var(--pixel-border, #1e5fa8);
+  border-radius: 4px;
+  background: var(--panel, #0b2144);
+  color: var(--text, #eaf4ff);
+  text-align: center;
+}
+
+.exit-confirm-dialog:focus {
+  outline: none;
+}
+
+.exit-confirm-dialog h2 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  color: var(--warning, #ffd166);
+}
+
+.exit-confirm-dialog p {
+  margin: 0 0 20px;
+  color: var(--text-muted, #91a9c8);
+  line-height: 1.5;
+}
+
+.exit-confirm-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.exit-confirm-cancel,
+.exit-confirm-confirm {
+  min-height: 44px;
+  min-width: 100px;
+  padding: 8px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.exit-confirm-cancel {
+  border: 1px solid var(--pixel-border, #1e5fa8);
+  background: var(--panel-dark, #06142d);
+  color: var(--text, #eaf4ff);
+}
+
+.exit-confirm-cancel:hover {
+  background: var(--blue, #147bff);
+}
+
+.exit-confirm-confirm {
+  border: 1px solid var(--warning, #ffd166);
+  background: transparent;
+  color: var(--warning, #ffd166);
+}
+
+.exit-confirm-confirm:hover {
+  background: var(--warning, #ffd166);
+  color: var(--bg-deep, #050b1a);
+}
+
+.exit-confirm-cancel:focus-visible,
+.exit-confirm-confirm:focus-visible {
+  outline: 2px solid var(--cyan-bright, #57e8ff);
+  outline-offset: 2px;
+}

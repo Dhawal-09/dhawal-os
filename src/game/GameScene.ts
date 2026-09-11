@@ -22,8 +22,9 @@ export class GameScene extends Container {
   private readonly interactionSystem: InteractionSystem
   private readonly unsubscribeFromBridge: () => void
   /**
-   * True while a portfolio panel is open. World input is ignored while
-   * paused (ARCHITECTURE.md boundary: React owns the open panel, but
+   * True while a portfolio panel — or any other React modal, e.g. the exit
+   * confirmation dialog (`PAUSE_WORLD`) — is open. World input is ignored
+   * while paused (ARCHITECTURE.md boundary: React owns the open panel, but
    * pausing world input in reaction to that is itself game-state, so it
    * belongs here rather than in the React layer). The Pixi ticker keeps
    * running — GameApp/GameScene are never torn down for a panel open/close
@@ -59,7 +60,7 @@ export class GameScene extends Container {
     this.world.playerLayer.addChild(this.player)
 
     this.unsubscribeFromBridge = gameEventBridge.subscribe((event) => {
-      if (OPEN_EVENTS.has(event)) {
+      if (OPEN_EVENTS.has(event) || event === 'PAUSE_WORLD') {
         this.setPaused(true)
       } else if (event === 'CLOSE_OVERLAY' || event === 'RETURN_TO_WORLD') {
         this.setPaused(false)

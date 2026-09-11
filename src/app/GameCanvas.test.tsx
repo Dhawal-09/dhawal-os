@@ -124,4 +124,67 @@ describe('GameCanvas', () => {
 
     expect(triggerInteractTap).not.toHaveBeenCalled()
   })
+
+  it('calls onReady exactly once after a successful initialization', async () => {
+    const onReady = vi.fn()
+    const onError = vi.fn()
+    render(<GameCanvas onReady={onReady} onError={onError} />)
+
+    await waitFor(() => {
+      expect(onReady).toHaveBeenCalledTimes(1)
+    })
+    expect(onError).not.toHaveBeenCalled()
+  })
+
+  it('calls onError (not onReady) with the underlying error when initialization fails', async () => {
+    const failure = new Error('WebGL unavailable')
+    create.mockRejectedValueOnce(failure)
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const onReady = vi.fn()
+    const onError = vi.fn()
+
+    render(<GameCanvas onReady={onReady} onError={onError} />)
+
+    await waitFor(() => {
+      expect(onError).toHaveBeenCalledTimes(1)
+    })
+    expect(onError).toHaveBeenCalledWith(failure)
+    expect(onReady).not.toHaveBeenCalled()
+    errorSpy.mockRestore()
+  })
+
+  it('never calls onReady/onError for a cancelled StrictMode phantom instance', async () => {
+    const onReady = vi.fn()
+    const onError = vi.fn()
+
+    const { unmount } = render(
+      <StrictMode>
+        <GameCanvas onReady={onReady} onError={onError} />
+      </StrictMode>,
+    )
+
+    await waitFor(() => {
+      expect(onReady).toHaveBeenCalledTimes(1)
+    })
+    expect(onError).not.toHaveBeenCalled()
+
+    unmount()
+  })
+
+  it('does not re-run initialization (or call onReady again) when onReady/onError props change identity across re-renders', async () => {
+    const onReadyA = vi.fn()
+    const { rerender } = render(<GameCanvas onReady={onReadyA} />)
+
+    await waitFor(() => {
+      expect(onReadyA).toHaveBeenCalledTimes(1)
+    })
+    expect(create).toHaveBeenCalledTimes(1)
+
+    const onReadyB = vi.fn()
+    rerender(<GameCanvas onReady={onReadyB} />)
+    rerender(<GameCanvas onReady={onReadyB} />)
+
+    expect(create).toHaveBeenCalledTimes(1)
+    expect(onReadyB).not.toHaveBeenCalled()
+  })
 })

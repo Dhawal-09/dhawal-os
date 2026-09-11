@@ -1,0 +1,170 @@
+.landing-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: var(--bg-deep, #050b1a);
+  color: var(--text, #eaf4ff);
+}
+
+.landing-header {
+  flex-shrink: 0;
+  padding: 16px clamp(16px, 4vw, 32px);
+}
+
+.landing-brand {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--cyan, #27d7ff);
+}
+
+/* Stands in for the approved pixel-art room (ASSET_SPEC.md — not yet
+   supplied). Deliberately unfinished-looking, same intent as the Pixi dev
+   placeholders, so it is never mistaken for final art. */
+.landing-world-placeholder {
+  flex: 1;
+  min-height: 220px;
+  margin: 0 clamp(16px, 4vw, 32px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px dashed var(--pixel-border, #1e5fa8);
+  border-radius: 4px;
+  background: var(--panel-dark, #06142d);
+  color: var(--text-muted, #91a9c8);
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 16px;
+}
+
+.landing-intro {
+  flex-shrink: 0;
+  padding: 24px clamp(16px, 4vw, 32px) 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.landing-intro h1 {
+  margin: 0;
+  font-size: clamp(1.4rem, 5vw, 2rem);
+}
+
+.landing-role {
+  margin: 0;
+  color: var(--cyan-bright, #57e8ff);
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+}
+
+.landing-summary {
+  margin: 0;
+  max-width: 60ch;
+  color: var(--text-muted, #91a9c8);
+  line-height: 1.5;
+}
+
+.landing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.landing-cta,
+.landing-secondary {
+  min-height: 44px;
+  padding: 12px 24px;
+  border-radius: 4px;
+  font-size: 0.95rem;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.landing-cta {
+  border: 1px solid var(--blue, #147bff);
+  background: var(--blue, #147bff);
+  color: var(--text, #eaf4ff);
+}
+
+.landing-cta:hover {
+  background: var(--cyan, #27d7ff);
+  border-color: var(--cyan, #27d7ff);
+}
+
+.landing-secondary {
+  border: 1px solid var(--pixel-border, #1e5fa8);
+  background: transparent;
+  color: var(--text, #eaf4ff);
+}
+
+.landing-secondary:hover {
+  background: var(--panel, #0b2144);
+}
+
+.landing-cta:focus-visible,
+.landing-secondary:focus-visible,
+.landing-social a:focus-visible {
+  outline: 2px solid var(--cyan-bright, #57e8ff);
+  outline-offset: 2px;
+}
+
+.landing-social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.landing-social a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-muted, #91a9c8);
+}
+
+.landing-social a:hover {
+  color: var(--cyan, #27d7ff);
+}
+
+/* Desktop: an intentional composition, not a stretched-out mobile layout —
+   the intro panel overlays the room area as a card, per the approved
+   reference, instead of sitting in plain document flow underneath it.
+   `.landing-screen` (position: fixed) is the positioned ancestor here. */
+@media (min-width: 768px) {
+  .landing-world-placeholder {
+    margin: 0 clamp(16px, 4vw, 32px) 24px;
+  }
+
+  .landing-intro {
+    position: absolute;
+    left: clamp(16px, 4vw, 48px);
+    bottom: clamp(16px, 4vw, 48px);
+    max-width: 480px;
+    padding: 24px;
+    border: 1px solid var(--pixel-border, #1e5fa8);
+    border-radius: 6px;
+    background: rgba(11, 33, 68, 0.9);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .landing-screen {
+    animation: landing-fade-in 220ms ease-out;
+  }
+}
+
+@keyframes landing-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
