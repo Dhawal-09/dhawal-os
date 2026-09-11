@@ -30,8 +30,8 @@
 
 .game-hud-sound,
 .game-hud-menu-toggle {
-  min-height: 44px;
-  min-width: 44px;
+  min-height: 22px;
+  min-width: 22px;
   padding: 8px 12px;
   border: 1px solid var(--pixel-border, #1e5fa8);
   border-radius: 4px;
@@ -53,7 +53,7 @@
 
 .game-hud-sound:focus-visible,
 .game-hud-menu-toggle:focus-visible {
-  outline: 2px solid var(--cyan-bright, #57e8ff);
+  outline: 1px solid var(--cyan-bright, #57e8ff);
   outline-offset: 2px;
 }
 

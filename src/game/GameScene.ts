@@ -7,7 +7,7 @@ import { CollisionSystem } from './world/CollisionSystem'
 import { InteractionSystem } from './world/InteractionSystem'
 import { World } from './world/World'
 import { WORLD_HEIGHT, WORLD_WIDTH } from './world/worldConstants'
-import { worldObjects } from './world/worldObjects'
+import { ROOM_BOUNDARY_COLLIDERS, worldObjects } from './world/worldObjects'
 
 /**
  * Root scene container. Owns the World, its static Camera fit, collision,
@@ -35,7 +35,7 @@ export class GameScene extends Container {
   constructor() {
     super({ label: 'GameScene' })
 
-    this.world = new World(worldObjects)
+    this.world = new World(worldObjects, ROOM_BOUNDARY_COLLIDERS)
     this.addChild(this.world)
 
     this.camera = new Camera(this.world, WORLD_WIDTH, WORLD_HEIGHT)
@@ -44,6 +44,7 @@ export class GameScene extends Container {
       worldObjects,
       WORLD_WIDTH,
       WORLD_HEIGHT,
+      ROOM_BOUNDARY_COLLIDERS,
     )
     this.interactionSystem = InteractionSystem.fromWorldObjects(worldObjects)
 
@@ -58,6 +59,7 @@ export class GameScene extends Container {
       { x: WORLD_WIDTH / 2, y: WORLD_HEIGHT / 2 },
     )
     this.world.playerLayer.addChild(this.player)
+    this.camera.follow(this.player.position.x, this.player.position.y)
 
     this.unsubscribeFromBridge = gameEventBridge.subscribe((event) => {
       if (OPEN_EVENTS.has(event) || event === 'PAUSE_WORLD') {
@@ -93,6 +95,10 @@ export class GameScene extends Container {
   update(deltaMS: number): void {
     if (this.paused) return
     this.player.update(deltaMS)
+    // PHASE 10B: keeps the player centered as the Camera pans a larger-
+    // than-viewport world (CAMERA_SPEC.md) — a no-op whenever the whole
+    // room already fits the viewport (see Camera.ts's `apply()`).
+    this.camera.follow(this.player.position.x, this.player.position.y)
   }
 
   /** Also tears down non-Pixi resources (the keyboard listener, the event bridge subscription) that a plain `Container.destroy()` cascade can't reach. */

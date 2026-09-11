@@ -1,5 +1,9 @@
 import { Container } from 'pixi.js'
-import { createWorldObjectPlaceholder, type WorldObject } from './WorldObject'
+import {
+  createWorldObjectView,
+  type Collider,
+  type WorldObject,
+} from './WorldObject'
 import type { WorldLayer } from './worldConstants'
 import {
   createCollisionDebugOverlay,
@@ -9,7 +13,7 @@ import {
 } from './worldPlaceholders'
 
 /**
- * The canonical `1440x1024` room, structured into the four draw-order layers
+ * The canonical `1920x1440` room, structured into the four draw-order layers
  * from WORLD_SPEC.md. Rendering (this file) and collision (CollisionSystem)
  * stay independent: World never performs a collision test or decides what
  * blocks the player — it only ever reads `WorldObject.collision` to draw a
@@ -23,7 +27,18 @@ export class World extends Container {
   readonly playerLayer = new Container({ label: 'PLAYER' })
   readonly foregroundLayer = new Container({ label: 'FOREGROUND' })
 
-  constructor(objects: readonly WorldObject[]) {
+  /**
+   * `extraColliders` (PHASE 10B.1) lets the dev collision-debug overlay
+   * also outline non-WorldObject obstacles — namely the room's own
+   * perimeter walls (`ROOM_BOUNDARY_COLLIDERS` in worldObjects.ts), which
+   * CollisionSystem resolves against but which have no WorldObject entry.
+   * Defaults to none, so every existing caller/test that only passes
+   * `objects` is unaffected.
+   */
+  constructor(
+    objects: readonly WorldObject[],
+    extraColliders: readonly Collider[] = [],
+  ) {
     super({ label: 'World' })
 
     this.addChild(
@@ -40,13 +55,13 @@ export class World extends Container {
     }
 
     for (const object of objects) {
-      this.layerFor(object.layer).addChild(createWorldObjectPlaceholder(object))
+      this.layerFor(object.layer).addChild(createWorldObjectView(object))
     }
 
     // Drawn last (on top of everything) so collider outlines are never
     // hidden behind objects/foreground. Dev-only — see PERFORMANCE.md.
     if (import.meta.env.DEV) {
-      this.addChild(createCollisionDebugOverlay(objects))
+      this.addChild(createCollisionDebugOverlay(objects, extraColliders))
     }
   }
 

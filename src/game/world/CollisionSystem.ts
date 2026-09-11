@@ -42,13 +42,23 @@ export class CollisionSystem {
     this.obstacles = obstacles
   }
 
-  /** Only WorldObject entries with a `collision` field become obstacles — visual-only objects are never automatically solid. */
+  /**
+   * Only WorldObject entries with a `collision` field become obstacles —
+   * visual-only objects are never automatically solid. `extraObstacles`
+   * (PHASE 10B.1) appends further raw colliders that aren't WorldObjects at
+   * all — namely the room's own perimeter-wall geometry (see
+   * `ROOM_BOUNDARY_COLLIDERS` in worldObjects.ts): a wall isn't a
+   * positioned, labeled, asset-bearing thing the way furniture is, so it
+   * doesn't belong in `objects`, but it resolves through this exact same
+   * AABB obstacle list — no change to the resolution algorithm itself.
+   */
   static fromWorldObjects(
     objects: readonly WorldObject[],
     worldWidth: number,
     worldHeight: number,
+    extraObstacles: readonly Collider[] = [],
   ): CollisionSystem {
-    const obstacles: Collider[] = []
+    const obstacles: Collider[] = [...extraObstacles]
     for (const object of objects) {
       if (object.collision) obstacles.push(object.collision)
     }

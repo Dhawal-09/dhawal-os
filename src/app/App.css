@@ -5,7 +5,7 @@
      viewport width/height (PHASE 09 "Fullscreen game view") — GameHud is a
      slim, normal-flow row and GameCanvas's host takes 100% of whatever
      remains via flex:1, instead of a centered boxed canvas. This never
-     changes the canonical 1440x1024 world space Camera fits into that
+     changes the canonical 1920x1440 world space Camera fits into that
      remaining space (see CAMERA_SPEC.md) — only how much of the browser
      viewport is available to fit it into. */
   width: 100%;
