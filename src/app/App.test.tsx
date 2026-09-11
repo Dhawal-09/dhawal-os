@@ -104,6 +104,15 @@ describe('App lifecycle', () => {
     })
     expect(screen.getByTestId('game-canvas-stub')).toBeInTheDocument()
     expect(
+      screen.getByRole('heading', { name: 'DHAWAL.OS' }),
+    ).toBeInTheDocument()
+    // The portfolio nav is reachable via the HUD's menu disclosure
+    // (PHASE 09 GameHud), not shown expanded by default.
+    expect(
+      screen.queryByRole('navigation', { name: /portfolio sections/i }),
+    ).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /open menu/i }))
+    expect(
       screen.getByRole('navigation', { name: /portfolio sections/i }),
     ).toBeInTheDocument()
   })

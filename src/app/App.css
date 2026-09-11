@@ -2,15 +2,27 @@
   display: flex;
   /* A definite height (not min-height) is required so the .game-canvas-host
      flex:1 child has a real available size to track on resize. Full
-     viewport width/height — the shell that later fullscreen camera/
-     responsive work (PHASE 09+) builds on, without changing the canonical
-     1440x1024 world space Camera fits into it (see CAMERA_SPEC.md). */
+     viewport width/height (PHASE 09 "Fullscreen game view") — GameHud is a
+     slim, normal-flow row and GameCanvas's host takes 100% of whatever
+     remains via flex:1, instead of a centered boxed canvas. This never
+     changes the canonical 1440x1024 world space Camera fits into that
+     remaining space (see CAMERA_SPEC.md) — only how much of the browser
+     viewport is available to fit it into. */
   width: 100%;
   height: 100svh;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  text-align: center;
+  overflow: hidden;
+  background: var(--bg-deep, #050b1a);
+}
+
+/* Fills whatever height remains below GameHud's slim bar. min-height: 0 is
+   required so this flex child can actually shrink to that remaining space
+   instead of the default flex "min-height: auto" forcing it to expand to
+   its content's size. */
+.game-main {
+  display: flex;
+  flex: 1;
+  min-height: 0;
 }
 
 @media (prefers-reduced-motion: no-preference) {

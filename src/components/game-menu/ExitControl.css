@@ -1,8 +1,7 @@
+/* No longer independently `position: fixed` — PHASE 09 embeds this as a
+   normal-flow item inside GameHud's top bar (see GameHud.css) rather than
+   floating it separately, so it never visually collides with the HUD. */
 .exit-control {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  z-index: 2;
   min-height: 44px;
   padding: 8px 16px;
   border: 1px solid var(--pixel-border, #1e5fa8);
