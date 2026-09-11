@@ -1,0 +1,63 @@
+.game-hud {
+  flex-shrink: 0;
+  background: var(--bg-deep, #050b1a);
+  border-bottom: 1px solid var(--pixel-border, #1e5fa8);
+}
+
+.game-hud-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px clamp(16px, 4vw, 32px);
+}
+
+/* Same brand styling as .landing-brand (LandingScreen.css) — landing and
+   game must read as the same product. */
+.game-hud-brand {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--cyan, #27d7ff);
+}
+
+.game-hud-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.game-hud-sound,
+.game-hud-menu-toggle {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--pixel-border, #1e5fa8);
+  border-radius: 4px;
+  background: var(--panel-dark, #06142d);
+  color: var(--text, #eaf4ff);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.game-hud-menu-toggle {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.game-hud-sound:hover,
+.game-hud-menu-toggle:hover {
+  background: var(--blue, #147bff);
+}
+
+.game-hud-sound:focus-visible,
+.game-hud-menu-toggle:focus-visible {
+  outline: 2px solid var(--cyan-bright, #57e8ff);
+  outline-offset: 2px;
+}
+
+.game-hud-menu-panel {
+  padding-bottom: 8px;
+  border-top: 1px solid var(--pixel-border, #1e5fa8);
+}

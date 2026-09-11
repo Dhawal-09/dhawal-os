@@ -31,7 +31,11 @@ export class GameApp {
     await app.init({
       width: options.width,
       height: options.height,
-      background: options.backgroundColor ?? 0x1a1a2e,
+      // Matches the --bg-deep design token (App.css/index.css) so the
+      // Camera's letterbox bars blend seamlessly with the surrounding page
+      // instead of showing a visible rectangle seam (PHASE 09 "fullscreen
+      // presentation").
+      background: options.backgroundColor ?? 0x050b1a,
       resolution: Math.min(window.devicePixelRatio || 1, MAX_RESOLUTION),
       autoDensity: true,
       antialias: false,

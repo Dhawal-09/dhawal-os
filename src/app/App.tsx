@@ -1,9 +1,8 @@
 import { useCallback, useReducer, useState } from 'react'
 import { ErrorScreen } from '../components/error/ErrorScreen'
-import { ExitControl } from '../components/game-menu/ExitControl'
+import { GameHud } from '../components/game-menu/GameHud'
 import { LandingScreen } from '../components/landing/LandingScreen'
 import { LoadingScreen } from '../components/loading/LoadingScreen'
-import { PortfolioNav } from '../components/portfolio/PortfolioNav'
 import {
   appLifecycleReducer,
   INITIAL_APP_LIFECYCLE_STATE,
@@ -90,23 +89,27 @@ function App() {
   const mountGameCanvas = lifecycle === 'loading' || lifecycle === 'game'
 
   return (
-    <main className="app-shell">
-      <h1>DHAWAL.OS</h1>
-      <PortfolioNav />
-      {mountGameCanvas && (
-        <GameCanvas
-          key={sessionKey}
-          onReady={handleGameReady}
-          onError={handleGameError}
-        />
-      )}
+    <div className="app-shell">
+      <GameHud
+        onExitConfirmed={lifecycle === 'game' ? handleExitConfirmed : undefined}
+      />
+      {/* A real <main> landmark for the game world, sibling to (not
+          nested inside) GameHud's <header> — a <header> descendant of
+          <main> loses its implicit "banner" landmark role per the
+          HTML/ARIA spec, so the two must stay siblings. */}
+      <main className="game-main">
+        {mountGameCanvas && (
+          <GameCanvas
+            key={sessionKey}
+            onReady={handleGameReady}
+            onError={handleGameError}
+          />
+        )}
+      </main>
       <InteractionOverlay />
       {lifecycle === 'loading' && <LoadingScreen />}
       {lifecycle === 'error' && <ErrorScreen onRetry={handleRetry} />}
-      {lifecycle === 'game' && (
-        <ExitControl onExitConfirmed={handleExitConfirmed} />
-      )}
-    </main>
+    </div>
   )
 }
 

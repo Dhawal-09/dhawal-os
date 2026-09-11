@@ -5,10 +5,14 @@ import { WORLD_HEIGHT, WORLD_WIDTH } from './worldConstants'
 const GRID_STEP = 200
 
 /**
- * Obvious "not final art" placeholder for the room background — no approved
- * room artwork exists in the repository yet (see ASSET_SPEC.md /
- * PHASE-04-WORLD.md "Known risks"). Replaced wholesale once the asset lands;
- * nothing else in `World.ts` depends on its contents.
+ * Neutral placeholder fill for the room background — no approved room
+ * artwork exists in the repository yet (see ASSET_SPEC.md /
+ * PHASE-04-WORLD.md "Known risks"). Replaced wholesale once the asset
+ * lands; nothing else in `World.ts` depends on its contents. Deliberately
+ * plain in every build (no magenta stroke, no label) — PHASE 09 "production
+ * output must not display... magenta world border... development
+ * placeholder text". The dev-only magenta annotation that makes this
+ * obviously-not-final is `createDevWorldBoundsAnnotation` below.
  */
 export function createWorldBoundsPlaceholder(): Container {
   const view = new Container({ label: 'WorldBoundsPlaceholder' })
@@ -16,8 +20,24 @@ export function createWorldBoundsPlaceholder(): Container {
   const bounds = new Graphics()
     .rect(0, 0, WORLD_WIDTH, WORLD_HEIGHT)
     .fill({ color: 0x141414 })
-    .stroke({ width: 4, color: 0xff00ff })
   view.addChild(bounds)
+
+  return view
+}
+
+/**
+ * The magenta "this is not final art" outline + label, layered over
+ * `createWorldBoundsPlaceholder()`. The caller gates this to
+ * `import.meta.env.DEV` — it must never render in production
+ * (PERFORMANCE.md / PHASE 09 "Important development vs production").
+ */
+export function createDevWorldBoundsAnnotation(): Container {
+  const view = new Container({ label: 'DevWorldBoundsAnnotation' })
+
+  const outline = new Graphics()
+    .rect(0, 0, WORLD_WIDTH, WORLD_HEIGHT)
+    .stroke({ width: 4, color: 0xff00ff })
+  view.addChild(outline)
 
   const label = new Text({
     text: `DEVELOPMENT PLACEHOLDER — ${WORLD_WIDTH}×${WORLD_HEIGHT}\nNo approved room artwork yet`,

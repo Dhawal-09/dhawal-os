@@ -4,6 +4,7 @@ import type { WorldLayer } from './worldConstants'
 import {
   createCollisionDebugOverlay,
   createDebugGrid,
+  createDevWorldBoundsAnnotation,
   createWorldBoundsPlaceholder,
 } from './worldPlaceholders'
 
@@ -34,6 +35,7 @@ export class World extends Container {
 
     this.backgroundLayer.addChild(createWorldBoundsPlaceholder())
     if (import.meta.env.DEV) {
+      this.backgroundLayer.addChild(createDevWorldBoundsAnnotation())
       this.backgroundLayer.addChild(createDebugGrid())
     }
 
