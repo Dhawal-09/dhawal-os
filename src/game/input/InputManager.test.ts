@@ -15,6 +15,10 @@ function fakeKeyboard(
       justPressed.delete(code)
       return true
     },
+    reset: vi.fn(() => {
+      pressed.clear()
+      justPressed.clear()
+    }),
     destroy: vi.fn(),
   }
 }
@@ -89,6 +93,17 @@ describe('InputManager — interaction', () => {
     input.triggerTapInteract()
 
     expect(input.wasInteractPressed()).toBe(true)
+    expect(input.wasInteractPressed()).toBe(false)
+  })
+
+  it('reset() delegates to the keyboard source and clears a pending tap', () => {
+    const keyboard = fakeKeyboard([], ['KeyE'])
+    const input = new InputManager(keyboard)
+    input.triggerTapInteract()
+
+    input.reset()
+
+    expect(keyboard.reset).toHaveBeenCalledTimes(1)
     expect(input.wasInteractPressed()).toBe(false)
   })
 

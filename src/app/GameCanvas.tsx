@@ -24,8 +24,14 @@ export function GameCanvas() {
 
     // Minimal mobile "tap to interact" stub (INTERACTION_SPEC.md "[TAP]
     // INTERACT"; full touch UX lands in Phase 09) — scoped to the canvas
-    // host only, not the whole window.
-    const handlePointerDown = (): void => {
+    // host only, not the whole window. Restricted to actual touch/pen input:
+    // a desktop mouse click on the canvas is how a visitor gives it keyboard
+    // focus (see e2e), and since Phase 08 pauses world input while a panel
+    // is open, treating that click as an interact-tap could open a panel the
+    // visitor never asked for and then get "stuck" (world paused) until they
+    // close it.
+    const handlePointerDown = (event: PointerEvent): void => {
+      if (event.pointerType === 'mouse') return
       gameApp?.scene.triggerInteractTap()
     }
 

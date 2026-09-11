@@ -19,6 +19,23 @@ export type GameEvent =
 export type GameEventListener = (event: GameEvent) => void
 
 /**
+ * Every event that opens a React portfolio panel — shared by GameScene
+ * (to pause world input while a panel is open) and the React panel host
+ * (to know which events open something), so the set of "open" events is
+ * defined once instead of duplicated per consumer.
+ */
+export const OPEN_EVENTS: ReadonlySet<GameEvent> = new Set<GameEvent>([
+  'OPEN_PROJECTS',
+  'OPEN_EXPERIENCE',
+  'OPEN_SKILLS',
+  'OPEN_EDUCATION',
+  'OPEN_CERTIFICATES',
+  'OPEN_RESUME',
+  'OPEN_ABOUT',
+  'OPEN_CONTACT',
+])
+
+/**
  * The explicit event bridge between the Pixi game layer and the React UI
  * layer (INTERACTION_SPEC.md "Responsibility split"). Framework-agnostic —
  * it holds no application state and renders nothing; it only relays events.

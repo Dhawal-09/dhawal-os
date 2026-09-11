@@ -3,6 +3,8 @@ export interface KeyboardSource {
   isPressed(code: string): boolean
   /** Edge-triggered: true once per physical press, consumed on read. */
   wasJustPressed(code: string): boolean
+  /** Clears held/pending key state without removing listeners (see InputManager.reset). */
+  reset(): void
   destroy(): void
 }
 
@@ -44,8 +46,7 @@ export class KeyboardInput implements KeyboardSource {
 
   /** Clears held keys on focus loss, so alt-tabbing away doesn't leave the player walking forever. */
   private readonly handleBlur = (): void => {
-    this.pressed.clear()
-    this.justPressed.clear()
+    this.reset()
   }
 
   constructor() {
@@ -66,11 +67,16 @@ export class KeyboardInput implements KeyboardSource {
     return false
   }
 
+  /** Clears held/pending key state without removing listeners — used when the game resumes from a paused (portfolio-panel-open) state, so a key pressed while paused can't "carry over" as a fresh edge-trigger. */
+  reset(): void {
+    this.pressed.clear()
+    this.justPressed.clear()
+  }
+
   destroy(): void {
     window.removeEventListener('keydown', this.handleKeyDown)
     window.removeEventListener('keyup', this.handleKeyUp)
     window.removeEventListener('blur', this.handleBlur)
-    this.pressed.clear()
-    this.justPressed.clear()
+    this.reset()
   }
 }

@@ -88,7 +88,7 @@ describe('GameCanvas', () => {
     expect(errorSpy).toHaveBeenCalled()
   })
 
-  it("wires a pointerdown on the canvas host to the game scene's tap-to-interact stub", async () => {
+  it("wires a touch pointerdown on the canvas host to the game scene's tap-to-interact stub", async () => {
     const { container, unmount } = render(<GameCanvas />)
     const host = container.querySelector('.game-canvas-host')
 
@@ -96,13 +96,32 @@ describe('GameCanvas', () => {
       expect(container.querySelector('canvas')).not.toBeNull()
     })
 
-    host?.dispatchEvent(new Event('pointerdown', { bubbles: true }))
+    host?.dispatchEvent(
+      new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch' }),
+    )
     expect(triggerInteractTap).toHaveBeenCalledTimes(1)
 
     unmount()
 
     // No further calls once unmounted — the listener was removed, not left dangling.
-    host?.dispatchEvent(new Event('pointerdown', { bubbles: true }))
+    host?.dispatchEvent(
+      new PointerEvent('pointerdown', { bubbles: true, pointerType: 'touch' }),
+    )
     expect(triggerInteractTap).toHaveBeenCalledTimes(1)
+  })
+
+  it('ignores a mouse pointerdown on the canvas host (a desktop click there is for keyboard focus, not the mobile tap stub — see PHASE-08-PORTFOLIO-UI.md)', async () => {
+    const { container } = render(<GameCanvas />)
+    const host = container.querySelector('.game-canvas-host')
+
+    await waitFor(() => {
+      expect(container.querySelector('canvas')).not.toBeNull()
+    })
+
+    host?.dispatchEvent(
+      new PointerEvent('pointerdown', { bubbles: true, pointerType: 'mouse' }),
+    )
+
+    expect(triggerInteractTap).not.toHaveBeenCalled()
   })
 })

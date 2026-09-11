@@ -1,0 +1,29 @@
+.portfolio-nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px;
+  list-style: none;
+}
+
+.portfolio-nav button {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--pixel-border, #1e5fa8);
+  border-radius: 4px;
+  background: var(--panel-dark, #06142d);
+  color: var(--text, #eaf4ff);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.portfolio-nav button:hover {
+  background: var(--blue, #147bff);
+}
+
+.portfolio-nav button:focus-visible {
+  outline: 2px solid var(--cyan-bright, #57e8ff);
+  outline-offset: 2px;
+}

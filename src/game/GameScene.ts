@@ -1,5 +1,5 @@
 import { Container } from 'pixi.js'
-import { gameEventBridge } from './events/GameEventBridge'
+import { gameEventBridge, OPEN_EVENTS } from './events/GameEventBridge'
 import { InputManager } from './input/InputManager'
 import { Player } from './player/Player'
 import { Camera } from './world/Camera'
@@ -20,6 +20,16 @@ export class GameScene extends Container {
   private readonly inputManager: InputManager
   private readonly collisionSystem: CollisionSystem
   private readonly interactionSystem: InteractionSystem
+  private readonly unsubscribeFromBridge: () => void
+  /**
+   * True while a portfolio panel is open. World input is ignored while
+   * paused (ARCHITECTURE.md boundary: React owns the open panel, but
+   * pausing world input in reaction to that is itself game-state, so it
+   * belongs here rather than in the React layer). The Pixi ticker keeps
+   * running — GameApp/GameScene are never torn down for a panel open/close
+   * (INTERACTION_SPEC.md "without unnecessarily resetting world state").
+   */
+  private paused = false
 
   constructor() {
     super({ label: 'GameScene' })
@@ -47,6 +57,14 @@ export class GameScene extends Container {
       { x: WORLD_WIDTH / 2, y: WORLD_HEIGHT / 2 },
     )
     this.world.playerLayer.addChild(this.player)
+
+    this.unsubscribeFromBridge = gameEventBridge.subscribe((event) => {
+      if (OPEN_EVENTS.has(event)) {
+        this.setPaused(true)
+      } else if (event === 'CLOSE_OVERLAY' || event === 'RETURN_TO_WORLD') {
+        this.setPaused(false)
+      }
+    })
   }
 
   /** Refits the canonical world space to the given viewport dimensions. */
@@ -59,12 +77,26 @@ export class GameScene extends Container {
     this.inputManager.triggerTapInteract()
   }
 
+  /**
+   * Pauses/resumes world input in response to a portfolio panel opening or
+   * closing. Idempotent. Resuming resets pending input edge-state so a key
+   * pressed while a panel was open (e.g. `E`) cannot immediately re-trigger
+   * an interaction the instant the world resumes.
+   */
+  private setPaused(paused: boolean): void {
+    if (paused === this.paused) return
+    this.paused = paused
+    if (!paused) this.inputManager.reset()
+  }
+
   update(deltaMS: number): void {
+    if (this.paused) return
     this.player.update(deltaMS)
   }
 
-  /** Also tears down non-Pixi resources (the keyboard listener) that a plain `Container.destroy()` cascade can't reach. */
+  /** Also tears down non-Pixi resources (the keyboard listener, the event bridge subscription) that a plain `Container.destroy()` cascade can't reach. */
   override destroy(options?: Parameters<Container['destroy']>[0]): void {
+    this.unsubscribeFromBridge()
     this.inputManager.destroy()
     super.destroy(options)
   }
