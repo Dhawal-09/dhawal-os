@@ -82,6 +82,21 @@ describe('KeyboardInput', () => {
     expect(input.wasJustPressed('KeyE')).toBe(false)
   })
 
+  it('reset() clears held and pending key state without removing listeners', () => {
+    input = new KeyboardInput()
+    press('KeyW')
+    press('KeyE')
+
+    input.reset()
+
+    expect(input.isPressed('KeyW')).toBe(false)
+    expect(input.wasJustPressed('KeyE')).toBe(false)
+
+    // Listeners are still attached — a fresh press still registers.
+    press('KeyD')
+    expect(input.isPressed('KeyD')).toBe(true)
+  })
+
   it('clears the pending just-pressed flag on window blur', () => {
     input = new KeyboardInput()
 

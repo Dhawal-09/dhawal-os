@@ -80,6 +80,18 @@ export class InputManager implements MovementInput, InteractionInput {
     this.pendingTapInteract = true
   }
 
+  /**
+   * Clears all held/pending input state. Called by GameScene when the world
+   * resumes after a portfolio panel closes, so a key pressed while the panel
+   * was open (input intended for the panel, not the player) cannot
+   * "carry over" into an unwanted movement/interaction the instant the game
+   * resumes (PHASE-08-PORTFOLIO-UI.md / ACCESSIBILITY.md).
+   */
+  reset(): void {
+    this.pendingTapInteract = false
+    this.keyboard.reset()
+  }
+
   destroy(): void {
     this.keyboard.destroy()
   }

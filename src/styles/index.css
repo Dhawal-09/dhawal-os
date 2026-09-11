@@ -1,5 +1,22 @@
 :root {
   color-scheme: light dark;
+
+  /* DESIGN_SYSTEM.md "Design tokens" — starting values, tuned later against
+     the approved reference. Used by portfolio UI (Phase 08); the Pixi world
+     does not consume these. */
+  --bg-deep: #050b1a;
+  --bg-navy: #08152f;
+  --panel: #0b2144;
+  --panel-dark: #06142d;
+  --blue: #147bff;
+  --cyan: #27d7ff;
+  --cyan-bright: #57e8ff;
+  --purple: #4d28ac;
+  --green: #39f27a;
+  --text: #eaf4ff;
+  --text-muted: #91a9c8;
+  --warning: #ffd166;
+  --pixel-border: #1e5fa8;
 }
 
 * {

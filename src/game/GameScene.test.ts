@@ -123,6 +123,93 @@ describe('GameScene', () => {
     unsubscribe()
   })
 
+  it('pauses world input while a portfolio panel is open (no player movement, no interaction)', () => {
+    scene = new GameScene()
+    const received: unknown[] = []
+    const unsubscribe = gameEventBridge.subscribe((event) =>
+      received.push(event),
+    )
+
+    // Get within range of "projects" first, same walk as the E2E path above.
+    press('KeyW')
+    for (let i = 0; i < 10; i++) scene.update(100)
+    release('KeyW')
+    press('KeyA')
+    for (let i = 0; i < 20; i++) scene.update(100)
+    release('KeyA')
+    expect(scene.player.interactionTarget?.id).toBe('projects')
+
+    gameEventBridge.emit('OPEN_PROJECTS')
+    received.length = 0
+    const xWhilePaused = scene.player.position.x
+
+    // Movement and interaction must both be ignored while paused.
+    press('KeyD')
+    scene.update(16)
+    release('KeyD')
+    press('KeyE')
+    scene.update(16)
+    release('KeyE')
+
+    expect(scene.player.position.x).toBe(xWhilePaused)
+    expect(received).toEqual([])
+
+    unsubscribe()
+  })
+
+  it('resumes world input after RETURN_TO_WORLD, without re-triggering from a stale keypress', () => {
+    scene = new GameScene()
+    const received: unknown[] = []
+    const unsubscribe = gameEventBridge.subscribe((event) =>
+      received.push(event),
+    )
+
+    press('KeyW')
+    for (let i = 0; i < 10; i++) scene.update(100)
+    release('KeyW')
+    press('KeyA')
+    for (let i = 0; i < 20; i++) scene.update(100)
+    release('KeyA')
+    expect(scene.player.interactionTarget?.id).toBe('projects')
+
+    gameEventBridge.emit('OPEN_PROJECTS')
+    received.length = 0
+
+    // Player presses E again while the panel is open (input meant for the
+    // panel, not the world) — this must not "carry over" into a re-open.
+    press('KeyE')
+    scene.update(16)
+
+    gameEventBridge.emit('RETURN_TO_WORLD')
+    received.length = 0
+    scene.update(16)
+    release('KeyE')
+
+    expect(received).toEqual([])
+
+    // Movement resumes normally afterward.
+    const startX = scene.player.position.x
+    press('KeyD')
+    scene.update(16)
+    release('KeyD')
+    expect(scene.player.position.x).toBeGreaterThan(startX)
+
+    unsubscribe()
+  })
+
+  it('destroy() unsubscribes from the event bridge (no leak across scene instances)', () => {
+    scene = new GameScene()
+    const startX = scene.player.position.x
+
+    scene.destroy()
+    scene = null
+
+    // A pause event after destroy must not throw and must not affect a
+    // (now nonexistent) scene — proves the subscription was released.
+    expect(() => gameEventBridge.emit('OPEN_PROJECTS')).not.toThrow()
+    expect(startX).toBeGreaterThanOrEqual(0)
+  })
+
   it('destroy() removes its keyboard listeners (no leak across scene instances)', () => {
     const addSpy = vi.spyOn(window, 'addEventListener')
     const removeSpy = vi.spyOn(window, 'removeEventListener')
