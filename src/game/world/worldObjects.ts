@@ -49,6 +49,30 @@ function centeredColliderClippedToBottom(
 const INTERACTION_RADIUS = 70
 
 /**
+ * Converts a desired *rendered width* (world px) into the uniform scale
+ * that produces it — height follows automatically from the asset's own
+ * aspect ratio, so this only ever changes "how big", never the art's
+ * proportions (PHASE-10A "Asset scale" forbids distortion). Use this (or
+ * `scaleForHeight`) instead of hand-picking a raw scale multiplier: every
+ * `*_SCALE` constant below is authored as a target pixel size, so each
+ * asset's rendered size is a single, independently-editable number.
+ */
+function scaleForWidth(
+  naturalSize: { readonly width: number },
+  targetWidth: number,
+): number {
+  return targetWidth / naturalSize.width
+}
+
+/** Same idea as `scaleForWidth`, but pick the target by height instead — for assets where height is the dimension that actually matters (e.g. a door's height against the wall). */
+function scaleForHeight(
+  naturalSize: { readonly height: number },
+  targetHeight: number,
+): number {
+  return targetHeight / naturalSize.height
+}
+
+/**
  * PHASE 10B.1 — room-boundary (perimeter wall) collision. Floor.png's
  * visible architectural walls sit *inset* from the canonical 1920×1440
  * canvas edge (a dark margin surrounds the room art itself); before this,
@@ -78,8 +102,8 @@ const INTERACTION_RADIUS = 70
  */
 const TOP_WALL_INNER_Y = 310
 const BOTTOM_WALL_INNER_Y = 1200
-const LEFT_WALL_INNER_X = 250
-const RIGHT_WALL_INNER_X = 1650
+const LEFT_WALL_INNER_X = 140
+const RIGHT_WALL_INNER_X = 1850
 
 /**
  * The `door` WorldObject (below) is decorative/physical-only — no
@@ -126,8 +150,17 @@ const DESK_NATURAL_SIZE = {
   resumeDesk: { width: 986, height: 828 }, // desk_resume_original.png
 } as const
 
-/** Uniform render scale for all furniture — never independent x/y (PHASE-10A "Asset scale" forbids distortion). */
-const FURNITURE_SCALE = 0.28
+/**
+ * Per-desk render scale, each authored as that desk's target rendered
+ * *width* (world px) via `scaleForWidth` — never independent x/y (PHASE-10A
+ * "Asset scale" forbids distortion), and never shared: resizing one desk
+ * can no longer move the other two. The numbers below (358.12 / 257.6 /
+ * 276.08) reproduce the previous shared `FURNITURE_SCALE = 0.28` exactly —
+ * change one to resize just that desk.
+ */
+const MAIN_WORK_DESK_SCALE = scaleForWidth(DESK_NATURAL_SIZE.mainWorkDesk, 358.12)
+const EDUCATION_DESK_SCALE = scaleForWidth(DESK_NATURAL_SIZE.educationDesk, 257.6)
+const RESUME_DESK_SCALE = scaleForWidth(DESK_NATURAL_SIZE.resumeDesk, 276.08)
 
 /**
  * A desk's collision footprint is the physical desk/legs area near the
@@ -160,27 +193,22 @@ function deskCollider(
 const DESK_FOOTPRINT = { widthFraction: 0.7, heightFraction: 0.32 }
 
 /**
- * Uniform render scale for the door — its approved PNG (assets/world/structural/door.png)
- * is already only 141×185, close to the size it should occupy in-world, so
- * it renders at native pixel size (no upscaling, no downscaling).
- */
-const DOOR_SCALE = 1
-
-/**
  * Natural pixel dimensions of the approved door PNG, read directly from the
  * source file — never assumed (same discipline as `DESK_NATURAL_SIZE`).
  */
 const DOOR_NATURAL_SIZE = { width: 141, height: 185 } // door.png
 
+/**
+ * Door render scale, authored as a target rendered *height* (world px) via
+ * `scaleForHeight` — a door's height against the wall is the dimension that
+ * actually matters; width follows automatically from the PNG's own aspect
+ * ratio. 185 reproduces the previous `DOOR_SCALE = 1` (native size) exactly
+ * — change it to resize the door.
+ */
+const DOOR_SCALE = scaleForHeight(DOOR_NATURAL_SIZE, 185)
+
 /** The door's art fills almost its entire canvas (verified: opaque pixels cover ~93% of it) — only a thin anti-aliased edge is trimmed from the footprint. */
 const DOOR_FOOTPRINT = { widthFraction: 0.9, heightFraction: 0.95 }
-
-/**
- * Uniform render scale for the bed. Chosen so it reads at roughly the same
- * in-room scale as the desks while still fitting the top-left corner
- * without overlapping `main-work-desk` (PHASE 09.1 "Bed collision").
- */
-const BED_SCALE = 0.16
 
 /**
  * Natural pixel dimensions of the approved bed PNG
@@ -195,8 +223,17 @@ const BED_SCALE = 0.16
  * collision": collision must cover the physical bed footprint, not the
  * transparent (or soft-glow) space around it.
  */
-const BED_NATURAL_SIZE = { width: 1536, height: 1024 } // Bed.png
+const BED_NATURAL_SIZE = { width: 1436, height: 1024 } // Bed.png
 const BED_CONTENT_BBOX = { minX: 377, minY: 113, maxX: 1162, maxY: 901 }
+
+/**
+ * Bed render scale, authored as a target rendered *width* (world px) via
+ * `scaleForWidth` — chosen so it reads at roughly the same in-room scale as
+ * the desks while still fitting the top-left corner without overlapping
+ * `main-work-desk` (PHASE 09.1 "Bed collision"). 645.12 reproduces the
+ * previous `BED_SCALE = 0.42` exactly — change it to resize the bed.
+ */
+const BED_SCALE = scaleForWidth(BED_NATURAL_SIZE, 645.12)
 
 /**
  * A collision box derived from an asset's *actual visible content*, not its
@@ -257,6 +294,117 @@ function bedPositionForVisibleFloorPoint(visible: { x: number; y: number }): {
 }
 
 /**
+ * KITCHEN FURNITURE PLACEMENT PASS — visual only, no collision (see this
+ * phase's brief: "Do NOT solve walkability/collision in this pass"). Every
+ * kitchen WorldObject below therefore has no `collision` field, the same
+ * documented way `aboutMe` opts out of being a physical obstacle.
+ *
+ * The approved Kitchen PNGs (assets/world/Kitchen/*.png) are AI-exported on
+ * an oversized, mostly-transparent canvas with the actual artwork centered
+ * inside it — the same padding problem `BED_CONTENT_BBOX` solves for the
+ * bed. Measured directly from each file's pixel data (never guessed), the
+ * bounding boxes below record where each asset's real content sits inside
+ * its canvas. Unlike the bed, these assets are also horizontally centered
+ * within their canvas (verified per-file), so `kitchenPositionForFloorPoint`
+ * only needs to correct the vertical (padding-below-content) offset — same
+ * idea as `bedPositionForVisibleFloorPoint`, generalized to any asset.
+ */
+function kitchenPositionForFloorPoint(
+  visible: { x: number; y: number },
+  naturalSize: { readonly width: number; readonly height: number },
+  contentBBox: { readonly maxY: number },
+  scale: number,
+): { x: number; y: number } {
+  const paddingBelowContent = naturalSize.height - contentBBox.maxY
+  return { x: visible.x, y: visible.y + paddingBelowContent * scale }
+}
+
+const KITCHEN_ASSET_NATURAL_SIZE = {
+  mainCounter: { width: 2400, height: 1792 }, // MainTable.png
+  sideCounter: { width: 2200, height: 1792 }, // Main table2.png
+  fridge: { width: 2400, height: 1792 }, // Fridge1.png (developer magnets already on the door)
+  cooktop: { width: 2400, height: 1792 }, // Stove.png
+  coffeeMachine: { width: 1024, height: 765 }, // coffee-Makaer.png
+  hangingPans: { width: 1200, height: 896 }, // Hanging Pans.png
+  wallShelf: { width: 1200, height: 896 }, // Jars.png
+  diningSet: { width: 2400, height: 1792 }, // Dining.png (table + 4 chairs, one asset)
+  light: { width: 1200, height: 896 }, // Right.png
+  propHolder: { width: 142, height: 241 }, // Utensil/holder.png
+  propSalt: { width: 105, height: 184 }, // Utensil/salt.png
+  propBowl: { width: 117, height: 117 }, // Utensil/bowl.png
+  propPlate: { width: 138, height: 113 }, // Utensil/plate.png
+} as const
+
+/** Measured opaque-pixel bounding box per asset — see the block comment above `kitchenPositionForFloorPoint`. */
+const KITCHEN_ASSET_CONTENT_BBOX = {
+  mainCounter: { minX: 867, minY: 520, maxX: 1932, maxY: 1178 },
+  sideCounter: { minX: 233, minY: 316, maxX: 966, maxY: 589 },
+  fridge: { minX: 936, minY: 294, maxX: 1463, maxY: 1440 },
+  cooktop: { minX: 778, minY: 563, maxX: 1621, maxY: 1256 },
+  coffeeMachine: { minX: 399, minY: 245, maxX: 624, maxY: 518 },
+  hangingPans: { minX: 134, minY: 139, maxX: 1065, maxY: 635 },
+  wallShelf: { minX: 178, minY: 279, maxX: 1021, maxY: 597 },
+  diningSet: { minX: 298, minY: 144, maxX: 2101, maxY: 1571 },
+  light: { minX: 499, minY: 274, maxX: 712, maxY: 549 },
+  propHolder: { minX: 24, minY: 30, maxX: 119, maxY: 210 },
+  propSalt: { minX: 23, minY: 25, maxX: 76, maxY: 145 },
+  propBowl: { minX: 6, minY: 22, maxX: 101, maxY: 94 },
+  propPlate: { minX: 7, minY: 17, maxX: 131, maxY: 94 },
+} as const
+
+/**
+ * Render scale per kitchen asset, each authored as that asset's target
+ * rendered *width* (world px) via `scaleForWidth` — retuned to match the
+ * reference layout ("kitchen layout.png"): the fridge sits at the *left*
+ * end of the back-wall run (right after the main work desk), so the whole
+ * run — fridge, main counter, side counter — has to fit in the narrower
+ * strip between the desk and the right wall, smaller than the previous
+ * pass's more spread-out arrangement.
+ *
+ * Every asset gets its own independent number — including the four
+ * counter props, split out from a single shared `prop` ratio so each one
+ * (holder/salt/bowl/plate) can be resized without moving the others. Every
+ * value below reproduces the previous scale exactly; change one number to
+ * resize just that asset.
+ */
+const KITCHEN_SCALE = {
+  mainCounter: scaleForWidth(KITCHEN_ASSET_NATURAL_SIZE.mainCounter, 408),
+  sideCounter: scaleForWidth(KITCHEN_ASSET_NATURAL_SIZE.sideCounter, 330),
+  fridge: scaleForWidth(KITCHEN_ASSET_NATURAL_SIZE.fridge, 360),
+  cooktop: scaleForWidth(KITCHEN_ASSET_NATURAL_SIZE.cooktop, 312),
+  coffeeMachine: scaleForWidth(KITCHEN_ASSET_NATURAL_SIZE.coffeeMachine, 245.76),
+  hangingPans: scaleForWidth(KITCHEN_ASSET_NATURAL_SIZE.hangingPans, 240),
+  wallShelf: scaleForWidth(KITCHEN_ASSET_NATURAL_SIZE.wallShelf, 216),
+  diningSet: scaleForWidth(KITCHEN_ASSET_NATURAL_SIZE.diningSet, 432),
+  light: scaleForWidth(KITCHEN_ASSET_NATURAL_SIZE.light, 192),
+  propHolder: scaleForWidth(KITCHEN_ASSET_NATURAL_SIZE.propHolder, 31.24),
+  propSalt: scaleForWidth(KITCHEN_ASSET_NATURAL_SIZE.propSalt, 23.1),
+  propBowl: scaleForWidth(KITCHEN_ASSET_NATURAL_SIZE.propBowl, 25.74),
+  propPlate: scaleForWidth(KITCHEN_ASSET_NATURAL_SIZE.propPlate, 30.36),
+} as const
+
+/** Builds a kitchen WorldObject's `position` from its intended visible floor/counter point — see `kitchenPositionForFloorPoint`. */
+function kitchenObject(
+  id: string,
+  asset: string,
+  label: string,
+  visible: { x: number; y: number },
+  naturalSize: { readonly width: number; readonly height: number },
+  contentBBox: { readonly maxY: number },
+  scale: number,
+): WorldObject {
+  return {
+    id,
+    asset,
+    label,
+    position: kitchenPositionForFloorPoint(visible, naturalSize, contentBBox, scale),
+    layer: 'object',
+    scale,
+    // No `collision` — visual placement pass only.
+  }
+}
+
+/**
  * Room composition for the PHASE 10B 1920×1440 expansion. A spatial guide,
  * not a final furniture plan (see PHASE 10B "6. Room composition") — loose
  * thirds, each with real breathing room between objects:
@@ -294,11 +442,11 @@ export const worldObjects: WorldObject[] = [
     label: 'MAIN WORK DESK',
     position: { x: 1300, y: 300 }, // WORLD POSITION — SAFE TO TUNE
     layer: 'object',
-    scale: FURNITURE_SCALE,
+    scale: MAIN_WORK_DESK_SCALE,
     collision: deskCollider(
       { x: 1300, y: 300 },
       DESK_NATURAL_SIZE.mainWorkDesk,
-      FURNITURE_SCALE,
+      MAIN_WORK_DESK_SCALE,
       DESK_FOOTPRINT,
     ),
     // No `interaction` — the separate "projects" entry below owns OPEN_PROJECTS.
@@ -379,11 +527,11 @@ export const worldObjects: WorldObject[] = [
     label: 'EDUCATION DESK',
     position: { x: 300, y: 1080 }, // WORLD POSITION — SAFE TO TUNE
     layer: 'object',
-    scale: FURNITURE_SCALE,
+    scale: EDUCATION_DESK_SCALE,
     collision: deskCollider(
       { x: 300, y: 1080 },
       DESK_NATURAL_SIZE.educationDesk,
-      FURNITURE_SCALE,
+      EDUCATION_DESK_SCALE,
       DESK_FOOTPRINT,
     ),
     // No `interaction` — the separate "education" entry below owns OPEN_EDUCATION.
@@ -447,11 +595,11 @@ export const worldObjects: WorldObject[] = [
     label: 'RESUME DESK',
     position: { x: 1480, y: 1080 }, // WORLD POSITION — SAFE TO TUNE
     layer: 'object',
-    scale: FURNITURE_SCALE,
+    scale: RESUME_DESK_SCALE,
     collision: deskCollider(
       { x: 1480, y: 1080 },
       DESK_NATURAL_SIZE.resumeDesk,
-      FURNITURE_SCALE,
+      RESUME_DESK_SCALE,
       DESK_FOOTPRINT,
     ),
     // No `interaction` — the separate "resume" entry below owns OPEN_RESUME.
@@ -471,6 +619,138 @@ export const worldObjects: WorldObject[] = [
     ),
     interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_RESUME' },
   },
+
+  // -------------------------------------------------------------------
+  // KITCHEN — the tiled-floor nook right of the main work desk
+  // (Background2.png). Arrangement matches the approved reference
+  // ("kitchen layout.png", KITCHEN LAYOUT ARRANGEMENT phase): fridge at
+  // the *left* end of the back-wall run (immediately right of the desk),
+  // then the main counter (sink + cooktop) and side counter continuing
+  // right toward the wall, with the shelf/rack mounted above and the
+  // dining set in the open tile floor to the right of the SKILLS marker.
+  // Visual placement pass only (see the block comment above
+  // `kitchenPositionForFloorPoint`): no collision, no interaction.
+  // Draw order below is deliberately back-to-front — counters first, then
+  // whatever sits on/above them — since World.ts draws array order, not a
+  // Y-sort (PHASE-10A precedent: every object here is hand-ordered).
+  // -------------------------------------------------------------------
+  kitchenObject(
+    'kitchen-fridge',
+    'kitchen.fridge',
+    'REFRIGERATOR',
+    { x: 140, y: 280 }, // WORLD POSITION — SAFE TO TUNE — leftmost, right after the main work desk
+    KITCHEN_ASSET_NATURAL_SIZE.fridge,
+    KITCHEN_ASSET_CONTENT_BBOX.fridge,
+    KITCHEN_SCALE.fridge,
+  ),
+  kitchenObject(
+    'kitchen-main-counter',
+    'kitchen.mainCounter',
+    'KITCHEN COUNTER',
+    { x: 1645, y: 870 }, // WORLD POSITION — SAFE TO TUNE
+    KITCHEN_ASSET_NATURAL_SIZE.mainCounter,
+    KITCHEN_ASSET_CONTENT_BBOX.mainCounter,
+    KITCHEN_SCALE.mainCounter,
+  ),
+  kitchenObject(
+    'kitchen-side-counter',
+    'kitchen.sideCounter',
+    'SIDE COUNTER',
+    { x: 1800, y: 278 }, // WORLD POSITION — SAFE TO TUNE — connects/aligns with the main counter's right edge
+    KITCHEN_ASSET_NATURAL_SIZE.sideCounter,
+    KITCHEN_ASSET_CONTENT_BBOX.sideCounter,
+    KITCHEN_SCALE.sideCounter,
+  ),
+  kitchenObject(
+    'kitchen-wall-shelf',
+    'kitchen.wallShelf',
+    'WALL SHELF',
+    { x: 1500, y: 95 }, // WORLD POSITION — SAFE TO TUNE — above the fridge/counter seam, per reference
+    KITCHEN_ASSET_NATURAL_SIZE.wallShelf,
+    KITCHEN_ASSET_CONTENT_BBOX.wallShelf,
+    KITCHEN_SCALE.wallShelf,
+  ),
+  kitchenObject(
+    'kitchen-hanging-pans',
+    'kitchen.hangingPans',
+    'HANGING PANS',
+    { x: 1640, y: 120 }, // WORLD POSITION — SAFE TO TUNE — above the cooktop, per reference
+    KITCHEN_ASSET_NATURAL_SIZE.hangingPans,
+    KITCHEN_ASSET_CONTENT_BBOX.hangingPans,
+    KITCHEN_SCALE.hangingPans,
+  ),
+  kitchenObject(
+    'kitchen-light',
+    'kitchen.light',
+    'KITCHEN LIGHT',
+    { x: 1770, y: 110 }, // WORLD POSITION — SAFE TO TUNE — near the coffee-machine end of the counter, per reference
+    KITCHEN_ASSET_NATURAL_SIZE.light,
+    KITCHEN_ASSET_CONTENT_BBOX.light,
+    KITCHEN_SCALE.light,
+  ),
+  kitchenObject(
+    'kitchen-cooktop',
+    'kitchen.cooktop',
+    'COOKTOP',
+    { x: 1600, y: 178 }, // WORLD POSITION — SAFE TO TUNE — sits on kitchen-main-counter
+    KITCHEN_ASSET_NATURAL_SIZE.cooktop,
+    KITCHEN_ASSET_CONTENT_BBOX.cooktop,
+    KITCHEN_SCALE.cooktop,
+  ),
+  kitchenObject(
+    'kitchen-coffee-machine',
+    'kitchen.coffeeMachine',
+    'COFFEE MACHINE',
+    { x: 1715, y: 225 }, // WORLD POSITION — SAFE TO TUNE — sits at the counter's right/end, per reference
+    KITCHEN_ASSET_NATURAL_SIZE.coffeeMachine,
+    KITCHEN_ASSET_CONTENT_BBOX.coffeeMachine,
+    KITCHEN_SCALE.coffeeMachine,
+  ),
+  kitchenObject(
+    'kitchen-counter-prop-holder',
+    'kitchen.propHolder',
+    'UTENSIL HOLDER',
+    { x: 1560, y: 222 }, // WORLD POSITION — SAFE TO TUNE — sits on kitchen-main-counter, left of the cooktop, per reference
+    KITCHEN_ASSET_NATURAL_SIZE.propHolder,
+    KITCHEN_ASSET_CONTENT_BBOX.propHolder,
+    KITCHEN_SCALE.propHolder,
+  ),
+  kitchenObject(
+    'kitchen-counter-prop-salt',
+    'kitchen.propSalt',
+    'SALT SHAKER',
+    { x: 1580, y: 220 }, // WORLD POSITION — SAFE TO TUNE — grouped with the utensil holder
+    KITCHEN_ASSET_NATURAL_SIZE.propSalt,
+    KITCHEN_ASSET_CONTENT_BBOX.propSalt,
+    KITCHEN_SCALE.propSalt,
+  ),
+  kitchenObject(
+    'kitchen-counter-prop-bowl',
+    'kitchen.propBowl',
+    'BOWL',
+    { x: 1800, y: 252 }, // WORLD POSITION — SAFE TO TUNE — grouped on the side counter
+    KITCHEN_ASSET_NATURAL_SIZE.propBowl,
+    KITCHEN_ASSET_CONTENT_BBOX.propBowl,
+    KITCHEN_SCALE.propBowl,
+  ),
+  kitchenObject(
+    'kitchen-counter-prop-plate',
+    'kitchen.propPlate',
+    'PLATE',
+    { x: 1820, y: 251 }, // WORLD POSITION — SAFE TO TUNE — grouped on the side counter
+    KITCHEN_ASSET_NATURAL_SIZE.propPlate,
+    KITCHEN_ASSET_CONTENT_BBOX.propPlate,
+    KITCHEN_SCALE.propPlate,
+  ),
+  kitchenObject(
+    'kitchen-dining-set',
+    'kitchen.diningSet',
+    'DINING TABLE',
+    { x: 1680, y: 600 }, // WORLD POSITION — SAFE TO TUNE — open floor, right of the SKILLS marker, per reference
+    KITCHEN_ASSET_NATURAL_SIZE.diningSet,
+    KITCHEN_ASSET_CONTENT_BBOX.diningSet,
+    KITCHEN_SCALE.diningSet,
+  ),
 ]
 
 /**
