@@ -32,6 +32,19 @@ export type InteractionAction =
   | 'OPEN_CONTACT'
 
 /**
+ * Independently configurable per-asset visual transform. `width`/`height`
+ * are fully independent of one another (see `resolveAssetSize`) — setting
+ * one never implicitly changes the other, and neither is tied to
+ * `collision`, which is always its own explicit data.
+ */
+export interface AssetTransform {
+  width?: number
+  height?: number
+  rotation?: number
+  anchor?: { x: number; y: number }
+}
+
+/**
  * Data-driven world-object configuration (see WORLD_SPEC.md "World object
  * model"). Adding a new object must only require a new entry here plus an
  * asset — never a change to a core system.
@@ -48,17 +61,44 @@ export interface WorldObject {
   }
   layer: WorldLayer
   /**
-   * Uniform render scale applied to the real asset once it loads (never
-   * independent x/y — PHASE-10A "Asset scale" forbids distortion).
+   * Visual size/rotation/anchor applied to the real asset once it loads.
    * Ignored by the dev placeholder, which always draws at PLACEHOLDER_SIZE.
-   * Defaults to 1 (native pixel size) when omitted.
+   * Omitted (or an omitted field within it) resolves via `resolveAssetSize`
+   * — never affects `collision`, which is configured independently.
    */
-  scale?: number
+  transform?: AssetTransform
   collision?: Collider
   interaction?: {
     radius: number
     action: InteractionAction
   }
+}
+
+/**
+ * The single source of truth for turning a texture's natural pixel size plus
+ * an optional `AssetTransform` into final render dimensions. Every sprite in
+ * the world goes through this — never a duplicated width/height calculation
+ * elsewhere.
+ *
+ * - width AND height given: used exactly, independently (may distort).
+ * - only width given: height follows the texture's natural aspect ratio.
+ * - only height given: width follows the texture's natural aspect ratio.
+ * - neither given: the texture's natural pixel size.
+ */
+export function resolveAssetSize(
+  natural: { readonly width: number; readonly height: number },
+  transform?: AssetTransform,
+): { width: number; height: number } {
+  const { width, height } = transform ?? {}
+
+  if (width != null && height != null) return { width, height }
+  if (width != null) {
+    return { width, height: width * (natural.height / natural.width) }
+  }
+  if (height != null) {
+    return { width: height * (natural.width / natural.height), height }
+  }
+  return { width: natural.width, height: natural.height }
 }
 
 /** Uniform dev-only placeholder footprint. Real assets size themselves from their own texture. */
@@ -137,17 +177,29 @@ export class ManagedAssetSprite extends Sprite {
 
 /**
  * Builds the real furniture Sprite from a loaded texture. Anchored at
- * (0.5, 1) — bottom-center — so `object.position` always represents the
- * point where the object meets the floor (PHASE-10A "Anchor convention"),
- * the same point `createWorldObjectPlaceholder` centers its box on. `scale`
- * is applied uniformly to both axes — never independent x/y — so the art
- * never distorts.
+ * (0.5, 1) — bottom-center — by default, so `object.position` represents
+ * the point where the object meets the floor (PHASE-10A "Anchor
+ * convention"), the same point `createWorldObjectPlaceholder` centers its
+ * box on; `transform.anchor` can override this per object. Width and height
+ * resolve independently via `resolveAssetSize` — never a shared/global
+ * scale.
  */
-export function createDeskSprite(texture: Texture, scale = 1): Sprite {
+export function createDeskSprite(
+  texture: Texture,
+  transform?: AssetTransform,
+): Sprite {
   const sprite = new ManagedAssetSprite(texture)
   sprite.label = 'DeskSprite'
-  sprite.anchor.set(0.5, 1)
-  sprite.scale.set(scale)
+
+  const anchor = transform?.anchor ?? { x: 0.5, y: 1 }
+  sprite.anchor.set(anchor.x, anchor.y)
+
+  const size = resolveAssetSize(texture, transform)
+  sprite.width = size.width
+  sprite.height = size.height
+
+  if (transform?.rotation != null) sprite.rotation = transform.rotation
+
   return sprite
 }
 
@@ -162,13 +214,13 @@ export function createDeskSprite(texture: Texture, scale = 1): Sprite {
 async function upgradeToSprite(
   view: Container,
   url: string,
-  scale: number,
+  transform?: AssetTransform,
 ): Promise<void> {
   try {
     const texture = await Assets.load<Texture>(url)
     if (view.destroyed) return
     for (const child of view.removeChildren()) child.destroy()
-    view.addChild(createDeskSprite(texture, scale))
+    view.addChild(createDeskSprite(texture, transform))
   } catch {
     // Real asset failed to load — leave the dev placeholder in place rather
     // than silently swallowing the problem into a blank/missing object.
@@ -188,7 +240,7 @@ export function createWorldObjectView(object: WorldObject): Container {
 
   const assetUrl = getFurnitureAssetUrl(object.asset)
   if (assetUrl) {
-    void upgradeToSprite(view, assetUrl, object.scale ?? 1)
+    void upgradeToSprite(view, assetUrl, object.transform)
   }
 
   return view

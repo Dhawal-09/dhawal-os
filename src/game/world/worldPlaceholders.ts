@@ -143,8 +143,10 @@ export function createDebugGrid(): Container {
  * Dev-only outline of every configured blocking collider — drawn at the
  * collider's *actual* rect, independent of whatever the object's visual
  * placeholder looks like (COLLISION_SPEC.md: collision is independent from
- * rendering). The caller gates this to `import.meta.env.DEV`; it must never
- * render in production (PERFORMANCE.md).
+ * rendering) — plus, for each WorldObject, its id/position/collision size
+ * and (where configured) its interaction radius. The caller gates this to
+ * `import.meta.env.DEV`; it must never render in production
+ * (PERFORMANCE.md).
  */
 export function createCollisionDebugOverlay(
   objects: readonly WorldObject[],
@@ -152,17 +154,48 @@ export function createCollisionDebugOverlay(
 ): Container {
   const view = new Container({ label: 'CollisionDebugOverlay' })
 
-  const allColliders: Collider[] = [...extraColliders]
-  for (const object of objects) {
-    if (object.collision) allColliders.push(object.collision)
+  for (const collider of extraColliders) {
+    view.addChild(createColliderOutline(collider))
   }
 
-  for (const collider of allColliders) {
-    const outline = new Graphics()
-      .rect(collider.x, collider.y, collider.width, collider.height)
-      .stroke({ width: 2, color: 0xff2d2d })
-    view.addChild(outline)
+  for (const object of objects) {
+    if (!object.collision && !object.interaction) continue
+    view.addChild(createObjectDebugEntry(object))
   }
 
   return view
+}
+
+function createColliderOutline(collider: Collider): Graphics {
+  return new Graphics()
+    .rect(collider.x, collider.y, collider.width, collider.height)
+    .stroke({ width: 2, color: 0xff2d2d })
+}
+
+/** One WorldObject's full debug picture, grouped into a single child so overlay.children stays one-entry-per-object regardless of how many debug primitives it draws. */
+function createObjectDebugEntry(object: WorldObject): Container {
+  const entry = new Container({ label: `ColliderDebug:${object.id}` })
+
+  if (object.collision) {
+    entry.addChild(createColliderOutline(object.collision))
+
+    const visualSize = object.transform
+      ? `${object.transform.width ?? 'auto'}×${object.transform.height ?? 'auto'}`
+      : 'native'
+    const label = new Text({
+      text: `${object.id}\npos: ${Math.round(object.position.x)}, ${Math.round(object.position.y)}\nvisual: ${visualSize}\ncollision: ${Math.round(object.collision.width)}×${Math.round(object.collision.height)}`,
+      style: { fontFamily: 'monospace', fontSize: 10, fill: 0xff2d2d },
+    })
+    label.position.set(object.collision.x + 2, object.collision.y + 2)
+    entry.addChild(label)
+  }
+
+  if (object.interaction) {
+    const circle = new Graphics()
+      .circle(object.position.x, object.position.y, object.interaction.radius)
+      .stroke({ width: 1, color: 0x00e5ff, alpha: 0.6 })
+    entry.addChild(circle)
+  }
+
+  return entry
 }

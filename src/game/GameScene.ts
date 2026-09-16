@@ -7,7 +7,7 @@ import { CollisionSystem } from './world/CollisionSystem'
 import { InteractionSystem } from './world/InteractionSystem'
 import { World } from './world/World'
 import { WORLD_HEIGHT, WORLD_WIDTH } from './world/worldConstants'
-import { ROOM_BOUNDARY_COLLIDERS, worldObjects } from './world/worldObjects'
+import { EXTRA_COLLIDERS, worldObjects } from './world/worldObjects'
 
 /**
  * Root scene container. Owns the World, its static Camera fit, collision,
@@ -35,7 +35,7 @@ export class GameScene extends Container {
   constructor() {
     super({ label: 'GameScene' })
 
-    this.world = new World(worldObjects, ROOM_BOUNDARY_COLLIDERS)
+    this.world = new World(worldObjects, EXTRA_COLLIDERS)
     this.addChild(this.world)
 
     this.camera = new Camera(this.world, WORLD_WIDTH, WORLD_HEIGHT)
@@ -44,7 +44,7 @@ export class GameScene extends Container {
       worldObjects,
       WORLD_WIDTH,
       WORLD_HEIGHT,
-      ROOM_BOUNDARY_COLLIDERS,
+      EXTRA_COLLIDERS,
     )
     this.interactionSystem = InteractionSystem.fromWorldObjects(worldObjects)
 
