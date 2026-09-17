@@ -204,12 +204,27 @@ export const entranceObjects: WorldObject[] = [
   // floor gap between CERTIFICATES and the door (see ENTRANCE_TARGET_WIDTH's
   // comment on `mat`).
   entranceObject('entrance-mat', 'mat', 'DOORMAT', { x: 960, y: 1188 }), // WORLD POSITION — SAFE TO TUNE
-  // Potted plant, balancing the room on the open-floor side opposite the
-  // sitting nook — clear of the education-desk cluster (collision ends
-  // x374) and the CERTIFICATES marker (collision starts x912) on either
-  // side, and of the Experience/living-room bookshelf above it (y880).
+  // Potted plants — one approved asset (plant-Photoroom.png), instantiated
+  // four times as independent WorldObjects, same "one asset, many
+  // instances, only position differs" pattern as the two lounge chairs
+  // above. These four starting spots are placeholders on open floor only
+  // (spread out, clear of every other room's furniture/markers) — meant to
+  // be dragged/retuned into their final positions later; only their count
+  // and shared asset matter right now, not their exact placement.
   entranceObject('entrance-plant', 'plant', 'POTTED PLANT', {
     x: 1840,
     y: 990,
+  }), // WORLD POSITION — SAFE TO TUNE
+  entranceObject('entrance-plant-2', 'plant', 'POTTED PLANT', {
+    x: 500,
+    y: 950,
+  }), // WORLD POSITION — SAFE TO TUNE
+  entranceObject('entrance-plant-3', 'plant', 'POTTED PLANT', {
+    x: 1300,
+    y: 950,
+  }), // WORLD POSITION — SAFE TO TUNE
+  entranceObject('entrance-plant-4', 'plant', 'POTTED PLANT', {
+    x: 1700,
+    y: 820,
   }), // WORLD POSITION — SAFE TO TUNE
 ]

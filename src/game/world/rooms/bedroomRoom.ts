@@ -23,7 +23,7 @@ const BED_NATURAL_SIZE = { width: 765, height: 1024 } // Double_bed.png
 const BED_CONTENT_BBOX = { minX: 113, minY: 102, maxX: 651, maxY: 904 }
 
 /** Target rendered width (world px) — chosen so the bed's footprint reads at roughly the same in-room scale as the desks while fitting the top-left corner. Change this single number to resize just the bed. */
-const BED_TARGET_WIDTH = 300
+const BED_TARGET_WIDTH = 240
 const BED_SCALE = scaleForWidth(BED_NATURAL_SIZE, BED_TARGET_WIDTH)
 
 /**
@@ -46,7 +46,7 @@ function bedPositionForVisibleFloorPoint(visible: { x: number; y: number }): {
   }
 }
 
-const bedPosition = bedPositionForVisibleFloorPoint({ x: 230, y: 490 }) // WORLD POSITION — SAFE TO TUNE (the visible floor point, not the padded canvas anchor)
+const bedPosition = bedPositionForVisibleFloorPoint({ x: 230, y: 450 }) // WORLD POSITION — SAFE TO TUNE (the visible floor point, not the padded canvas anchor)
 
 const bedObject: WorldObject = {
   id: 'bed',
