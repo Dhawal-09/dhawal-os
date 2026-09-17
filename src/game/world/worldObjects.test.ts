@@ -42,13 +42,26 @@ describe('worldObjects', () => {
   })
 
   it('every configured collider is horizontally centered on its object', () => {
-    // Excludes 'bed': its collider comes from `contentAlignedCollider`,
-    // derived from the *measured* (real pixel-data) content bbox rather
-    // than a symmetric footprint fraction — the art itself isn't perfectly
-    // centered in its canvas, so its true center is a fraction of a world
-    // unit off from `position.x`. Covered separately below.
+    // Excludes 'bed' and the Entrance sitting-nook furniture: their
+    // colliders come from `contentAlignedCollider`, derived from the
+    // *measured* (real pixel-data) content bbox rather than a symmetric
+    // footprint fraction — the art itself isn't perfectly centered in its
+    // canvas, so its true center is a fraction of a world unit off from
+    // `position.x`. Bed is covered separately below; the Entrance items'
+    // (sub-pixel) tolerance is asserted inline in the Entrance suite instead.
+    const contentAlignedExclusions = new Set([
+      'bed',
+      'entrance-chair-left',
+      'entrance-chair-right',
+      'entrance-side-table',
+      'entrance-painting',
+      'entrance-hook',
+      'entrance-mat',
+      'entrance-plant',
+    ])
     for (const object of worldObjects) {
-      if (!object.collision || object.id === 'bed') continue
+      if (!object.collision || contentAlignedExclusions.has(object.id))
+        continue
 
       const centerX = object.collision.x + object.collision.width / 2
       expect(centerX).toBeCloseTo(object.position.x)
@@ -125,11 +138,10 @@ describe('worldObjects', () => {
 })
 
 describe('desk furniture (PHASE-10A)', () => {
-  const deskIds = ['main-work-desk', 'education-desk', 'resume-desk'] as const
+  const deskIds = ['main-work-desk', 'education-desk'] as const
   const expectedAsset: Record<(typeof deskIds)[number], string> = {
     'main-work-desk': 'furniture.mainWorkDesk',
     'education-desk': 'furniture.educationDesk',
-    'resume-desk': 'furniture.resumeDesk',
   }
 
   function findDesk(id: (typeof deskIds)[number]): WorldObject {
@@ -138,7 +150,7 @@ describe('desk furniture (PHASE-10A)', () => {
     return object!
   }
 
-  it('all three approved desks exist in the shipped world', () => {
+  it('both approved desks exist in the shipped world', () => {
     for (const id of deskIds) {
       expect(worldObjects.some((object) => object.id === id)).toBe(true)
     }
@@ -321,6 +333,7 @@ describe('structural: bed + door (PHASE 09.1)', () => {
 
   it('a player-sized body cannot move through the door — the CollisionSystem stops it at the door footprint', () => {
     const door = findStructural('door')
+    const mat = worldObjects.find((object) => object.id === 'entrance-mat')!
     const collisionSystem = CollisionSystem.fromWorldObjects(
       worldObjects,
       WORLD_WIDTH,
@@ -329,8 +342,13 @@ describe('structural: bed + door (PHASE 09.1)', () => {
 
     const playerWidth = 20
     const playerHeight = 12
+    // The doormat (entrance.ts) now has its own asset-sized collider sitting
+    // directly in front of the door, narrower than the door itself — this
+    // walks down a column between the door's left edge and the mat's left
+    // edge, clear of the mat, so this test still isolates the door's own
+    // blocking behavior rather than the mat's.
     const startRect = {
-      x: door.collision!.x + door.collision!.width / 2 - playerWidth / 2,
+      x: (door.collision!.x + mat.collision!.x) / 2 - playerWidth / 2,
       y: door.collision!.y - 50,
       width: playerWidth,
       height: playerHeight,
@@ -340,6 +358,53 @@ describe('structural: bed + door (PHASE 09.1)', () => {
 
     expect(resolved.y + playerHeight).toBeLessThanOrEqual(door.collision!.y)
     expect(resolved.y + playerHeight).toBeGreaterThan(door.collision!.y - 5)
+  })
+})
+
+describe('Entrance sitting-nook furniture (asset-sized collision)', () => {
+  const entranceFurnitureIds = [
+    'entrance-chair-left',
+    'entrance-chair-right',
+    'entrance-side-table',
+    'entrance-painting',
+    'entrance-hook',
+    'entrance-mat',
+    'entrance-plant',
+  ] as const
+
+  function findEntranceFurniture(
+    id: (typeof entranceFurnitureIds)[number],
+  ): WorldObject {
+    const object = worldObjects.find((candidate) => candidate.id === id)
+    expect(object).toBeDefined()
+    return object!
+  }
+
+  it('every entrance furniture item exists and has a valid, positive-area collision footprint', () => {
+    for (const id of entranceFurnitureIds) {
+      const { collision } = findEntranceFurniture(id)
+      expect(collision).toBeDefined()
+      expect(Number.isFinite(collision!.width)).toBe(true)
+      expect(Number.isFinite(collision!.height)).toBe(true)
+      expect(collision!.width).toBeGreaterThan(0)
+      expect(collision!.height).toBeGreaterThan(0)
+    }
+  })
+
+  it('each collider is centered on its object within a small, documented tolerance (content-bbox-derived, same as the bed)', () => {
+    for (const id of entranceFurnitureIds) {
+      const { position, collision } = findEntranceFurniture(id)
+      const centerX = collision!.x + collision!.width / 2
+      expect(Math.abs(centerX - position.x)).toBeLessThan(1)
+    }
+  })
+
+  it('the two lounge chairs share identical collision dimensions — same source asset, only position differs', () => {
+    const left = findEntranceFurniture('entrance-chair-left')
+    const right = findEntranceFurniture('entrance-chair-right')
+    expect(left.asset).toBe(right.asset)
+    expect(left.collision!.width).toBeCloseTo(right.collision!.width)
+    expect(left.collision!.height).toBeCloseTo(right.collision!.height)
   })
 })
 
@@ -423,11 +488,14 @@ describe('PHASE 10B.1 CLEANUP — no redundant overlap with the room boundary, r
     //   main-work-desk's own collider.
     // - 'bed': overlaps both the top and left walls (it's a corner piece).
     // - 'education-desk': overlaps the left wall.
+    // - 'entrance-hook': deliberately mounted in the bottom wall band,
+    //   same "embedded by design" precedent as 'door' (entrance.ts).
     const knownOverlaps = new Set([
       'door',
       'main-work-desk',
       'bed',
       'education-desk',
+      'entrance-hook',
     ])
 
     for (const object of worldObjects) {

@@ -34,10 +34,19 @@ export class World extends Container {
    * CollisionSystem resolves against but which have no WorldObject entry.
    * Defaults to none, so every existing caller/test that only passes
    * `objects` is unaffected.
+   *
+   * `debugCollisionOverlay` is a separate opt-in on top of
+   * `import.meta.env.DEV` — the overlay is off by default even in
+   * `npm run dev`, so a normal player (or developer) never sees red
+   * collider outlines during ordinary gameplay. GameScene.ts turns this on
+   * only when the `VITE_DEBUG_COLLISION` env var is explicitly set;
+   * `import.meta.env.DEV` remains a hard, unconditional gate too, so no
+   * caller mistake can ever make it render in a production build.
    */
   constructor(
     objects: readonly WorldObject[],
     extraColliders: readonly Collider[] = [],
+    debugCollisionOverlay = false,
   ) {
     super({ label: 'World' })
 
@@ -59,8 +68,9 @@ export class World extends Container {
     }
 
     // Drawn last (on top of everything) so collider outlines are never
-    // hidden behind objects/foreground. Dev-only — see PERFORMANCE.md.
-    if (import.meta.env.DEV) {
+    // hidden behind objects/foreground. Dev-only AND opt-in — see
+    // PERFORMANCE.md and the constructor doc comment above.
+    if (import.meta.env.DEV && debugCollisionOverlay) {
       this.addChild(createCollisionDebugOverlay(objects, extraColliders))
     }
   }

@@ -84,7 +84,7 @@ const KITCHEN_TARGET_WIDTH = {
   cooktop: 192,
   coffeeMachine: 245.76,
   hangingPans: 160,
-  wallShelf: 216,
+  wallShelf: 170,
   diningSet: 432,
   light: 202,
   propHolder: 31.24,
@@ -213,7 +213,7 @@ export const kitchenObjects: WorldObject[] = [
     'kitchen-wall-shelf',
     'kitchen.wallShelf',
     'WALL SHELF',
-    { x: 1500, y: 95 }, // WORLD POSITION — SAFE TO TUNE — above the fridge/counter seam, per reference
+    { x: 1750, y: 139 }, // WORLD POSITION — SAFE TO TUNE — above the fridge/counter seam, per reference
     KITCHEN_ASSET_NATURAL_SIZE.wallShelf,
     KITCHEN_ASSET_CONTENT_BBOX.wallShelf,
     KITCHEN_SCALE.wallShelf,

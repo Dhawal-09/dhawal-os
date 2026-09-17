@@ -1,6 +1,5 @@
 import deskLaptopUrl from '../../../assets/world/furniture/desk_laptop.png'
 import deskEducationUrl from '../../../assets/world/furniture/desk_education.png'
-import deskResumeUrl from '../../../assets/world/furniture/desk_resume_original.png'
 import gamingChairUrl from '../../../assets/world/furniture/GamingChair.png'
 import bedUrl from '../../../assets/world/structural/Double_bed.png'
 import doorUrl from '../../../assets/world/structural/door.png'
@@ -38,6 +37,12 @@ import hobbiesScarfUrl from '../../../assets/world/HobbiesRoom/Scarf.png'
 import hobbiesArtworkUrl from '../../../assets/world/HobbiesRoom/Artwork.png'
 import hobbiesFootballRackUrl from '../../../assets/world/HobbiesRoom/Rack.png'
 import hobbiesStorageUrl from '../../../assets/world/HobbiesRoom/Storage2.png'
+import entranceChairUrl from '../../../assets/world/Entrance/LaugeChair.png'
+import entranceTableUrl from '../../../assets/world/Entrance/table1-Photoroom.png'
+import entranceHookUrl from '../../../assets/world/Entrance/Hook.png'
+import entranceMatUrl from '../../../assets/world/Entrance/mat.png'
+import entrancePaintingUrl from '../../../assets/world/Entrance/Photo.png'
+import entrancePlantUrl from '../../../assets/world/Entrance/plant-Photoroom.png'
 
 /**
  * Maps a WorldObject's stable logical `asset` id (see WorldObject.ts) to the
@@ -53,7 +58,6 @@ import hobbiesStorageUrl from '../../../assets/world/HobbiesRoom/Storage2.png'
 export const ASSET_MANIFEST: Record<string, string> = {
   'furniture.mainWorkDesk': deskLaptopUrl,
   'furniture.educationDesk': deskEducationUrl,
-  'furniture.resumeDesk': deskResumeUrl,
   'furniture.gamingChair': gamingChairUrl,
   // PHASE 09.1
   'structural.bed': bedUrl,
@@ -99,6 +103,15 @@ export const ASSET_MANIFEST: Record<string, string> = {
   'hobbies.artwork': hobbiesArtworkUrl,
   'hobbies.footballRack': hobbiesFootballRackUrl,
   'hobbies.storage': hobbiesStorageUrl,
+  // About Me/Entrance sitting-nook asset-integration pass (see entrance.ts).
+  // The lounge chair is a single approved asset instantiated twice as two
+  // separate WorldObjects — never a second manifest entry/duplicate file.
+  'entrance.chair': entranceChairUrl,
+  'entrance.table': entranceTableUrl,
+  'entrance.hook': entranceHookUrl,
+  'entrance.mat': entranceMatUrl,
+  'entrance.painting': entrancePaintingUrl,
+  'entrance.plant': entrancePlantUrl,
 }
 
 export function getFurnitureAssetUrl(assetId: string): string | undefined {

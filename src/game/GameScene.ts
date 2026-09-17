@@ -10,6 +10,16 @@ import { WORLD_HEIGHT, WORLD_WIDTH } from './world/worldConstants'
 import { EXTRA_COLLIDERS, worldObjects } from './world/worldObjects'
 
 /**
+ * Shows red collider-outline debug overlays (world furniture + the
+ * player's own hitbox) — off by default even in `npm run dev`. Opt in
+ * locally by setting `VITE_DEBUG_COLLISION=true` (e.g. in a gitignored
+ * `.env.local`); `World`/`Player` additionally gate this on
+ * `import.meta.env.DEV`, so it's always off in a production build too.
+ */
+const DEBUG_COLLISION_OVERLAY =
+  import.meta.env.DEV && import.meta.env.VITE_DEBUG_COLLISION === 'true'
+
+/**
  * Root scene container. Owns the World, its static Camera fit, collision,
  * interaction, and the player.
  */
@@ -35,7 +45,11 @@ export class GameScene extends Container {
   constructor() {
     super({ label: 'GameScene' })
 
-    this.world = new World(worldObjects, EXTRA_COLLIDERS)
+    this.world = new World(
+      worldObjects,
+      EXTRA_COLLIDERS,
+      DEBUG_COLLISION_OVERLAY,
+    )
     this.addChild(this.world)
 
     this.camera = new Camera(this.world, WORLD_WIDTH, WORLD_HEIGHT)
@@ -56,7 +70,11 @@ export class GameScene extends Container {
         interactionSystem: this.interactionSystem,
         eventBridge: gameEventBridge,
       },
-      { x: WORLD_WIDTH / 2, y: WORLD_HEIGHT / 2 },
+      {
+        x: WORLD_WIDTH / 2,
+        y: WORLD_HEIGHT / 2,
+        showDebugCollider: DEBUG_COLLISION_OVERLAY,
+      },
     )
     this.world.playerLayer.addChild(this.player)
     this.camera.follow(this.player.position.x, this.player.position.y)

@@ -18,6 +18,13 @@ const FACING_OFFSETS: Record<Direction, readonly [number, number]> = {
 export interface PlayerOptions {
   x?: number
   y?: number
+  /**
+   * Shows the dev-only red hitbox outline. Off by default even in
+   * `npm run dev` — matches `World.ts`'s `debugCollisionOverlay` opt-in, and
+   * is additionally gated on `import.meta.env.DEV` here too, so it can never
+   * render in a production build regardless of what a caller passes.
+   */
+  showDebugCollider?: boolean
 }
 
 /**
@@ -40,9 +47,7 @@ export class Player extends Container {
 
   private readonly body = new Graphics()
   private readonly facing = new Graphics()
-  private readonly debugCollider: Graphics | null = import.meta.env.DEV
-    ? new Graphics()
-    : null
+  private readonly debugCollider: Graphics | null
   /**
    * The `[E] INTERACT` prompt (INTERACTION_SPEC.md). Plain text, not tied to
    * any visual asset — visibility alone tracks `interactionTarget`, so it
@@ -56,6 +61,8 @@ export class Player extends Container {
   constructor(systems: PlayerSystems, options: PlayerOptions = {}) {
     super({ label: 'Player' })
     this.position.set(options.x ?? 0, options.y ?? 0)
+    this.debugCollider =
+      import.meta.env.DEV && options.showDebugCollider ? new Graphics() : null
 
     this.addChild(this.body, this.facing)
     if (this.debugCollider) this.addChild(this.debugCollider)
