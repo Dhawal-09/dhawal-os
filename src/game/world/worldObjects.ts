@@ -2,7 +2,7 @@ import type { Collider, WorldObject } from './WorldObject'
 import { WORLD_HEIGHT, WORLD_WIDTH } from './worldConstants'
 import { aboutObjects } from './rooms/aboutRoom'
 import { bedroomObjects } from './rooms/bedroomRoom'
-import { educationObjects } from './rooms/educationRoom'
+import { educationColliders, educationObjects } from './rooms/educationRoom'
 import { entranceObjects } from './rooms/entrance'
 import { hobbiesColliders, hobbiesObjects } from './rooms/hobbiesRoom'
 import { kitchenObjects } from './rooms/kitchen'
@@ -18,8 +18,11 @@ export { ROOM_BOUNDARY_COLLIDERS } from './rooms/worldObjectHelpers'
  * perimeter walls (`ROOM_BOUNDARY_COLLIDERS`, exactly 4 rects — see
  * `roomBoundary.test.ts`'s regression coverage, which is why that constant
  * itself is never extended) plus each room's own hand-authored architectural
- * colliders, like the Hobbies back wall (`hobbiesColliders`) and the
- * Skills/Resume nook's right-side wall (`skillsColliders`). This is what
+ * colliders, like the Hobbies back wall (`hobbiesColliders`), the
+ * Skills/Resume nook's right-side wall (`skillsColliders`), and the
+ * Education desk's baked-in chair footprint (`educationColliders` — not
+ * architecture, but likewise not its own WorldObject, since it's already
+ * rendered as part of the desk's sprite). This is what
  * `GameScene` actually wires into `CollisionSystem`/`World` — a room adding
  * its own invisible wall geometry only ever means exporting a new array from
  * that room file and appending it here, never touching the perimeter-wall
@@ -29,6 +32,7 @@ export const EXTRA_COLLIDERS: readonly Collider[] = [
   ...ROOM_BOUNDARY_COLLIDERS,
   ...hobbiesColliders,
   ...skillsColliders,
+  ...educationColliders,
 ]
 
 /**

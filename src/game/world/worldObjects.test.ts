@@ -3,6 +3,7 @@ import { getFurnitureAssetUrl } from './assetManifest'
 import { CollisionBody } from '../player/CollisionBody'
 import { CollisionSystem, rectsOverlap } from './CollisionSystem'
 import { InteractionSystem } from './InteractionSystem'
+import { educationColliders } from './rooms/educationRoom'
 import type { WorldObject } from './WorldObject'
 import { WORLD_HEIGHT, WORLD_WIDTH } from './worldConstants'
 import {
@@ -42,13 +43,14 @@ describe('worldObjects', () => {
   })
 
   it('every configured collider is horizontally centered on its object', () => {
-    // Excludes 'bed' and the Entrance sitting-nook furniture: their
-    // colliders come from `contentAlignedCollider`, derived from the
-    // *measured* (real pixel-data) content bbox rather than a symmetric
-    // footprint fraction — the art itself isn't perfectly centered in its
-    // canvas, so its true center is a fraction of a world unit off from
-    // `position.x`. Bed is covered separately below; the Entrance items'
-    // (sub-pixel) tolerance is asserted inline in the Entrance suite instead.
+    // Excludes 'bed', the Entrance sitting-nook furniture, and
+    // 'education-desk': their colliders come from `contentAlignedCollider`,
+    // derived from the *measured* (real pixel-data) content bbox rather
+    // than a symmetric footprint fraction — the art itself isn't perfectly
+    // centered in its canvas, so its true center is a fraction of a world
+    // unit off from `position.x`. Bed is covered separately below; the
+    // Entrance/Education items' (sub-pixel) tolerance is asserted inline in
+    // their own suites instead.
     const contentAlignedExclusions = new Set([
       'bed',
       'entrance-chair-left',
@@ -58,6 +60,10 @@ describe('worldObjects', () => {
       'entrance-hook',
       'entrance-mat',
       'entrance-plant',
+      'entrance-plant-2',
+      'entrance-plant-3',
+      'entrance-plant-4',
+      'education-desk',
     ])
     for (const object of worldObjects) {
       if (!object.collision || contentAlignedExclusions.has(object.id))
@@ -138,10 +144,16 @@ describe('worldObjects', () => {
 })
 
 describe('desk furniture (PHASE-10A)', () => {
-  const deskIds = ['main-work-desk', 'education-desk'] as const
+  // 'education-desk' is deliberately excluded: its artwork now bakes in a
+  // pushed-in chair (see educationRoom.ts), so its collider comes from a
+  // hand-measured `contentAlignedCollider` sub-region rather than the
+  // generic, always-symmetric, always-flush-bottom `deskCollider`/
+  // `DESK_FOOTPRINT` pattern every desk here assumes — same reason 'bed'
+  // was never included either. It gets its own dedicated coverage in the
+  // "Education room desk + chair" suite below instead.
+  const deskIds = ['main-work-desk'] as const
   const expectedAsset: Record<(typeof deskIds)[number], string> = {
     'main-work-desk': 'furniture.mainWorkDesk',
-    'education-desk': 'furniture.educationDesk',
   }
 
   function findDesk(id: (typeof deskIds)[number]): WorldObject {
@@ -150,7 +162,7 @@ describe('desk furniture (PHASE-10A)', () => {
     return object!
   }
 
-  it('both approved desks exist in the shipped world', () => {
+  it('the approved desk exists in the shipped world', () => {
     for (const id of deskIds) {
       expect(worldObjects.some((object) => object.id === id)).toBe(true)
     }
@@ -370,6 +382,9 @@ describe('Entrance sitting-nook furniture (asset-sized collision)', () => {
     'entrance-hook',
     'entrance-mat',
     'entrance-plant',
+    'entrance-plant-2',
+    'entrance-plant-3',
+    'entrance-plant-4',
   ] as const
 
   function findEntranceFurniture(
@@ -405,6 +420,162 @@ describe('Entrance sitting-nook furniture (asset-sized collision)', () => {
     expect(left.asset).toBe(right.asset)
     expect(left.collision!.width).toBeCloseTo(right.collision!.width)
     expect(left.collision!.height).toBeCloseTo(right.collision!.height)
+  })
+})
+
+describe('Education room desk + chair (asset-sized collision)', () => {
+  function findEducation(id: string): WorldObject {
+    const object = worldObjects.find((candidate) => candidate.id === id)
+    expect(object).toBeDefined()
+    return object!
+  }
+
+  it('the desk and bookshelf each have a valid, positive-area collision footprint', () => {
+    for (const id of ['education-desk', 'education-bookshelf']) {
+      const { collision } = findEducation(id)
+      expect(collision).toBeDefined()
+      expect(Number.isFinite(collision!.width)).toBe(true)
+      expect(Number.isFinite(collision!.height)).toBe(true)
+      expect(collision!.width).toBeGreaterThan(0)
+      expect(collision!.height).toBeGreaterThan(0)
+    }
+  })
+
+  it("the desk's and bookshelf's colliders are centered on their object within a small, documented tolerance (content-bbox-derived, same as the bed)", () => {
+    for (const id of ['education-desk', 'education-bookshelf']) {
+      const { position, collision } = findEducation(id)
+      const centerX = collision!.x + collision!.width / 2
+      expect(Math.abs(centerX - position.x)).toBeLessThan(1)
+    }
+  })
+
+  it('the globe has no collision of its own — a decorative tabletop object resting on the desk, not a separate obstacle', () => {
+    expect(findEducation('education-globe').collision).toBeUndefined()
+  })
+
+  it("the desk's baked-in chair has its own real, positive-area collider — a plain extra collider, not a second WorldObject (it's already part of the desk's sprite)", () => {
+    expect(educationColliders.length).toBeGreaterThan(0)
+    for (const collider of educationColliders) {
+      expect(Number.isFinite(collider.width)).toBe(true)
+      expect(Number.isFinite(collider.height)).toBe(true)
+      expect(collider.width).toBeGreaterThan(0)
+      expect(collider.height).toBeGreaterThan(0)
+    }
+  })
+
+  it("the desk's own collider and its baked-in chair's collider don't overlap each other — they split one sprite's footprint by height, not double-cover it", () => {
+    const desk = findEducation('education-desk')
+    for (const chairCollider of educationColliders) {
+      expect(rectsOverlap(desk.collision!, chairCollider)).toBe(false)
+    }
+  })
+
+  it('a player-sized body cannot walk through the education desk', () => {
+    const desk = findEducation('education-desk')
+    const collisionSystem = CollisionSystem.fromWorldObjects(
+      worldObjects,
+      WORLD_WIDTH,
+      WORLD_HEIGHT,
+    )
+    const playerWidth = 20
+    const playerHeight = 12
+    const startRect = {
+      x: desk.collision!.x + desk.collision!.width / 2 - playerWidth / 2,
+      y: desk.collision!.y - 50,
+      width: playerWidth,
+      height: playerHeight,
+    }
+
+    let rect = startRect
+    for (let moved = 0; moved < 200; moved += 5) {
+      const resolved = collisionSystem.resolveMovement(rect, 0, 5)
+      rect = { ...rect, ...resolved }
+    }
+
+    expect(rect.y + playerHeight).toBeLessThanOrEqual(desk.collision!.y)
+    expect(rect.y + playerHeight).toBeGreaterThan(desk.collision!.y - 5)
+  })
+
+  it("a player-sized body cannot walk through the desk's baked-in chair (its own extra collider)", () => {
+    const combined = CollisionSystem.fromWorldObjects(
+      worldObjects,
+      WORLD_WIDTH,
+      WORLD_HEIGHT,
+      educationColliders,
+    )
+    const chairCollider = educationColliders[0]
+    const playerWidth = 20
+    const playerHeight = 12
+    // Approaches from *below*, walking up — the chair sits directly under
+    // the desk (see the block comment on EDUCATION_CHAIR_BBOX in
+    // educationRoom.ts), so approaching from above would hit the desk's own
+    // collider first and never isolate the chair's.
+    const startRect = {
+      x: chairCollider.x + chairCollider.width / 2 - playerWidth / 2,
+      y: chairCollider.y + chairCollider.height + 50,
+      width: playerWidth,
+      height: playerHeight,
+    }
+
+    let rect = startRect
+    for (let moved = 0; moved < 200; moved += 5) {
+      const resolved = combined.resolveMovement(rect, 0, -5)
+      rect = { ...rect, ...resolved }
+    }
+
+    const chairBottom = chairCollider.y + chairCollider.height
+    expect(rect.y).toBeGreaterThanOrEqual(chairBottom)
+    expect(rect.y).toBeLessThan(chairBottom + 5)
+  })
+
+  it('the bookshelf blocks a player-sized body from walking through it', () => {
+    const shelf = findEducation('education-bookshelf')
+    const collisionSystem = CollisionSystem.fromWorldObjects(
+      worldObjects,
+      WORLD_WIDTH,
+      WORLD_HEIGHT,
+    )
+    const playerWidth = 20
+    const playerHeight = 12
+    // Starts only 20px above the shelf (not the usual 50) — the Living
+    // room's sofa-left collider (livingRoom.ts) now sits in the same x
+    // column just above that, so a 50px offset would start the player
+    // already inside it; this narrower gap still isolates the shelf's own
+    // blocking behavior.
+    const startRect = {
+      x: shelf.collision!.x + shelf.collision!.width / 2 - playerWidth / 2,
+      y: shelf.collision!.y - 20,
+      width: playerWidth,
+      height: playerHeight,
+    }
+
+    let rect = startRect
+    for (let moved = 0; moved < 200; moved += 5) {
+      const resolved = collisionSystem.resolveMovement(rect, 0, 5)
+      rect = { ...rect, ...resolved }
+    }
+
+    expect(rect.y + playerHeight).toBeLessThanOrEqual(shelf.collision!.y)
+    expect(rect.y + playerHeight).toBeGreaterThan(shelf.collision!.y - 5)
+  })
+
+  it('the EDUCATION content marker is still reachable — the new furniture leaves its approach clear', () => {
+    const collisionSystem = CollisionSystem.fromWorldObjects(
+      worldObjects,
+      WORLD_WIDTH,
+      WORLD_HEIGHT,
+      ROOM_BOUNDARY_COLLIDERS,
+    )
+    const interactionSystem = InteractionSystem.fromWorldObjects(worldObjects)
+    const collisionBody = new CollisionBody()
+    let rect = collisionBody.getRect(700, 1180)
+    for (let i = 0; i < 100; i++) {
+      const resolved = collisionSystem.resolveMovement(rect, -10, 0)
+      if (resolved.x === rect.x && resolved.y === rect.y) break
+      rect = { ...rect, ...resolved }
+    }
+    const final = collisionBody.toOrigin(rect.x, rect.y)
+    expect(interactionSystem.findNearestInRange(final)?.id).toBe('education')
   })
 })
 
@@ -490,12 +661,16 @@ describe('PHASE 10B.1 CLEANUP — no redundant overlap with the room boundary, r
     // - 'education-desk': overlaps the left wall.
     // - 'entrance-hook': deliberately mounted in the bottom wall band,
     //   same "embedded by design" precedent as 'door' (entrance.ts).
+    // - 'entrance-plant': positioned flush against the right wall
+    //   (entrance.ts), same "embedded by design" precedent as the hook —
+    //   both sit at the same x column.
     const knownOverlaps = new Set([
       'door',
       'main-work-desk',
       'bed',
       'education-desk',
       'entrance-hook',
+      'entrance-plant',
     ])
 
     for (const object of worldObjects) {

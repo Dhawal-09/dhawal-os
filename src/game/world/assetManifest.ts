@@ -25,8 +25,12 @@ import bedroomBeanbagUrl from '../../../assets/world/BedRoom/SittingRug.png'
 import livingTvConsoleUrl from '../../../assets/world/ExpiernceRoom/BelowTv.png'
 import livingStorageCabinetUrl from '../../../assets/world/ExpiernceRoom/Desk.png'
 import livingRugUrl from '../../../assets/world/ExpiernceRoom/Rug.png'
+import livingRugSmallUrl from '../../../assets/world/ExpiernceRoom/smallrug-Photoroom.png'
 import livingBookshelfUrl from '../../../assets/world/ExpiernceRoom/Shelf.png'
 import livingTvUrl from '../../../assets/world/ExpiernceRoom/TV.png'
+import livingSofaUrl from '../../../assets/world/ExpiernceRoom/sofa-Photoroom.png'
+import livingSofaLeftUrl from '../../../assets/world/ExpiernceRoom/leftsofa-Photoroom.png'
+import livingSpeakerUrl from '../../../assets/world/ExpiernceRoom/speaker-Photoroom.png'
 import livingBigPlantUrl from '../../../assets/world/special/Big plant.png'
 import hobbiesDumbbellRackUrl from '../../../assets/world/HobbiesRoom/Dumbel rack.png'
 import hobbiesGymStationUrl from '../../../assets/world/HobbiesRoom/workout-Photoroom.png'
@@ -43,6 +47,8 @@ import entranceHookUrl from '../../../assets/world/Entrance/Hook.png'
 import entranceMatUrl from '../../../assets/world/Entrance/mat.png'
 import entrancePaintingUrl from '../../../assets/world/Entrance/Photo.png'
 import entrancePlantUrl from '../../../assets/world/Entrance/plant-Photoroom.png'
+import educationGlobeUrl from '../../../assets/world/Education/Globe.png'
+import educationBookshelfUrl from '../../../assets/world/Education/shelf-Photoroom.png'
 
 /**
  * Maps a WorldObject's stable logical `asset` id (see WorldObject.ts) to the
@@ -90,9 +96,13 @@ export const ASSET_MANIFEST: Record<string, string> = {
   'living.tvConsole': livingTvConsoleUrl,
   'living.storageCabinet': livingStorageCabinetUrl,
   'living.rug': livingRugUrl,
+  'living.rugSmall': livingRugSmallUrl,
   'living.bookshelf': livingBookshelfUrl,
   'living.tv': livingTvUrl,
   'living.bigPlant': livingBigPlantUrl,
+  'living.sofa': livingSofaUrl,
+  'living.sofaLeft': livingSofaLeftUrl,
+  'living.speaker': livingSpeakerUrl,
   // Hobbies/gym asset-integration pass (see hobbiesRoom.ts).
   'hobbies.dumbbellRack': hobbiesDumbbellRackUrl,
   'hobbies.gymStation': hobbiesGymStationUrl,
@@ -112,6 +122,9 @@ export const ASSET_MANIFEST: Record<string, string> = {
   'entrance.mat': entranceMatUrl,
   'entrance.painting': entrancePaintingUrl,
   'entrance.plant': entrancePlantUrl,
+  // Education room asset-integration pass (see educationRoom.ts).
+  'education.globe': educationGlobeUrl,
+  'education.bookshelf': educationBookshelfUrl,
 }
 
 export function getFurnitureAssetUrl(assetId: string): string | undefined {
