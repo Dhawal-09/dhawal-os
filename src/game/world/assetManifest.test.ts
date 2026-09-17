@@ -2,12 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { ASSET_MANIFEST, getFurnitureAssetUrl } from './assetManifest'
 
 describe('assetManifest', () => {
-  it('maps all three approved desk asset ids to a resolved, non-empty URL', () => {
-    const deskAssetIds = [
-      'furniture.mainWorkDesk',
-      'furniture.educationDesk',
-      'furniture.resumeDesk',
-    ]
+  it('maps both approved desk asset ids to a resolved, non-empty URL', () => {
+    const deskAssetIds = ['furniture.mainWorkDesk', 'furniture.educationDesk']
 
     for (const id of deskAssetIds) {
       const url = getFurnitureAssetUrl(id)

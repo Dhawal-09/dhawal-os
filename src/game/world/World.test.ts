@@ -75,7 +75,7 @@ describe('World', () => {
     expect(() => new World([])).not.toThrow()
   })
 
-  it('draws a dev-only collision debug overlay on top, for configured colliders only', () => {
+  it('draws a dev-only, opt-in collision debug overlay on top, for configured colliders only', () => {
     const withCollider: WorldObject = {
       id: 'blocking',
       asset: 'content.blocking',
@@ -84,7 +84,9 @@ describe('World', () => {
       layer: 'object',
       collision: { x: 20, y: 20, width: 60, height: 60 },
     }
-    const world = new World([withCollider, fixtures[1]]) // fixtures[1] has no collision
+    // Third arg (`debugCollisionOverlay`) explicitly opts in — it defaults
+    // to false (off), even in DEV, so a normal construction never shows it.
+    const world = new World([withCollider, fixtures[1]], [], true) // fixtures[1] has no collision
 
     const overlay = world.children.find(
       (child) => child.label === 'CollisionDebugOverlay',
@@ -93,5 +95,21 @@ describe('World', () => {
     expect(overlay).toBeDefined()
     expect(overlay?.children).toHaveLength(1) // only the object with `collision`
     expect(world.children.at(-1)).toBe(overlay) // drawn last (on top)
+  })
+
+  it('the collision debug overlay is off by default, even in DEV — must be explicitly opted into', () => {
+    const withCollider: WorldObject = {
+      id: 'blocking',
+      asset: 'content.blocking',
+      label: 'BLOCKING',
+      position: { x: 50, y: 50 },
+      layer: 'object',
+      collision: { x: 20, y: 20, width: 60, height: 60 },
+    }
+    const world = new World([withCollider])
+
+    expect(
+      world.children.some((child) => child.label === 'CollisionDebugOverlay'),
+    ).toBe(false)
   })
 })
