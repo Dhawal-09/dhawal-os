@@ -80,7 +80,7 @@ const KITCHEN_ASSET_CONTENT_BBOX = {
 const KITCHEN_TARGET_WIDTH = {
   mainCounter: 538,
   sideCounter: 330,
-  fridge: 520,
+  fridge: 530,
   cooktop: 192,
   coffeeMachine: 245.76,
   hangingPans: 160,
@@ -182,7 +182,7 @@ export const kitchenObjects: WorldObject[] = [
     'kitchen-fridge',
     'kitchen.fridge',
     'REFRIGERATOR',
-    { x: 1458, y: -28 }, // WORLD POSITION — SAFE TO TUNE — leftmost, right after the main work desk
+    { x: 1453, y: -28 }, // WORLD POSITION — SAFE TO TUNE — leftmost, right after the main work desk
     KITCHEN_ASSET_NATURAL_SIZE.fridge,
     KITCHEN_ASSET_CONTENT_BBOX.fridge,
     KITCHEN_SCALE.fridge,

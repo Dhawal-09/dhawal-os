@@ -41,7 +41,7 @@ import hobbiesScarfUrl from '../../../assets/world/HobbiesRoom/Scarf.png'
 import hobbiesArtworkUrl from '../../../assets/world/HobbiesRoom/Artwork.png'
 import hobbiesFootballRackUrl from '../../../assets/world/HobbiesRoom/Rack.png'
 import hobbiesStorageUrl from '../../../assets/world/HobbiesRoom/Storage2.png'
-import entranceChairUrl from '../../../assets/world/Entrance/LaugeChair.png'
+import entranceChairUrl from '../../../assets/world/Entrance/Entrance_lounge.png'
 import entranceTableUrl from '../../../assets/world/Entrance/table1-Photoroom.png'
 import entranceHookUrl from '../../../assets/world/Entrance/Hook.png'
 import entranceMatUrl from '../../../assets/world/Entrance/mat.png'
@@ -49,6 +49,8 @@ import entrancePaintingUrl from '../../../assets/world/Entrance/Photo.png'
 import entrancePlantUrl from '../../../assets/world/Entrance/plant-Photoroom.png'
 import educationGlobeUrl from '../../../assets/world/Education/Globe.png'
 import educationBookshelfUrl from '../../../assets/world/Education/shelf-Photoroom.png'
+import wallOneUrl from '../../../assets/world/Walls/Wall one.png'
+import wallTwoUrl from '../../../assets/world/Walls/Wall2.png'
 
 /**
  * Maps a WorldObject's stable logical `asset` id (see WorldObject.ts) to the
@@ -125,6 +127,9 @@ export const ASSET_MANIFEST: Record<string, string> = {
   // Education room asset-integration pass (see educationRoom.ts).
   'education.globe': educationGlobeUrl,
   'education.bookshelf': educationBookshelfUrl,
+  // Decorative architectural wall panels (see walls.ts).
+  'walls.wallOne': wallOneUrl,
+  'walls.wallTwo': wallTwoUrl,
 }
 
 export function getFurnitureAssetUrl(assetId: string): string | undefined {

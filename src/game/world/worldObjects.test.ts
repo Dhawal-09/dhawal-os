@@ -64,6 +64,16 @@ describe('worldObjects', () => {
       'entrance-plant-3',
       'entrance-plant-4',
       'education-desk',
+      'living-sofa-left',
+      'living-tv-console',
+      'living-tv',
+      'living-speaker',
+      // 'wall-one' is deliberately off by a larger margin than the rest:
+      // its own content isn't centered in its canvas at all (flush-left),
+      // so `position` is intentionally shifted away from the content
+      // center to compensate — see walls.ts's `wallOnePositionForVisibleCenter`.
+      'wall-one',
+      'wall-two',
     ])
     for (const object of worldObjects) {
       if (!object.collision || contentAlignedExclusions.has(object.id))
@@ -579,6 +589,56 @@ describe('Education room desk + chair (asset-sized collision)', () => {
   })
 })
 
+describe('Decorative wall panels (asset-sized collision)', () => {
+  const wallIds = ['wall-one', 'wall-two'] as const
+
+  function findWall(id: (typeof wallIds)[number]): WorldObject {
+    const object = worldObjects.find((candidate) => candidate.id === id)
+    expect(object).toBeDefined()
+    return object!
+  }
+
+  it('both wall panels exist and have a valid, positive-area collision footprint', () => {
+    for (const id of wallIds) {
+      const { collision } = findWall(id)
+      expect(collision).toBeDefined()
+      expect(Number.isFinite(collision!.width)).toBe(true)
+      expect(Number.isFinite(collision!.height)).toBe(true)
+      expect(collision!.width).toBeGreaterThan(0)
+      expect(collision!.height).toBeGreaterThan(0)
+    }
+  })
+
+  it('a player-sized body cannot walk through either wall panel', () => {
+    const collisionSystem = CollisionSystem.fromWorldObjects(
+      worldObjects,
+      WORLD_WIDTH,
+      WORLD_HEIGHT,
+    )
+    const playerWidth = 20
+    const playerHeight = 12
+
+    for (const id of wallIds) {
+      const wall = findWall(id)
+      const startRect = {
+        x: wall.collision!.x + wall.collision!.width / 2 - playerWidth / 2,
+        y: wall.collision!.y - 50,
+        width: playerWidth,
+        height: playerHeight,
+      }
+
+      let rect = startRect
+      for (let moved = 0; moved < 200; moved += 5) {
+        const resolved = collisionSystem.resolveMovement(rect, 0, 5)
+        rect = { ...rect, ...resolved }
+      }
+
+      expect(rect.y + playerHeight, id).toBeLessThanOrEqual(wall.collision!.y)
+      expect(rect.y + playerHeight, id).toBeGreaterThan(wall.collision!.y - 5)
+    }
+  })
+})
+
 describe('PHASE 10B layout (1920x1440 expansion)', () => {
   it('every object stays within the new 1920x1440 canonical bounds', () => {
     for (const object of worldObjects) {
@@ -664,6 +724,9 @@ describe('PHASE 10B.1 CLEANUP — no redundant overlap with the room boundary, r
     // - 'entrance-plant': positioned flush against the right wall
     //   (entrance.ts), same "embedded by design" precedent as the hook —
     //   both sit at the same x column.
+    // - 'wall-one'/'wall-two': decorative wall panels (walls.ts) —
+    //   deliberately extend up into the top wall band, since they depict
+    //   wall material themselves; same "embedded by design" precedent.
     const knownOverlaps = new Set([
       'door',
       'main-work-desk',
@@ -671,6 +734,8 @@ describe('PHASE 10B.1 CLEANUP — no redundant overlap with the room boundary, r
       'education-desk',
       'entrance-hook',
       'entrance-plant',
+      'wall-one',
+      'wall-two',
     ])
 
     for (const object of worldObjects) {
@@ -772,10 +837,15 @@ describe('PHASE 10B.1 CLEANUP — no redundant overlap with the room boundary, r
       start: { x: number; y: number }
       direction: { dx: number; dy: number }
     }> = [
+      // Approaches from the south (below), not the original north/downward
+      // path — the Living room's TV (x365-515,y456-540) and TV console
+      // (x314-566,y531-620), both now solid (livingRoom.ts), fully block
+      // the old straight-down column at x380; nothing sits between the
+      // marker and y900 on this column.
       {
         id: 'experience',
-        start: { x: 380, y: 400 },
-        direction: { dx: 0, dy: 1 },
+        start: { x: 380, y: 900 },
+        direction: { dx: 0, dy: -1 },
       },
       { id: 'skills', start: { x: 1540, y: 400 }, direction: { dx: 0, dy: 1 } },
       {

@@ -197,9 +197,9 @@ export const livingRoomObjects: WorldObject[] = [
     id: 'living-storage-cabinet',
     asset: 'living.storageCabinet',
     label: 'STORAGE CABINET',
-    position: { x: 320, y: 960 }, // WORLD POSITION — SAFE TO TUNE
+    position: { x: 270, y: 1020 }, // WORLD POSITION — SAFE TO TUNE
     layer: 'object',
-    transform: { width: 150 },
+    transform: { width: 200 },
   },
   {
     id: 'living-tv-console',
