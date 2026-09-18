@@ -1,4 +1,4 @@
-import type { WorldObject } from '../WorldObject'
+import type { Collider, WorldObject } from '../WorldObject'
 import {
   contentAlignedCollider,
   deskCollider,
@@ -156,6 +156,40 @@ function entranceObject(
   }
 }
 
+/**
+ * Invisible AABB collision for the mantel/shelf structure baked into the
+ * shared house background (assets/world/structural/Background2.png) above
+ * this room's sitting nook — no separate asset exists for it (it's part of
+ * the background art itself), so there's nothing to render, only a
+ * collider to add. Same precedent as `hobbiesColliders`/`skillsColliders`:
+ * independent, hand-authored geometry describing what the *art* depicts,
+ * resolved through `CollisionSystem`'s existing `extraObstacles` list —
+ * never a change to the collision algorithm itself, and never rendered
+ * outside the dev-only, opt-in collision debug overlay (World.ts).
+ *
+ * Measured directly from Background2.png's own pixel data: the mantel's
+ * protruding lip runs from native (1120, 580) to (1405, 600) — found by
+ * cropping the region with a pixel-coordinate grid overlaid and reading the
+ * lip's edges directly off it, then converting to world space with the same
+ * `Math.max(WORLD_WIDTH/textureWidth, WORLD_HEIGHT/textureHeight)` uniform
+ * scale `worldPlaceholders.ts` uses to place that background (1451x1084
+ * native → scale 1440/1084 ≈1.328413, height-constrained). Deliberately
+ * only the lip itself, not the full recessed alcove below it (native
+ * y600-700ish) — that space is already covered by the entrance-painting's
+ * own collider (entrance-painting sits inside that alcove), so colliding
+ * the whole recess too would just double up on the same obstacle.
+ */
+const BACKGROUND_SCALE = 1440 / 1084
+const MANTEL_NATIVE = { left: 1120, right: 1405, top: 580, bottom: 600 }
+export const entranceColliders: readonly Collider[] = [
+  {
+    x: MANTEL_NATIVE.left * BACKGROUND_SCALE,
+    y: MANTEL_NATIVE.top * BACKGROUND_SCALE,
+    width: (MANTEL_NATIVE.right - MANTEL_NATIVE.left) * BACKGROUND_SCALE,
+    height: (MANTEL_NATIVE.bottom - MANTEL_NATIVE.top) * BACKGROUND_SCALE,
+  },
+]
+
 export const entranceObjects: WorldObject[] = [
   {
     id: 'door',
@@ -212,7 +246,7 @@ export const entranceObjects: WorldObject[] = [
   // be dragged/retuned into their final positions later; only their count
   // and shared asset matter right now, not their exact placement.
   entranceObject('entrance-plant', 'plant', 'POTTED PLANT', {
-    x: 1840,
+    x: 1850,
     y: 990,
   }), // WORLD POSITION — SAFE TO TUNE
   entranceObject('entrance-plant-2', 'plant', 'POTTED PLANT', {
@@ -224,7 +258,8 @@ export const entranceObjects: WorldObject[] = [
     y: 950,
   }), // WORLD POSITION — SAFE TO TUNE
   entranceObject('entrance-plant-4', 'plant', 'POTTED PLANT', {
-    x: 1700,
-    y: 820,
-  }), // WORLD POSITION — SAFE TO TUNE
+    x: 1350,
+    y: 650,
+  }), // WORLD POSITION — SAFE TO TUNE — nudged from (1700,820), which the
+  // new `entranceColliders` mantel-lip collider above now occupies
 ]

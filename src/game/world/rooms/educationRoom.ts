@@ -95,7 +95,7 @@ const GLOBE_SCALE = scaleForWidth(GLOBE_NATURAL_SIZE, GLOBE_TARGET_WIDTH)
 const SHELF_NATURAL_SIZE = { width: 765, height: 1024 }
 const SHELF_CONTENT_BBOX = { minX: 115, minY: 127, maxX: 649, maxY: 897 }
 /** Target rendered width (world px, full padded canvas) — visible content reads at ~140px wide, a compact floor-standing bookshelf against the left wall. */
-const SHELF_TARGET_WIDTH = 200.56
+const SHELF_TARGET_WIDTH = 180.56
 const SHELF_SCALE = scaleForWidth(SHELF_NATURAL_SIZE, SHELF_TARGET_WIDTH)
 
 /** Same padding-correction idea as `kitchenPositionForFloorPoint` (kitchen.ts)/`entrancePositionForFloorPoint` (entrance.ts) — converts a desired *visible resting point* (floor, or here, the desk's own tabletop) into the `position` that actually produces it, given the canvas's own padding-below-content. */
@@ -131,7 +131,7 @@ const globePosition = educationPositionForFloorPoint(
  * "experience" marker's collider at y≤768).
  */
 const shelfPosition = educationPositionForFloorPoint(
-  { x: 215, y: 1000 }, // WORLD POSITION — SAFE TO TUNE
+  { x: 148, y: 990 }, // WORLD POSITION — SAFE TO TUNE
   SHELF_NATURAL_SIZE,
   SHELF_CONTENT_BBOX,
   SHELF_SCALE,

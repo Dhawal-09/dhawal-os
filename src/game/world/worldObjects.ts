@@ -3,12 +3,13 @@ import { WORLD_HEIGHT, WORLD_WIDTH } from './worldConstants'
 import { aboutObjects } from './rooms/aboutRoom'
 import { bedroomObjects } from './rooms/bedroomRoom'
 import { educationColliders, educationObjects } from './rooms/educationRoom'
-import { entranceObjects } from './rooms/entrance'
+import { entranceColliders, entranceObjects } from './rooms/entrance'
 import { hobbiesColliders, hobbiesObjects } from './rooms/hobbiesRoom'
 import { kitchenObjects } from './rooms/kitchen'
 import { livingRoomObjects } from './rooms/livingRoom'
 import { projectsObjects } from './rooms/projectsRoom'
 import { skillsColliders, skillsObjects } from './rooms/skillsRoom'
+import { wallObjects } from './rooms/walls'
 import { ROOM_BOUNDARY_COLLIDERS } from './rooms/worldObjectHelpers'
 
 export { ROOM_BOUNDARY_COLLIDERS } from './rooms/worldObjectHelpers'
@@ -22,7 +23,9 @@ export { ROOM_BOUNDARY_COLLIDERS } from './rooms/worldObjectHelpers'
  * Skills/Resume nook's right-side wall (`skillsColliders`), and the
  * Education desk's baked-in chair footprint (`educationColliders` — not
  * architecture, but likewise not its own WorldObject, since it's already
- * rendered as part of the desk's sprite). This is what
+ * rendered as part of the desk's sprite), and the Entrance nook's
+ * background mantel/shelf (`entranceColliders` — baked into the shared
+ * house background, no separate asset to render). This is what
  * `GameScene` actually wires into `CollisionSystem`/`World` — a room adding
  * its own invisible wall geometry only ever means exporting a new array from
  * that room file and appending it here, never touching the perimeter-wall
@@ -33,6 +36,7 @@ export const EXTRA_COLLIDERS: readonly Collider[] = [
   ...hobbiesColliders,
   ...skillsColliders,
   ...educationColliders,
+  ...entranceColliders,
 ]
 
 /**
@@ -55,6 +59,7 @@ export const worldObjects: WorldObject[] = [
   ...entranceObjects,
   ...kitchenObjects,
   ...hobbiesObjects,
+  ...wallObjects,
 ]
 
 /**
