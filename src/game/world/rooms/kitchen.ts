@@ -299,6 +299,24 @@ export const kitchenObjects: WorldObject[] = [
     KITCHEN_SCALE.propPlate,
     KITCHEN_TARGET_WIDTH.propPlate,
   ),
+  {
+    id: 'kitchen-cafe-menu',
+    asset: 'frames.cafeMenu',
+    label: 'CAFE MENU',
+    position: { x: 1340, y: 180 }, // WORLD POSITION — SAFE TO TUNE — same open wall gap as projects-code-poster (projectsRoom.ts), right of it, clear of the fridge (x≥1395)
+    layer: 'object',
+    transform: { width: 100 },
+    // No `collision` — wall-mounted decor, visual placement pass only.
+  },
+  {
+    id: 'kitchen-hanging-plant',
+    asset: 'special.hangingPlant',
+    label: 'HANGING PLANT',
+    position: { x: 1650, y: 85 }, // WORLD POSITION — SAFE TO TUNE — high on the back wall, above the wall-shelf/hanging-pans cluster
+    layer: 'object',
+    transform: { width: 55 },
+    // No `collision` — wall/ceiling-mounted decor, visual placement pass only.
+  },
   kitchenObject(
     'kitchen-dining-set',
     'kitchen.diningSet',

@@ -32,6 +32,7 @@ import livingSofaUrl from '../../../assets/world/ExpiernceRoom/sofa-Photoroom.pn
 import livingSofaLeftUrl from '../../../assets/world/ExpiernceRoom/leftsofa-Photoroom.png'
 import livingSpeakerUrl from '../../../assets/world/ExpiernceRoom/speaker-Photoroom.png'
 import livingBigPlantUrl from '../../../assets/world/special/Big plant.png'
+import hangingPlantUrl from '../../../assets/world/special/Hangingplant.png'
 import hobbiesDumbbellRackUrl from '../../../assets/world/HobbiesRoom/Dumbel rack.png'
 import hobbiesGymStationUrl from '../../../assets/world/HobbiesRoom/workout-Photoroom.png'
 import hobbiesGymFloorUrl from '../../../assets/world/HobbiesRoom/GymFloor.png'
@@ -49,8 +50,19 @@ import entrancePaintingUrl from '../../../assets/world/Entrance/Photo.png'
 import entrancePlantUrl from '../../../assets/world/Entrance/plant-Photoroom.png'
 import educationGlobeUrl from '../../../assets/world/Education/Globe.png'
 import educationBookshelfUrl from '../../../assets/world/Education/shelf-Photoroom.png'
+import educationBooksUrl from '../../../assets/world/Education/Books.png'
+import educationCertificateUrl from '../../../assets/world/Education/certificate.png'
+import educationReadingChairUrl from '../../../assets/world/Education/Edu_chair.png'
+import educationReadingTableUrl from '../../../assets/world/Education/smalltable-Photoroom.png'
+import educationSmallPlantUrl from '../../../assets/world/special/small plant-Photoroom.png'
+import educationReadingCatUrl from '../../../assets/world/special/cat.png'
+import educationPinboardUrl from '../../../assets/world/Education/pin board-Photoroom.png'
+import educationFilesUrl from '../../../assets/world/Education/Files.png'
+import bedroomNightstandUrl from '../../../assets/world/BedRoom/desk-Photoroom.png'
 import wallOneUrl from '../../../assets/world/Walls/Wall one.png'
 import wallTwoUrl from '../../../assets/world/Walls/Wall2.png'
+import frameCodeUrl from '../../../assets/world/Frames/code.png'
+import frameCafeMenuUrl from '../../../assets/world/Frames/menu-Photoroom.png'
 
 /**
  * Maps a WorldObject's stable logical `asset` id (see WorldObject.ts) to the
@@ -94,6 +106,7 @@ export const ASSET_MANIFEST: Record<string, string> = {
   'bedroom.jerseyRack': bedroomJerseyRackUrl,
   'bedroom.hangingShelf': bedroomHangingShelfUrl,
   'bedroom.beanbag': bedroomBeanbagUrl,
+  'bedroom.nightstand': bedroomNightstandUrl,
   // Experience/living-room asset-integration pass (see livingRoom.ts).
   'living.tvConsole': livingTvConsoleUrl,
   'living.storageCabinet': livingStorageCabinetUrl,
@@ -102,6 +115,10 @@ export const ASSET_MANIFEST: Record<string, string> = {
   'living.bookshelf': livingBookshelfUrl,
   'living.tv': livingTvUrl,
   'living.bigPlant': livingBigPlantUrl,
+  // Hanging plant (assets/world/special/Hangingplant.png) — a second,
+  // ceiling/wall-mounted plant style, instantiated twice across the house
+  // (see bedroomRoom.ts / kitchen.ts) — never a second file/manifest entry.
+  'special.hangingPlant': hangingPlantUrl,
   'living.sofa': livingSofaUrl,
   'living.sofaLeft': livingSofaLeftUrl,
   'living.speaker': livingSpeakerUrl,
@@ -127,9 +144,21 @@ export const ASSET_MANIFEST: Record<string, string> = {
   // Education room asset-integration pass (see educationRoom.ts).
   'education.globe': educationGlobeUrl,
   'education.bookshelf': educationBookshelfUrl,
+  // Education study/reading-corner assembly pass (see educationRoom.ts).
+  'education.books': educationBooksUrl,
+  'education.certificate': educationCertificateUrl,
+  'education.readingChair': educationReadingChairUrl,
+  'education.readingTable': educationReadingTableUrl,
+  'education.smallPlant': educationSmallPlantUrl,
+  'education.readingCat': educationReadingCatUrl,
+  'education.pinboard': educationPinboardUrl,
+  'education.files': educationFilesUrl,
   // Decorative architectural wall panels (see walls.ts).
   'walls.wallOne': wallOneUrl,
   'walls.wallTwo': wallTwoUrl,
+  // Framed wall art (assets/world/Frames/*.png) — see projectsRoom.ts/kitchen.ts.
+  'frames.codePoster': frameCodeUrl,
+  'frames.cafeMenu': frameCafeMenuUrl,
 }
 
 export function getFurnitureAssetUrl(assetId: string): string | undefined {

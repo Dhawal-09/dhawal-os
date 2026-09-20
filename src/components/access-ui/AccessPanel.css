@@ -1,0 +1,145 @@
+.access-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--bg-deep, #050b1a);
+}
+
+.access-panel {
+  width: 100%;
+  max-width: 360px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--pixel-border, #1e5fa8);
+  border-radius: 4px;
+  background: var(--panel, #0b2144);
+  color: var(--text, #eaf4ff);
+  text-align: center;
+}
+
+.access-brand {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--cyan, #27d7ff);
+}
+
+.access-subtitle {
+  margin: 0;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--text-muted, #91a9c8);
+}
+
+.access-fields {
+  margin: 4px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.access-fields div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.access-fields dt {
+  color: var(--text-muted, #91a9c8);
+  letter-spacing: 0.05em;
+}
+
+.access-fields dd {
+  margin: 0;
+  color: var(--text, #eaf4ff);
+  font-weight: 600;
+}
+
+.access-session-status {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  color: var(--cyan-bright, #57e8ff);
+}
+
+.access-session-active {
+  color: var(--green, #39f27a);
+}
+
+.access-cta {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 8px;
+  padding: 10px 20px;
+  border: 1px solid var(--blue, #147bff);
+  border-radius: 4px;
+  background: var(--blue, #147bff);
+  color: var(--text, #eaf4ff);
+  font-size: 0.9rem;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
+.access-cta:hover {
+  background: var(--cyan, #27d7ff);
+  border-color: var(--cyan, #27d7ff);
+}
+
+.access-cta:focus-visible {
+  outline: 2px solid var(--cyan-bright, #57e8ff);
+  outline-offset: 2px;
+}
+
+.access-lock-status {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  color: var(--warning, #ffd166);
+}
+
+.access-heading {
+  margin: 0;
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+  color: var(--cyan-bright, #57e8ff);
+}
+
+.access-heading-success {
+  color: var(--green, #39f27a);
+}
+
+.access-steps {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text-muted, #91a9c8);
+  text-align: left;
+}
+
+.access-step-done {
+  color: var(--green, #39f27a);
+}
+
+.access-role {
+  margin: 4px 0 0;
+  color: var(--text-muted, #91a9c8);
+}
+
+.access-disclaimer {
+  margin: 8px 0 0;
+  font-size: 0.7rem;
+  color: var(--text-muted, #91a9c8);
+}

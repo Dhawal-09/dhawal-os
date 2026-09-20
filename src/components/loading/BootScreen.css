@@ -1,0 +1,75 @@
+.boot-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--bg-deep, #050b1a);
+  color: var(--text, #eaf4ff);
+  text-align: center;
+  padding: 16px;
+}
+
+.boot-brand {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--cyan, #27d7ff);
+}
+
+.boot-heading {
+  margin: 0 0 4px;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #91a9c8);
+}
+
+.boot-stages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--text-muted, #91a9c8);
+  min-width: 220px;
+  text-align: left;
+}
+
+.boot-stage-done {
+  color: var(--green, #39f27a);
+}
+
+.boot-progress {
+  width: 220px;
+  height: 8px;
+  margin-top: 8px;
+  border: 1px solid var(--pixel-border, #1e5fa8);
+  border-radius: 2px;
+  background: var(--panel-dark, #06142d);
+  overflow: hidden;
+}
+
+.boot-progress-bar {
+  height: 100%;
+  background: var(--cyan, #27d7ff);
+  transition: width 80ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-progress-bar {
+    transition: none;
+  }
+}
+
+.boot-status {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  color: var(--cyan-bright, #57e8ff);
+}

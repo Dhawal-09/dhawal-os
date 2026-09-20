@@ -1,8 +1,10 @@
 import { useCallback, useReducer, useState } from 'react'
+import { AccessPanel } from '../components/access-ui/AccessPanel'
 import { ErrorScreen } from '../components/error/ErrorScreen'
 import { GameHud } from '../components/game-menu/GameHud'
 import { LandingScreen } from '../components/landing/LandingScreen'
-import { LoadingScreen } from '../components/loading/LoadingScreen'
+import { BootScreen } from '../components/loading/BootScreen'
+import { authManager } from '../game/auth/AuthManager'
 import {
   appLifecycleReducer,
   INITIAL_APP_LIFECYCLE_STATE,
@@ -18,22 +20,25 @@ import { InteractionOverlay } from './InteractionOverlay'
 import './App.css'
 
 /**
- * Owns the small explicit application lifecycle (PHASE-08.5): LANDING ->
- * (START JOURNEY) -> LOADING -> GAME, with an ERROR branch that can retry
- * and an EXIT branch (GAME -> LANDING, PHASE-08.5 follow-up) once the
- * visitor confirms they want to leave. `GameCanvas` — the single Pixi
- * bootstrap path (PHASE-03/07/08) — is only ever mounted once the visitor
- * leaves LANDING, and stays mounted unchanged across the LOADING -> GAME
- * transition so `GameApp`/`GameScene` are created exactly once per game
- * session and never recreated by a re-render.
+ * Owns the small explicit application lifecycle (PHASE-08.5, extended by the
+ * DHAWAL.OS boot + guest-access flow): LANDING -> (START JOURNEY) -> LOADING
+ * -> ACCESS -> GAME, with an ERROR branch that can retry and an EXIT branch
+ * (GAME -> LANDING) once the visitor confirms they want to leave.
+ * `GameCanvas` — the single Pixi bootstrap path — mounts once the visitor
+ * leaves LANDING and stays mounted unchanged through LOADING -> ACCESS ->
+ * GAME, so `GameApp`/`GameScene` are created exactly once per game session;
+ * the world is fully loaded and running *behind* the BootScreen/AccessPanel
+ * overlays, which is what lets ACCESS complete instantly once the guest
+ * clicks ACCESS SYSTEM (PixiJS never even knows authentication exists — see
+ * ARCHITECTURE.md).
  *
- * A `sessionStorage` flag (see `gameSession.ts`) survives a page refresh
- * within the same browser tab/session (never permanently — that's the
- * point of `sessionStorage` over `localStorage`): if the visitor already
- * reached GAME, a refresh re-enters the JS runtime fresh (there is no
- * persisted GameApp — it cannot survive a reload) but skips LANDING and
- * goes straight into a brand-new LOADING -> GAME bootstrap, exactly one
- * new GameApp instance, same as any other LOADING entry.
+ * A `sessionStorage` flag (`gameSession.ts`) survives a page refresh within
+ * the same browser tab/session: if the visitor already reached GAME, a
+ * refresh skips LANDING and goes straight into a brand-new LOADING -> GAME
+ * bootstrap. `AuthManager`'s own persisted guest session (also
+ * `sessionStorage`) additionally skips ACCESS on that same refresh — the
+ * guest already has a session, so `GAME_READY` goes straight to GAME
+ * instead of re-showing the access panel.
  */
 function App() {
   const [lifecycle, dispatch] = useReducer(
@@ -49,17 +54,33 @@ function App() {
   // reuse a prior (failed/exited) GameApp attempt. Bumped only on retry
   // and on confirmed exit, never on any other lifecycle transition.
   const [sessionKey, setSessionKey] = useState(0)
+  // True once GameCanvas's real onReady has fired for the current attempt
+  // — the only real signal BootScreen gates its own completion on
+  // (BootScreen.tsx). Reset on every fresh attempt (retry/exit).
+  const [engineReady, setEngineReady] = useState(false)
 
   const handleStartJourney = useCallback(() => {
     dispatch({ type: 'START_JOURNEY' })
   }, [])
 
   const handleGameReady = useCallback(() => {
-    // "Successfully enters the game" — deliberately not on START_JOURNEY,
-    // so a refresh mid-LOADING (before the game has actually proven it
-    // works) still lands back in LOADING to try again, not a false GAME.
+    // "The engine successfully initialized" — deliberately not on
+    // START_JOURNEY, so a refresh mid-LOADING (before the game has
+    // actually proven it works) still lands back in LOADING to try again,
+    // not a false GAME/ACCESS.
     markGameSessionActive()
-    dispatch({ type: 'GAME_READY' })
+    setEngineReady(true)
+  }, [])
+
+  const handleBootComplete = useCallback(() => {
+    dispatch({
+      type: 'GAME_READY',
+      alreadyAuthenticated: authManager.isAuthenticated(),
+    })
+  }, [])
+
+  const handleAccessGranted = useCallback(() => {
+    dispatch({ type: 'ACCESS_GRANTED' })
   }, [])
 
   const handleGameError = useCallback((error: unknown) => {
@@ -68,12 +89,15 @@ function App() {
   }, [])
 
   const handleRetry = useCallback(() => {
+    setEngineReady(false)
     setSessionKey((key) => key + 1)
     dispatch({ type: 'RETRY' })
   }, [])
 
   const handleExitConfirmed = useCallback(() => {
     clearGameSession()
+    authManager.logout()
+    setEngineReady(false)
     setSessionKey((key) => key + 1)
     dispatch({ type: 'EXIT' })
   }, [])
@@ -82,11 +106,13 @@ function App() {
     return <LandingScreen onStartJourney={handleStartJourney} />
   }
 
-  // LOADING, GAME, and ERROR all share the same portfolio shell — the
-  // conventional navigation and panel host work independently of whether
-  // the Pixi world itself is loading, ready, or failed (ACCESSIBILITY.md
-  // "a recruiter must be able to bypass exploration entirely").
-  const mountGameCanvas = lifecycle === 'loading' || lifecycle === 'game'
+  // LOADING, ACCESS, GAME, and ERROR all share the same portfolio shell —
+  // the conventional navigation and panel host work independently of
+  // whether the Pixi world itself is loading, gated behind guest access,
+  // ready, or failed (ACCESSIBILITY.md "a recruiter must be able to bypass
+  // exploration entirely").
+  const mountGameCanvas =
+    lifecycle === 'loading' || lifecycle === 'access' || lifecycle === 'game'
 
   return (
     <div className="app-shell">
@@ -107,7 +133,15 @@ function App() {
         )}
       </main>
       <InteractionOverlay />
-      {lifecycle === 'loading' && <LoadingScreen />}
+      {lifecycle === 'loading' && (
+        <BootScreen
+          engineReady={engineReady}
+          onBootComplete={handleBootComplete}
+        />
+      )}
+      {lifecycle === 'access' && (
+        <AccessPanel onAccessGranted={handleAccessGranted} />
+      )}
       {lifecycle === 'error' && <ErrorScreen onRetry={handleRetry} />}
     </div>
   )

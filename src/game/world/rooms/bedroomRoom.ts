@@ -107,4 +107,13 @@ export const bedroomObjects: WorldObject[] = [
     layer: 'object',
     transform: { width: 160 },
   },
+  {
+    id: 'bedroom-hanging-plant',
+    asset: 'special.hangingPlant',
+    label: 'HANGING PLANT',
+    position: { x: 560, y: 260 }, // WORLD POSITION — SAFE TO TUNE — back wall gap between the jersey rack (x≤530) and the wall art (x≥715)
+    layer: 'object',
+    transform: { width: 130 },
+    // No `collision` — wall/ceiling-mounted decor, visual placement pass only.
+  },
 ]
