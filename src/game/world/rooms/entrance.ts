@@ -251,7 +251,7 @@ export const entranceObjects: WorldObject[] = [
   }), // WORLD POSITION — SAFE TO TUNE
   entranceObject('entrance-plant-2', 'plant', 'POTTED PLANT', {
     x: 500,
-    y: 950,
+    y: 1020,
   }), // WORLD POSITION — SAFE TO TUNE
   entranceObject('entrance-plant-3', 'plant', 'POTTED PLANT', {
     x: 1300,

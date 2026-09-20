@@ -79,4 +79,13 @@ export const projectsObjects: WorldObject[] = [
     collision: centeredCollider({ x: 1000, y: 400 }),
     interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_PROJECTS' },
   },
+  {
+    id: 'projects-code-poster',
+    asset: 'frames.codePoster',
+    label: 'WALL FRAME',
+    position: { x: 1230, y: 170 }, // WORLD POSITION — SAFE TO TUNE — open wall gap between the desk (x≤1179) and the kitchen fridge (x≥1395)
+    layer: 'object',
+    transform: { width: 60 },
+    // No `collision` — wall-mounted decor, visual placement pass only.
+  },
 ]
