@@ -7,7 +7,11 @@ import { CollisionSystem } from './world/CollisionSystem'
 import { InteractionSystem } from './world/InteractionSystem'
 import { World } from './world/World'
 import { WORLD_HEIGHT, WORLD_WIDTH } from './world/worldConstants'
-import { EXTRA_COLLIDERS, worldObjects } from './world/worldObjects'
+import {
+  EXTRA_COLLIDERS,
+  VISIBLE_COLLIDERS,
+  worldObjects,
+} from './world/worldObjects'
 
 /**
  * Shows red collider-outline debug overlays (world furniture + the
@@ -49,6 +53,7 @@ export class GameScene extends Container {
       worldObjects,
       EXTRA_COLLIDERS,
       DEBUG_COLLISION_OVERLAY,
+      VISIBLE_COLLIDERS,
     )
     this.addChild(this.world)
 

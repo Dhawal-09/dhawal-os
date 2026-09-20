@@ -71,6 +71,77 @@ const EDUCATION_DESK_POSITION = { x: 625, y: 1060 } // WORLD POSITION — SAFE T
  * change to the collision algorithm itself, and never rendered outside the
  * dev-only, opt-in collision debug overlay (World.ts).
  */
+/**
+ * Placeholder architectural wall collider for the Education room —
+ * independent, hand-authored geometry (same "invisible, resolved through
+ * CollisionSystem's extraObstacles list" precedent as the desk's own
+ * baked-in chair collider above, `hobbiesColliders`, `skillsColliders`, and
+ * `entranceColliders`'s mantel-lip collider), never a change to the
+ * collision algorithm itself, and never rendered outside the dev-only,
+ * opt-in collision debug overlay (World.ts).
+ *
+ * CUSTOMIZE ME: `x`/`y` is the collider's top-left corner, `width`/`height`
+ * its size, all in world px — edit these four numbers directly to place and
+ * size it wherever/however large it needs to be. Add more plain `{x, y,
+ * width, height}` objects to this array for additional wall segments; none
+ * of them render anything, so there's no matching asset to keep in sync.
+ */
+const EDUCATION_WALL_COLLIDER: Collider = {  //shelf one 
+  x: 110, 
+  y: 800, 
+  width: 240, 
+  height: 170, 
+}
+
+/** Copy #2 of the wall collider above — same shape, same handling; only the numbers differ. */
+const EDUCATION_WALL_COLLIDER_2: Collider = {  // DEsk one
+  x: 480,        
+  y: 800, 
+  width: 285, 
+  height: 150, 
+}
+
+/** Copy #3 of the wall collider above. */
+const EDUCATION_WALL_COLLIDER_3: Collider = {  //small
+  x: 140, 
+  y: 750, 
+  width: 70, 
+  height: 40, 
+}
+
+/** Copy #4 of the wall collider above. */
+const EDUCATION_WALL_COLLIDER_4: Collider = {  //bottom
+  x: 740,   
+  y: 1110,  
+  width: 30, 
+  height: 90,   
+}
+
+const EDUCATION_WALL_COLLIDER_5: Collider = {    //side wall
+  x: 740,   
+  y: 940,   
+  width: 30,  
+  height: 100,  
+}
+const EDUCATION_WALL_COLLIDER_6: Collider = {    //side wall
+  x: 230,   
+  y: 1110,   
+  width: 100,  
+  height: 100,  
+}
+/**
+ * Colliders drawn as a yellow bordered box in dev, so you can see what you're
+ * tuning. Remove an entry (or empty this array) when it's placed.
+ */
+export const educationVisibleColliders: readonly Collider[] = [
+  EDUCATION_WALL_COLLIDER,
+  EDUCATION_WALL_COLLIDER_2,
+  EDUCATION_WALL_COLLIDER_3,
+  EDUCATION_WALL_COLLIDER_4,
+  EDUCATION_WALL_COLLIDER_5,
+  EDUCATION_WALL_COLLIDER_6
+]
+
 export const educationColliders: readonly Collider[] = [
   contentAlignedCollider(
     EDUCATION_DESK_POSITION,
@@ -78,6 +149,12 @@ export const educationColliders: readonly Collider[] = [
     EDUCATION_CHAIR_BBOX,
     EDUCATION_DESK_SCALE,
   ),
+  EDUCATION_WALL_COLLIDER,
+  EDUCATION_WALL_COLLIDER_2,
+  EDUCATION_WALL_COLLIDER_3,
+  EDUCATION_WALL_COLLIDER_4,
+  EDUCATION_WALL_COLLIDER_5,
+  EDUCATION_WALL_COLLIDER_6
 ]
 
 /**
@@ -456,8 +533,18 @@ export const educationObjects: WorldObject[] = [
     position: readingCatPosition,
     layer: 'object',
     transform: { width: READING_CAT_TARGET_WIDTH },
-    // No `collision` — a flat rug (with its sleeping cat baked in), never a
-    // player obstacle.
+    // Content-aligned collider over the cat/rug's own measured footprint —
+    // same approach as every other solid object in this room. Requested
+    // explicitly (this asset was originally decorative-only); the "[E]
+    // INTERACT" prompt below is entirely generic (Player.ts) and needs no
+    // extra UI work of its own.
+    collision: contentAlignedCollider(
+      readingCatPosition,
+      READING_CAT_NATURAL_SIZE,
+      READING_CAT_CONTENT_BBOX,
+      READING_CAT_SCALE,
+    ),
+    interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_CAT' },
   },
   {
     id: 'education-reading-chair',

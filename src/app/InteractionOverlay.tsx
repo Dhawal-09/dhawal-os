@@ -7,6 +7,7 @@ import {
   type ReactElement,
 } from 'react'
 import { AboutPanel } from '../components/about-ui/AboutPanel'
+import { CatPanel } from '../components/cat-ui/CatPanel'
 import { CertificatesPanel } from '../components/certificates-ui/CertificatesPanel'
 import { ContactPanel } from '../components/contact-ui/ContactPanel'
 import { EducationPanel } from '../components/education-ui/EducationPanel'
@@ -30,6 +31,7 @@ const TITLE_BY_EVENT: Partial<Record<GameEvent, string>> = {
   OPEN_RESUME: 'Resume',
   OPEN_ABOUT: 'About Me',
   OPEN_CONTACT: 'Contact',
+  OPEN_CAT: 'Whiskers',
 }
 
 const PANEL_BY_EVENT: Partial<Record<GameEvent, () => ReactElement>> = {
@@ -41,6 +43,7 @@ const PANEL_BY_EVENT: Partial<Record<GameEvent, () => ReactElement>> = {
   OPEN_RESUME: ResumePanel,
   OPEN_ABOUT: AboutPanel,
   OPEN_CONTACT: ContactPanel,
+  OPEN_CAT: CatPanel,
 }
 
 const FOCUSABLE_SELECTOR =
