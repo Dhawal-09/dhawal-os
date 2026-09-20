@@ -2,7 +2,11 @@ import type { Collider, WorldObject } from './WorldObject'
 import { WORLD_HEIGHT, WORLD_WIDTH } from './worldConstants'
 import { aboutObjects } from './rooms/aboutRoom'
 import { bedroomObjects } from './rooms/bedroomRoom'
-import { educationColliders, educationObjects } from './rooms/educationRoom'
+import {
+  educationColliders,
+  educationObjects,
+  educationVisibleColliders,
+} from './rooms/educationRoom'
 import { entranceColliders, entranceObjects } from './rooms/entrance'
 import { hobbiesColliders, hobbiesObjects } from './rooms/hobbiesRoom'
 import { kitchenObjects } from './rooms/kitchen'
@@ -37,6 +41,11 @@ export const EXTRA_COLLIDERS: readonly Collider[] = [
   ...skillsColliders,
   ...educationColliders,
   ...entranceColliders,
+]
+
+/** Colliders outlined in yellow in dev while they're being placed (no env var needed) — see World.ts. */
+export const VISIBLE_COLLIDERS: readonly Collider[] = [
+  ...educationVisibleColliders,
 ]
 
 /**

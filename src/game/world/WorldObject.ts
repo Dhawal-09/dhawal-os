@@ -30,6 +30,7 @@ export type InteractionAction =
   | 'OPEN_RESUME'
   | 'OPEN_ABOUT'
   | 'OPEN_CONTACT'
+  | 'OPEN_CAT'
 
 /**
  * Independently configurable per-asset visual transform. `width`/`height`

@@ -9,6 +9,7 @@ import {
   createCollisionDebugOverlay,
   createDebugGrid,
   createDevWorldBoundsAnnotation,
+  createVisibleColliderOutlines,
   createWorldBoundsPlaceholder,
 } from './worldPlaceholders'
 
@@ -47,6 +48,7 @@ export class World extends Container {
     objects: readonly WorldObject[],
     extraColliders: readonly Collider[] = [],
     debugCollisionOverlay = false,
+    visibleColliders: readonly Collider[] = [],
   ) {
     super({ label: 'World' })
 
@@ -65,6 +67,12 @@ export class World extends Container {
 
     for (const object of objects) {
       this.layerFor(object.layer).addChild(createWorldObjectView(object))
+    }
+
+    // Colliders the author is still placing — outlined in dev without needing
+    // the debug env var (`visibleColliders`, see worldObjects.ts).
+    if (import.meta.env.DEV && visibleColliders.length > 0) {
+      this.addChild(createVisibleColliderOutlines(visibleColliders))
     }
 
     // Drawn last (on top of everything) so collider outlines are never

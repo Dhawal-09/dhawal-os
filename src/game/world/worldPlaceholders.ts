@@ -166,6 +166,26 @@ export function createCollisionDebugOverlay(
   return view
 }
 
+/**
+ * Always-on (dev-only) bright outline for colliders the author is actively
+ * placing/tuning — unlike `createCollisionDebugOverlay`, no env var needed.
+ * Yellow with a light fill so it stands apart from the red debug boxes.
+ */
+export function createVisibleColliderOutlines(
+  colliders: readonly Collider[],
+): Container {
+  const view = new Container({ label: 'VisibleColliders' })
+  for (const collider of colliders) {
+    view.addChild(
+      new Graphics()
+        .rect(collider.x, collider.y, collider.width, collider.height)
+        .fill({ color: 0xffe14d, alpha: 0.25 })
+        .stroke({ width: 3, color: 0xffe14d }),
+    )
+  }
+  return view
+}
+
 function createColliderOutline(collider: Collider): Graphics {
   return new Graphics()
     .rect(collider.x, collider.y, collider.width, collider.height)

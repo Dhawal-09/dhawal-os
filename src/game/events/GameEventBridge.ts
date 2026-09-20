@@ -17,6 +17,7 @@ export type GameEvent =
   | 'OPEN_RESUME'
   | 'OPEN_ABOUT'
   | 'OPEN_CONTACT'
+  | 'OPEN_CAT'
   | 'PAUSE_WORLD'
   | 'CLOSE_OVERLAY'
   | 'RETURN_TO_WORLD'
@@ -38,6 +39,7 @@ export const OPEN_EVENTS: ReadonlySet<GameEvent> = new Set<GameEvent>([
   'OPEN_RESUME',
   'OPEN_ABOUT',
   'OPEN_CONTACT',
+  'OPEN_CAT',
 ])
 
 /**
