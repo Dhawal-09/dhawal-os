@@ -12,6 +12,7 @@ import { hobbiesColliders, hobbiesObjects } from './rooms/hobbiesRoom'
 import { kitchenObjects } from './rooms/kitchen'
 import { livingRoomObjects } from './rooms/livingRoom'
 import { projectsObjects } from './rooms/projectsRoom'
+import { newColliders, visibleNewColliders } from './rooms/newColliders'
 import { skillsColliders, skillsObjects } from './rooms/skillsRoom'
 import { wallObjects } from './rooms/walls'
 import { ROOM_BOUNDARY_COLLIDERS } from './rooms/worldObjectHelpers'
@@ -41,11 +42,13 @@ export const EXTRA_COLLIDERS: readonly Collider[] = [
   ...skillsColliders,
   ...educationColliders,
   ...entranceColliders,
+  ...newColliders, // colliders added later — see rooms/newColliders.ts
 ]
 
 /** Colliders outlined in yellow in dev while they're being placed (no env var needed) — see World.ts. */
 export const VISIBLE_COLLIDERS: readonly Collider[] = [
   ...educationVisibleColliders,
+  ...visibleNewColliders,
 ]
 
 /**

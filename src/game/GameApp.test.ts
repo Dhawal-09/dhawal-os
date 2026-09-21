@@ -14,6 +14,12 @@ interface Destroyable {
   destroy(options?: unknown): void
 }
 
+// The real preloader fetches ~70 PNGs through Pixi's Assets loader, which has
+// no meaning in jsdom — it has its own unit test (preloadWorldAssets.test.ts).
+vi.mock('./world/preloadWorldAssets', () => ({
+  preloadWorldAssets: vi.fn(async () => {}),
+}))
+
 vi.mock('pixi.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('pixi.js')>()
 

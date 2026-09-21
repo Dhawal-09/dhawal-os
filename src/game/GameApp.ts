@@ -1,5 +1,6 @@
 import { Application } from 'pixi.js'
 import { GameScene } from './GameScene'
+import { preloadWorldAssets } from './world/preloadWorldAssets'
 
 export interface GameAppOptions {
   width: number
@@ -28,19 +29,25 @@ export class GameApp {
   static async create(options: GameAppOptions): Promise<GameApp> {
     const app = new Application()
 
-    await app.init({
-      width: options.width,
-      height: options.height,
-      // Matches the --bg-deep design token (App.css/index.css) so the
-      // Camera's letterbox bars blend seamlessly with the surrounding page
-      // instead of showing a visible rectangle seam (PHASE 09 "fullscreen
-      // presentation").
-      background: options.backgroundColor ?? 0x050b1a,
-      resolution: Math.min(window.devicePixelRatio || 1, MAX_RESOLUTION),
-      autoDensity: true,
-      antialias: false,
-      hello: false,
-    })
+    // Renderer init and world-artwork preload run in parallel — the game only
+    // counts as "ready" (and the boot screen only lifts) once both are done,
+    // so the room never appears half-drawn on a cold first load.
+    await Promise.all([
+      app.init({
+        width: options.width,
+        height: options.height,
+        // Matches the --bg-deep design token (App.css/index.css) so the
+        // Camera's letterbox bars blend seamlessly with the surrounding page
+        // instead of showing a visible rectangle seam (PHASE 09 "fullscreen
+        // presentation").
+        background: options.backgroundColor ?? 0x050b1a,
+        resolution: Math.min(window.devicePixelRatio || 1, MAX_RESOLUTION),
+        autoDensity: true,
+        antialias: false,
+        hello: false,
+      }),
+      preloadWorldAssets(),
+    ])
 
     const scene = new GameScene()
     app.stage.addChild(scene)

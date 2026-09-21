@@ -233,7 +233,7 @@ export const livingRoomObjects: WorldObject[] = [
     id: 'living-bookshelf',
     asset: 'living.bookshelf',
     label: 'BOOKSHELF',
-    position: { x: 1594, y: 675 }, // WORLD POSITION — SAFE TO TUNE
+    position: { x: 1194, y: 675 }, // WORLD POSITION — SAFE TO TUNE
     layer: 'object',
     transform: { width: 200 },
   },

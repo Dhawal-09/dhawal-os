@@ -12,6 +12,11 @@ import kitchenCoffeeMachineUrl from '../../../assets/world/Kitchen/coffee-Makaer
 import kitchenHangingPansUrl from '../../../assets/world/Kitchen/Hanging Pans.png'
 import kitchenWallShelfUrl from '../../../assets/world/Kitchen/Jars.png'
 import kitchenDiningSetUrl from '../../../assets/world/Kitchen/Dining.png'
+import kitchenDiningTableUrl from '../../../assets/world/Kitchen/Dining/DiningTable.png'
+import kitchenDiningChairBackUrl from '../../../assets/world/Kitchen/Dining/BackChaire.png'
+import kitchenDiningChairFrontUrl from '../../../assets/world/Kitchen/Dining/Frontchair.png'
+import kitchenDiningChairLeftUrl from '../../../assets/world/Kitchen/Dining/LeftChair.png'
+import kitchenDiningChairRightUrl from '../../../assets/world/Kitchen/Dining/RightChair.png'
 import kitchenLightUrl from '../../../assets/world/Kitchen/Right.png'
 import kitchenPropHolderUrl from '../../../assets/world/Kitchen/Utensil/holder.png'
 import kitchenPropSaltUrl from '../../../assets/world/Kitchen/Utensil/salt.png'
@@ -94,7 +99,12 @@ export const ASSET_MANIFEST: Record<string, string> = {
   'kitchen.coffeeMachine': kitchenCoffeeMachineUrl,
   'kitchen.hangingPans': kitchenHangingPansUrl,
   'kitchen.wallShelf': kitchenWallShelfUrl,
-  'kitchen.diningSet': kitchenDiningSetUrl,
+  'kitchen.diningSet': kitchenDiningSetUrl, // legacy single-image set — superseded by the five separate pieces below
+  'kitchen.diningTable': kitchenDiningTableUrl,
+  'kitchen.diningChairBack': kitchenDiningChairBackUrl,
+  'kitchen.diningChairFront': kitchenDiningChairFrontUrl,
+  'kitchen.diningChairLeft': kitchenDiningChairLeftUrl,
+  'kitchen.diningChairRight': kitchenDiningChairRightUrl,
   'kitchen.light': kitchenLightUrl,
   'kitchen.propHolder': kitchenPropHolderUrl,
   'kitchen.propSalt': kitchenPropSaltUrl,

@@ -1,5 +1,5 @@
 import type { WorldObject } from '../WorldObject'
-import { scaleForWidth } from './worldObjectHelpers'
+import { contentAlignedCollider, scaleForWidth } from './worldObjectHelpers'
 
 /**
  * KITCHEN — the tiled-floor nook right of the main work desk
@@ -41,7 +41,11 @@ const KITCHEN_ASSET_NATURAL_SIZE = {
   coffeeMachine: { width: 1024, height: 765 }, // coffee-Makaer.png
   hangingPans: { width: 1200, height: 896 }, // Hanging Pans.png
   wallShelf: { width: 1200, height: 896 }, // Jars.png
-  diningSet: { width: 2400, height: 1792 }, // Dining.png (table + 4 chairs, one asset)
+  diningTable: { width: 1376, height: 768 }, // Dining/DiningTable.png
+  diningChairBack: { width: 2400, height: 1792 }, // Dining/BackChaire.png
+  diningChairFront: { width: 1200, height: 896 }, // Dining/Frontchair.png
+  diningChairLeft: { width: 1024, height: 765 }, // Dining/LeftChair.png
+  diningChairRight: { width: 1200, height: 896 }, // Dining/RightChair.png
   light: { width: 1200, height: 896 }, // Right.png
   propHolder: { width: 142, height: 241 }, // Utensil/holder.png
   propSalt: { width: 105, height: 184 }, // Utensil/salt.png
@@ -58,7 +62,11 @@ const KITCHEN_ASSET_CONTENT_BBOX = {
   coffeeMachine: { minX: 399, minY: 245, maxX: 624, maxY: 518 },
   hangingPans: { minX: 134, minY: 139, maxX: 1065, maxY: 635 },
   wallShelf: { minX: 178, minY: 279, maxX: 1021, maxY: 597 },
-  diningSet: { minX: 298, minY: 144, maxX: 2101, maxY: 1571 },
+  diningTable: { minX: 446, minY: 134, maxX: 928, maxY: 713 },
+  diningChairBack: { minX: 794, minY: 214, maxX: 1605, maxY: 1676 },
+  diningChairFront: { minX: 444, minY: 130, maxX: 779, maxY: 770 },
+  diningChairLeft: { minX: 290, minY: 93, maxX: 723, maxY: 715 },
+  diningChairRight: { minX: 382, minY: 88, maxX: 851, maxY: 822 },
   light: { minX: 499, minY: 274, maxX: 712, maxY: 549 },
   propHolder: { minX: 24, minY: 30, maxX: 119, maxY: 210 },
   propSalt: { minX: 23, minY: 25, maxX: 76, maxY: 145 },
@@ -85,7 +93,11 @@ const KITCHEN_TARGET_WIDTH = {
   coffeeMachine: 245.76,
   hangingPans: 160,
   wallShelf: 170,
-  diningSet: 432,
+  diningTable: 342.6, // visible ~120px wide~
+  diningChairBack: 177,
+  diningChairFront: 177,
+  diningChairLeft: 157,
+  diningChairRight: 157,
   light: 202,
   propHolder: 31.24,
   propSalt: 23.1,
@@ -123,9 +135,25 @@ const KITCHEN_SCALE = {
     KITCHEN_ASSET_NATURAL_SIZE.wallShelf,
     KITCHEN_TARGET_WIDTH.wallShelf,
   ),
-  diningSet: scaleForWidth(
-    KITCHEN_ASSET_NATURAL_SIZE.diningSet,
-    KITCHEN_TARGET_WIDTH.diningSet,
+  diningTable: scaleForWidth(
+    KITCHEN_ASSET_NATURAL_SIZE.diningTable,
+    KITCHEN_TARGET_WIDTH.diningTable,
+  ),
+  diningChairBack: scaleForWidth(
+    KITCHEN_ASSET_NATURAL_SIZE.diningChairBack,
+    KITCHEN_TARGET_WIDTH.diningChairBack,
+  ),
+  diningChairFront: scaleForWidth(
+    KITCHEN_ASSET_NATURAL_SIZE.diningChairFront,
+    KITCHEN_TARGET_WIDTH.diningChairFront,
+  ),
+  diningChairLeft: scaleForWidth(
+    KITCHEN_ASSET_NATURAL_SIZE.diningChairLeft,
+    KITCHEN_TARGET_WIDTH.diningChairLeft,
+  ),
+  diningChairRight: scaleForWidth(
+    KITCHEN_ASSET_NATURAL_SIZE.diningChairRight,
+    KITCHEN_TARGET_WIDTH.diningChairRight,
   ),
   light: scaleForWidth(
     KITCHEN_ASSET_NATURAL_SIZE.light,
@@ -156,16 +184,28 @@ function kitchenObject(
   label: string,
   visible: { x: number; y: number },
   naturalSize: { readonly width: number; readonly height: number },
-  contentBBox: { readonly maxY: number },
+  contentBBox: {
+    readonly minX: number
+    readonly minY: number
+    readonly maxX: number
+    readonly maxY: number
+  },
   scale: number,
   targetWidth: number,
   rotationDegrees = 0,
+  solid = false,
 ): WorldObject {
+  const position = kitchenPositionForFloorPoint(
+    visible,
+    naturalSize,
+    contentBBox,
+    scale,
+  )
   return {
     id,
     asset,
     label,
-    position: kitchenPositionForFloorPoint(visible, naturalSize, contentBBox, scale),
+    position,
     layer: 'object',
     transform: {
       width: targetWidth,
@@ -173,7 +213,11 @@ function kitchenObject(
         rotation: (rotationDegrees * Math.PI) / 180,
       }),
     },
-    // No `collision` — visual placement pass only.
+    // `solid` (default false) adds a collider matching the asset's own measured
+    // visible footprint; every other kitchen piece stays visual-only.
+    ...(solid && {
+      collision: contentAlignedCollider(position, naturalSize, contentBBox, scale),
+    }),
   }
 }
 
@@ -317,14 +361,66 @@ export const kitchenObjects: WorldObject[] = [
     transform: { width: 55 },
     // No `collision` — wall/ceiling-mounted decor, visual placement pass only.
   },
+  // Dining set — four separate chairs first, then the table LAST so it draws
+  // on top of all of them (World.ts draws array order, not a Y-sort).
   kitchenObject(
-    'kitchen-dining-set',
-    'kitchen.diningSet',
+    'kitchen-dining-chair-back',
+    'kitchen.diningChairBack',
+    'DINING CHAIR',
+    { x: 1670, y: 689 }, // WORLD POSITION — SAFE TO TUNE — behind the table
+    KITCHEN_ASSET_NATURAL_SIZE.diningChairBack,
+    KITCHEN_ASSET_CONTENT_BBOX.diningChairBack,
+    KITCHEN_SCALE.diningChairBack,
+    KITCHEN_TARGET_WIDTH.diningChairBack,
+    0,
+    true, // solid — collider matches the visible footprint
+  ),
+  kitchenObject(
+    'kitchen-dining-chair-left',
+    'kitchen.diningChairLeft',
+    'DINING CHAIR',
+    { x: 1580, y: 630 }, // WORLD POSITION — SAFE TO TUNE — left of the table
+    KITCHEN_ASSET_NATURAL_SIZE.diningChairLeft,
+    KITCHEN_ASSET_CONTENT_BBOX.diningChairLeft,
+    KITCHEN_SCALE.diningChairLeft,
+    KITCHEN_TARGET_WIDTH.diningChairLeft,
+    0,
+    true, // solid — collider matches the visible footprint
+  ),
+  kitchenObject(
+    'kitchen-dining-chair-right',
+    'kitchen.diningChairRight',
+    'DINING CHAIR',
+    { x: 1745, y: 630 }, // WORLD POSITION — SAFE TO TUNE — right of the table
+    KITCHEN_ASSET_NATURAL_SIZE.diningChairRight,
+    KITCHEN_ASSET_CONTENT_BBOX.diningChairRight,
+    KITCHEN_SCALE.diningChairRight,
+    KITCHEN_TARGET_WIDTH.diningChairRight,
+    0,
+    true, // solid — collider matches the visible footprint
+  ),
+  kitchenObject(
+    'kitchen-dining-chair-front',
+    'kitchen.diningChairFront',
+    'DINING CHAIR',
+    { x: 1665, y: 570 }, // WORLD POSITION — SAFE TO TUNE — in front of the table
+    KITCHEN_ASSET_NATURAL_SIZE.diningChairFront,
+    KITCHEN_ASSET_CONTENT_BBOX.diningChairFront,
+    KITCHEN_SCALE.diningChairFront,
+    KITCHEN_TARGET_WIDTH.diningChairFront,
+    0,
+    true, // solid — collider matches the visible footprint
+  ),
+  kitchenObject(
+    'kitchen-dining-table',
+    'kitchen.diningTable',
     'DINING TABLE',
-    { x: 1680, y: 600 }, // WORLD POSITION — SAFE TO TUNE — open floor, right of the SKILLS marker, per reference
-    KITCHEN_ASSET_NATURAL_SIZE.diningSet,
-    KITCHEN_ASSET_CONTENT_BBOX.diningSet,
-    KITCHEN_SCALE.diningSet,
-    KITCHEN_TARGET_WIDTH.diningSet,
+    { x: 1670, y: 680 }, // WORLD POSITION — SAFE TO TUNE — drawn after all four chairs, so it sits on top of them
+    KITCHEN_ASSET_NATURAL_SIZE.diningTable,
+    KITCHEN_ASSET_CONTENT_BBOX.diningTable,
+    KITCHEN_SCALE.diningTable,
+    KITCHEN_TARGET_WIDTH.diningTable,
+    0,
+    true, // solid — collider matches the visible footprint
   ),
 ]
