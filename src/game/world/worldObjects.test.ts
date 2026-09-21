@@ -68,6 +68,9 @@ describe('worldObjects', () => {
       'living-tv-console',
       'living-tv',
       'living-speaker',
+      'hobbies-dumbbell-rack',
+      'hobbies-gym-station',
+      'hobbies-stand',
       // 'wall-one' is deliberately off by a larger margin than the rest:
       // its own content isn't centered in its canvas at all (flush-left),
       // so `position` is intentionally shifted away from the content
@@ -356,19 +359,23 @@ describe('structural: bed + door (PHASE 09.1)', () => {
   it('a player-sized body cannot move through the door — the CollisionSystem stops it at the door footprint', () => {
     const door = findStructural('door')
     const mat = worldObjects.find((object) => object.id === 'entrance-mat')!
+    // Door-only system: the gym's dumbbell rack (hobbiesRoom.ts) now has a
+    // solid, asset-sized collider whose right edge extends past the door's
+    // left edge, right above the door, so testing against every object would
+    // stop the player at the rack instead of the door. Any furniture placed
+    // near the door later would do the same — this test is about the door.
     const collisionSystem = CollisionSystem.fromWorldObjects(
-      worldObjects,
+      [door],
       WORLD_WIDTH,
       WORLD_HEIGHT,
     )
 
     const playerWidth = 20
     const playerHeight = 12
-    // The doormat (entrance.ts) now has its own asset-sized collider sitting
-    // directly in front of the door, narrower than the door itself — this
-    // walks down a column between the door's left edge and the mat's left
-    // edge, clear of the mat, so this test still isolates the door's own
-    // blocking behavior rather than the mat's.
+    // The doormat (entrance.ts) has its own asset-sized collider directly in
+    // front of the door, narrower than the door itself — this walks down a
+    // column between the door's left edge and the mat's left edge, clear of
+    // the mat's footprint.
     const startRect = {
       x: (door.collision!.x + mat.collision!.x) / 2 - playerWidth / 2,
       y: door.collision!.y - 50,

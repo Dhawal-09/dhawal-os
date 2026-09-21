@@ -1,15 +1,20 @@
 import type { AssetTransform, Collider, WorldObject } from '../WorldObject'
-import { BOTTOM_WALL_INNER_Y } from './worldObjectHelpers'
+import {
+  BOTTOM_WALL_INNER_Y,
+  contentAlignedCollider,
+  placeByVisibleContent,
+} from './worldObjectHelpers'
 
 /**
  * BOTTOM-CENTER: the Hobbies/gym room. Only the two currently-approved gym
  * assets exist (vertical dumbbell rack + a combined home-gym-station/bench
  * unit) — no football storage/footballs art has been generated yet, so
  * neither is added (per "do not invent missing assets"), and the punching
- * bag is explicitly out of scope for this pass. The two furniture items
- * have no collision, no interaction (there is no "hobbies" content
- * marker/action in the interaction system yet), same precedent as
- * kitchen.ts.
+ * bag is explicitly out of scope for this pass. The three big floor pieces
+ * — dumbbell rack, gym station and stand — are solid (see
+ * `spriteFootprintCollider` below); everything else here is visual-only.
+ * No interaction (there is no "hobbies" content marker/action in the
+ * interaction system yet).
  */
 
 /**
@@ -215,6 +220,63 @@ const footballRackFit = fitContentToRect(
   },
 )
 
+/**
+ * Wall trophy plaque, mirror and floor stand — each measured from its own
+ * PNG's alpha channel and placed by *visible* size/position via
+ * `placeByVisibleContent`, so the numbers below are what you actually see.
+ */
+const WALL_TROPHY_PLACEMENT = placeByVisibleContent(
+  { width: 1024, height: 559 }, // stand-Photoroom.png
+  { minX: 357, maxX: 666, maxY: 451 },
+  90, // visible width — SAFE TO TUNE
+  { x: 850, y: 985 }, // WORLD POSITION — SAFE TO TUNE — brick wall, left of the artwork
+)
+const MIRROR_PLACEMENT = placeByVisibleContent(
+  { width: 1024, height: 559 }, // mirror-Photoroom.png
+  { minX: 383, maxX: 631, maxY: 486 },
+  55, // visible width — SAFE TO TUNE
+  { x: 935, y: 995 }, // WORLD POSITION — SAFE TO TUNE — brick wall, between the trophy and the artwork
+)
+const STAND_PLACEMENT = placeByVisibleContent(
+  { width: 1581, height: 1025 }, // Stand.png
+  { minX: 607, maxX: 1010, maxY: 861 },
+  62, // visible width — SAFE TO TUNE
+  { x: 1010, y: 1175 }, // WORLD POSITION — SAFE TO TUNE — gym floor, between the dumbbell rack and the gym station
+)
+
+/**
+ * Natural canvas size + measured opaque-content bbox (alpha-channel scan) of
+ * the three solid gym pieces. The colliders below are derived from these, so
+ * each one is exactly the size of what's visible in its image — not the
+ * padded canvas.
+ */
+const DUMBBELL_RACK_NATURAL_SIZE = { width: 1200, height: 896 } // Dumbel rack.png
+const DUMBBELL_RACK_CONTENT_BBOX = { minX: 232, minY: 245, maxX: 967, maxY: 673 }
+const GYM_STATION_NATURAL_SIZE = { width: 1024, height: 1024 } // workout-Photoroom.png
+const GYM_STATION_CONTENT_BBOX = { minX: 276, minY: 147, maxX: 747, maxY: 916 }
+const STAND_NATURAL_SIZE = { width: 1581, height: 995 } // Stand.png (true file size)
+const STAND_CONTENT_BBOX = { minX: 607, minY: 150, maxX: 1010, maxY: 861 }
+
+/** Collider matching a width-only-scaled sprite's visible content — anchor (0.5, 1), uniform scale = `transform.width / naturalSize.width`. */
+function spriteFootprintCollider(
+  position: { x: number; y: number },
+  transform: { width: number },
+  naturalSize: { readonly width: number; readonly height: number },
+  contentBBox: ContentBBox,
+): Collider {
+  return contentAlignedCollider(
+    position,
+    naturalSize,
+    contentBBox,
+    transform.width / naturalSize.width,
+  )
+}
+
+const DUMBBELL_RACK_POSITION = { x: 860, y: 1240 } // WORLD POSITION — SAFE TO TUNE
+const DUMBBELL_RACK_TRANSFORM = { width: 250 }
+const GYM_STATION_POSITION = { x: 1140, y: 1180 } // WORLD POSITION — SAFE TO TUNE
+const GYM_STATION_TRANSFORM = { width: 280 }
+
 export const hobbiesObjects: WorldObject[] = [
   {
     id: 'hobbies-gym-floor',
@@ -267,14 +329,53 @@ export const hobbiesObjects: WorldObject[] = [
     transform: { width: 280 },
   },
 
+  {
+    id: 'hobbies-wall-trophy',
+    asset: 'hobbies.wallTrophy',
+    label: 'WALL TROPHY',
+    position: WALL_TROPHY_PLACEMENT.position,
+    layer: 'object',
+    transform: WALL_TROPHY_PLACEMENT.transform,
+    // No `collision` — wall-mounted decor.
+  },
+  {
+    id: 'hobbies-mirror',
+    asset: 'hobbies.mirror',
+    label: 'MIRROR',
+    position: MIRROR_PLACEMENT.position,
+    layer: 'object',
+    transform: MIRROR_PLACEMENT.transform,
+    // No `collision` — wall-mounted decor.
+  },
+
   // ONE SIDE — dumbbell rack + accessories storage, left portion of the floor.
+  {
+    id: 'hobbies-stand',
+    asset: 'hobbies.stand',
+    label: 'STAND',
+    position: STAND_PLACEMENT.position,
+    layer: 'object',
+    transform: STAND_PLACEMENT.transform,
+    collision: spriteFootprintCollider(
+      STAND_PLACEMENT.position,
+      STAND_PLACEMENT.transform,
+      STAND_NATURAL_SIZE,
+      STAND_CONTENT_BBOX,
+    ),
+  },
   {
     id: 'hobbies-dumbbell-rack',
     asset: 'hobbies.dumbbellRack',
     label: 'DUMBBELL RACK',
-    position: { x: 860, y: 1240 }, // WORLD POSITION — SAFE TO TUNE
+    position: DUMBBELL_RACK_POSITION,
     layer: 'object',
-    transform: { width: 250 },
+    transform: DUMBBELL_RACK_TRANSFORM,
+    collision: spriteFootprintCollider(
+      DUMBBELL_RACK_POSITION,
+      DUMBBELL_RACK_TRANSFORM,
+      DUMBBELL_RACK_NATURAL_SIZE,
+      DUMBBELL_RACK_CONTENT_BBOX,
+    ),
   },
   // VISUAL QUALITY NOTE: Storage.png has no real transparency — its
   // background was flattened to an opaque checkerboard (alpha=255
@@ -298,9 +399,15 @@ export const hobbiesObjects: WorldObject[] = [
     id: 'hobbies-gym-station',
     asset: 'hobbies.gymStation',
     label: 'GYM STATION',
-    position: { x: 1140, y: 1180 }, // WORLD POSITION — SAFE TO TUNE
+    position: GYM_STATION_POSITION,
     layer: 'object',
-    transform: { width: 280 },
+    transform: GYM_STATION_TRANSFORM,
+    collision: spriteFootprintCollider(
+      GYM_STATION_POSITION,
+      GYM_STATION_TRANSFORM,
+      GYM_STATION_NATURAL_SIZE,
+      GYM_STATION_CONTENT_BBOX,
+    ),
   },
 
   // FOOTBALL AREA — the ball rack, right portion of the floor. (Only one

@@ -1,5 +1,9 @@
 import type { WorldObject } from '../WorldObject'
-import { contentAlignedCollider, scaleForWidth } from './worldObjectHelpers'
+import {
+  contentAlignedCollider,
+  placeByVisibleContent,
+  scaleForWidth,
+} from './worldObjectHelpers'
 
 /**
  * TOP-LEFT: the bedroom. The bed is the room's one physical obstacle
@@ -23,7 +27,7 @@ const BED_NATURAL_SIZE = { width: 765, height: 1024 } // Double_bed.png
 const BED_CONTENT_BBOX = { minX: 113, minY: 102, maxX: 651, maxY: 904 }
 
 /** Target rendered width (world px) — chosen so the bed's footprint reads at roughly the same in-room scale as the desks while fitting the top-left corner. Change this single number to resize just the bed. */
-const BED_TARGET_WIDTH = 240
+const BED_TARGET_WIDTH = 250
 const BED_SCALE = scaleForWidth(BED_NATURAL_SIZE, BED_TARGET_WIDTH)
 
 /**
@@ -46,7 +50,7 @@ function bedPositionForVisibleFloorPoint(visible: { x: number; y: number }): {
   }
 }
 
-const bedPosition = bedPositionForVisibleFloorPoint({ x: 230, y: 450 }) // WORLD POSITION — SAFE TO TUNE (the visible floor point, not the padded canvas anchor)
+const bedPosition = bedPositionForVisibleFloorPoint({ x: 180, y: 430 }) // WORLD POSITION — SAFE TO TUNE (the visible floor point, not the padded canvas anchor)
 
 const bedObject: WorldObject = {
   id: 'bed',
@@ -64,15 +68,34 @@ const bedObject: WorldObject = {
   // No `interaction` — purely environmental furniture, nothing to open.
 }
 
+/** desk-Photoroom.png — the two-drawer bedside table. Measured opaque content sits inside a 1024×559 canvas. */
+const NIGHTSTAND_NATURAL_SIZE = { width: 1024, height: 559 }
+const NIGHTSTAND_CONTENT_BBOX = { minX: 363, maxX: 660, maxY: 456 }
+const nightstandPlacement = placeByVisibleContent(
+  NIGHTSTAND_NATURAL_SIZE,
+  NIGHTSTAND_CONTENT_BBOX,
+  60, // visible width (world px) — SAFE TO TUNE
+  { x: 292, y: 242 }, // WORLD POSITION — SAFE TO TUNE — visible bottom-center, beside the bed with the bedside lamp (320, 280) resting on its top
+)
+
 export const bedroomObjects: WorldObject[] = [
   bedObject,
+  {
+    id: 'bedroom-nightstand',
+    asset: 'bedroom.nightstand',
+    label: 'BEDSIDE TABLE',
+    position: nightstandPlacement.position,
+    layer: 'object',
+    transform: nightstandPlacement.transform,
+    // No `collision` — visual placement pass only, like the rest of the bedroom decor.
+  },
   {
     id: 'bedroom-wall-lamp',
     asset: 'bedroom.wallLamp',
     label: 'BEDSIDE LAMP',
-    position: { x: 320, y: 280 }, // WORLD POSITION — SAFE TO TUNE — wall-mounted, right of the bed's headboard
+    position: { x: 290, y: 200 }, // WORLD POSITION — SAFE TO TUNE — wall-mounted, right of the bed's headboard
     layer: 'object',
-    transform: { width: 50 },
+    transform: { width: 150 },
     // No `collision` — wall-mounted decor, visual placement pass only.
   },
   {
@@ -103,15 +126,15 @@ export const bedroomObjects: WorldObject[] = [
     id: 'bedroom-jersey-rack',
     asset: 'bedroom.jerseyRack',
     label: 'JERSEY RACK',
-    position: { x: 450, y: 340 }, // WORLD POSITION — SAFE TO TUNE — open floor, right side of the room
+    position: { x: 440, y: 340 }, // WORLD POSITION — SAFE TO TUNE — open floor, right side of the room
     layer: 'object',
-    transform: { width: 160 },
+    transform: { width: 180 },
   },
   {
     id: 'bedroom-hanging-plant',
     asset: 'special.hangingPlant',
     label: 'HANGING PLANT',
-    position: { x: 560, y: 260 }, // WORLD POSITION — SAFE TO TUNE — back wall gap between the jersey rack (x≤530) and the wall art (x≥715)
+    position: { x: 1290, y: 260 }, // WORLD POSITION — SAFE TO TUNE — back wall gap between the jersey rack (x≤530) and the wall art (x≥715)
     layer: 'object',
     transform: { width: 130 },
     // No `collision` — wall/ceiling-mounted decor, visual placement pass only.

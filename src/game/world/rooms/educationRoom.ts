@@ -303,7 +303,7 @@ const SMALL_PLANT_CONTENT_BBOX = {
   maxY: 371,
 }
 /** Target rendered width (world px, full padded canvas) — visible content reads at ~26px wide, a small corner accent (comparable in scale to the desk's own globe). */
-const SMALL_PLANT_TARGET_WIDTH = 184
+const SMALL_PLANT_TARGET_WIDTH = 484
 const SMALL_PLANT_SCALE = scaleForWidth(
   SMALL_PLANT_NATURAL_SIZE,
   SMALL_PLANT_TARGET_WIDTH,
@@ -378,7 +378,7 @@ const readingCatPosition = educationPositionForFloorPoint(
  * x≈252), well clear of both and of the reading corner further east.
  */
 const smallPlantPosition = educationPositionForFloorPoint(
-  { x: 190, y: 1150 }, // WORLD POSITION — SAFE TO TUNE
+  { x: 130, y: 480 }, // WORLD POSITION — SAFE TO TUNE
   SMALL_PLANT_NATURAL_SIZE,
   SMALL_PLANT_CONTENT_BBOX,
   SMALL_PLANT_SCALE,

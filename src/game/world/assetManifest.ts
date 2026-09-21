@@ -47,6 +47,9 @@ import hobbiesScarfUrl from '../../../assets/world/HobbiesRoom/Scarf.png'
 import hobbiesArtworkUrl from '../../../assets/world/HobbiesRoom/Artwork.png'
 import hobbiesFootballRackUrl from '../../../assets/world/HobbiesRoom/Rack.png'
 import hobbiesStorageUrl from '../../../assets/world/HobbiesRoom/Storage2.png'
+import hobbiesStandUrl from '../../../assets/world/HobbiesRoom/Stand.png'
+import hobbiesWallTrophyUrl from '../../../assets/world/HobbiesRoom/stand-Photoroom.png'
+import hobbiesMirrorUrl from '../../../assets/world/HobbiesRoom/mirror-Photoroom.png'
 import entranceChairUrl from '../../../assets/world/Entrance/Entrance_lounge.png'
 import entranceTableUrl from '../../../assets/world/Entrance/table1-Photoroom.png'
 import entranceHookUrl from '../../../assets/world/Entrance/Hook.png'
@@ -142,6 +145,9 @@ export const ASSET_MANIFEST: Record<string, string> = {
   'hobbies.artwork': hobbiesArtworkUrl,
   'hobbies.footballRack': hobbiesFootballRackUrl,
   'hobbies.storage': hobbiesStorageUrl,
+  'hobbies.stand': hobbiesStandUrl, // Stand.png — floor rack with bands, mat and gym bag
+  'hobbies.wallTrophy': hobbiesWallTrophyUrl, // stand-Photoroom.png — trophy + football + medals plaque
+  'hobbies.mirror': hobbiesMirrorUrl,
   // About Me/Entrance sitting-nook asset-integration pass (see entrance.ts).
   // The lounge chair is a single approved asset instantiated twice as two
   // separate WorldObjects — never a second manifest entry/duplicate file.
