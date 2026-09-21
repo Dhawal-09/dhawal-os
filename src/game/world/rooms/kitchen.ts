@@ -307,7 +307,7 @@ export const kitchenObjects: WorldObject[] = [
     'kitchen-counter-prop-holder',
     'kitchen.propHolder',
     'UTENSIL HOLDER',
-    { x: 1560, y: 222 }, // WORLD POSITION — SAFE TO TUNE — sits on kitchen-main-counter, left of the cooktop, per reference
+    { x: 1560, y: 210 }, // WORLD POSITION — SAFE TO TUNE — sits on kitchen-main-counter, left of the cooktop, per reference
     KITCHEN_ASSET_NATURAL_SIZE.propHolder,
     KITCHEN_ASSET_CONTENT_BBOX.propHolder,
     KITCHEN_SCALE.propHolder,
@@ -317,7 +317,7 @@ export const kitchenObjects: WorldObject[] = [
     'kitchen-counter-prop-salt',
     'kitchen.propSalt',
     'SALT SHAKER',
-    { x: 1580, y: 220 }, // WORLD POSITION — SAFE TO TUNE — grouped with the utensil holder
+    { x: 1580, y: 210 }, // WORLD POSITION — SAFE TO TUNE — grouped with the utensil holder
     KITCHEN_ASSET_NATURAL_SIZE.propSalt,
     KITCHEN_ASSET_CONTENT_BBOX.propSalt,
     KITCHEN_SCALE.propSalt,
@@ -337,7 +337,7 @@ export const kitchenObjects: WorldObject[] = [
     'kitchen-counter-prop-plate',
     'kitchen.propPlate',
     'PLATE',
-    { x: 1820, y: 251 }, // WORLD POSITION — SAFE TO TUNE — grouped on the side counter
+    { x: 1620, y: 611 }, // WORLD POSITION — SAFE TO TUNE — grouped on the side counter
     KITCHEN_ASSET_NATURAL_SIZE.propPlate,
     KITCHEN_ASSET_CONTENT_BBOX.propPlate,
     KITCHEN_SCALE.propPlate,

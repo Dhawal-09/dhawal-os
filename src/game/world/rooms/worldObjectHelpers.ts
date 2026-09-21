@@ -68,6 +68,38 @@ export function scaleForHeight(
 }
 
 /**
+ * Places a padded-canvas asset by its *visible content* rather than its
+ * canvas: the returned `transform.width` makes the measured `contentBBox`
+ * render `visibleWidth` world px wide (uniform scale — no stretching), and
+ * `position` is the sprite's bottom-center anchor corrected so the visible
+ * content's own bottom-center lands exactly on `visibleBottomCenter`.
+ * Handles both the padding below the content and any left/right offset of
+ * the content within its canvas, so a piece can be positioned by "where it
+ * visibly sits" without redoing the padding math by hand. Visual placement
+ * only — collision, where wanted, still comes from `contentAlignedCollider`.
+ */
+export function placeByVisibleContent(
+  naturalSize: { readonly width: number; readonly height: number },
+  contentBBox: {
+    readonly minX: number
+    readonly maxX: number
+    readonly maxY: number
+  },
+  visibleWidth: number,
+  visibleBottomCenter: { x: number; y: number },
+): { position: { x: number; y: number }; transform: { width: number } } {
+  const scale = visibleWidth / (contentBBox.maxX - contentBBox.minX)
+  const contentCenterX = (contentBBox.minX + contentBBox.maxX) / 2
+  return {
+    position: {
+      x: visibleBottomCenter.x + (naturalSize.width / 2 - contentCenterX) * scale,
+      y: visibleBottomCenter.y + (naturalSize.height - contentBBox.maxY) * scale,
+    },
+    transform: { width: naturalSize.width * scale },
+  }
+}
+
+/**
  * Room-boundary (perimeter wall) collision. Floor.png's visible architectural
  * walls sit *inset* from the canonical 1920×1440 canvas edge; these four
  * insets mark the wall's *inner* edge — where the walkable tile floor
