@@ -9,6 +9,8 @@ export const PLAYER_COLLIDER_WIDTH = 20
 export const PLAYER_COLLIDER_HEIGHT = 12
 /** Vertical offset from the player's origin (visual center) down to the top of the feet box. */
 const COLLIDER_OFFSET_Y = 6
+/** Vertical offset from the player's origin down to the bottom of the feet box — where the character's feet visually stand. */
+export const PLAYER_FEET_OFFSET_Y = COLLIDER_OFFSET_Y + PLAYER_COLLIDER_HEIGHT
 
 export class CollisionBody {
   /** World-space collider rect for a player currently at (originX, originY). */

@@ -2,6 +2,11 @@ import { Container } from 'pixi.js'
 import { gameEventBridge, OPEN_EVENTS } from './events/GameEventBridge'
 import { InputManager } from './input/InputManager'
 import { Player } from './player/Player'
+import {
+  getCachedPlayerFrames,
+  loadPlayerFrames,
+} from './player/playerAnimations'
+import { PLAYER_SPAWN_POSITION } from './player/playerConstants'
 import { Camera } from './world/Camera'
 import { CollisionSystem } from './world/CollisionSystem'
 import { InteractionSystem } from './world/InteractionSystem'
@@ -68,6 +73,10 @@ export class GameScene extends Container {
     this.interactionSystem = InteractionSystem.fromWorldObjects(worldObjects)
 
     this.inputManager = new InputManager()
+    // Already in the Assets cache in a real session — GameApp.create awaits
+    // `preloadWorldAssets` (which includes the character sheets) before this
+    // scene exists — so the player is built with its real art immediately.
+    const playerFrames = getCachedPlayerFrames()
     this.player = new Player(
       {
         input: this.inputManager,
@@ -76,13 +85,25 @@ export class GameScene extends Container {
         eventBridge: gameEventBridge,
       },
       {
-        x: WORLD_WIDTH / 2,
-        y: WORLD_HEIGHT / 2,
+        x: PLAYER_SPAWN_POSITION.x,
+        y: PLAYER_SPAWN_POSITION.y,
         showDebugCollider: DEBUG_COLLISION_OVERLAY,
+        frames: playerFrames,
       },
     )
     this.world.playerLayer.addChild(this.player)
     this.camera.follow(this.player.position.x, this.player.position.y)
+
+    if (!playerFrames) {
+      // Preload timed out or failed — the placeholder circle stands in, and
+      // upgrades to the real character the moment the sheets do arrive.
+      // If they never do, the placeholder simply stays.
+      loadPlayerFrames()
+        .then((frames) => {
+          if (!this.destroyed) this.player.setFrames(frames)
+        })
+        .catch(() => {})
+    }
 
     this.unsubscribeFromBridge = gameEventBridge.subscribe((event) => {
       if (OPEN_EVENTS.has(event) || event === 'PAUSE_WORLD') {

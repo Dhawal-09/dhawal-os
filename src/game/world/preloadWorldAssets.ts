@@ -1,4 +1,5 @@
 import { Assets } from 'pixi.js'
+import { PLAYER_SHEET_URLS } from '../player/playerAnimations'
 import { ASSET_MANIFEST } from './assetManifest'
 
 /**
@@ -24,7 +25,10 @@ const PRELOAD_TIMEOUT_MS = 30_000
  * simply stays visible for that one object).
  */
 export async function preloadWorldAssets(
-  urls: readonly string[] = Object.values(ASSET_MANIFEST),
+  urls: readonly string[] = [
+    ...Object.values(ASSET_MANIFEST),
+    ...Object.values(PLAYER_SHEET_URLS), // the character sheets (public/assets/character/)
+  ],
 ): Promise<void> {
   const uniqueUrls = [...new Set(urls)]
 

@@ -167,10 +167,9 @@ describe('boundary-only collision (isolated from furniture, precise wall-edge be
     },
   )
 
-  it("the door is decorative/non-traversable (PHASE 09.1 design) — the bottom wall has no opening at the door's location", () => {
-    // The `door` WorldObject sits at x=960 (worldObjects.ts). Walking
-    // straight down through that exact column must still stop at the
-    // bottom wall line, proving no gap was carved there.
+  it('the bottom wall has no opening in the middle column (x=960, where the entrance door used to be)', () => {
+    // Walking straight down through that exact column must still stop at
+    // the bottom wall line, proving no gap was carved there.
     const result = walkUntilBlocked(
       boundaryOnly,
       { x: 960, y: 900 },

@@ -119,11 +119,7 @@ export const BOTTOM_WALL_INNER_Y = 1200
 export const LEFT_WALL_INNER_X = 140
 export const RIGHT_WALL_INNER_X = 1850
 
-/**
- * The `door` WorldObject (entrance.ts) is decorative/physical-only — no
- * open/close/teleport behavior. It sits embedded in this same bottom wall
- * band, so the boundary stays fully solid here: no opening is carved for it.
- */
+/** The perimeter is fully solid — there is no opening in any wall (the bottom wall included). */
 export const ROOM_BOUNDARY_COLLIDERS: readonly Collider[] = [
   // top
   { x: 0, y: 0, width: WORLD_WIDTH, height: TOP_WALL_INNER_Y },

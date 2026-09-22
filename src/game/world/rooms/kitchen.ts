@@ -36,7 +36,7 @@ function kitchenPositionForFloorPoint(
 const KITCHEN_ASSET_NATURAL_SIZE = {
   mainCounter: { width: 2400, height: 1792 }, // MainTable.png
   sideCounter: { width: 2200, height: 1792 }, // Main table2.png
-  fridge: { width: 400, height: 1792 }, // Fridge1.png (developer magnets already on the door)
+  fridge: { width: 2400, height: 1792 }, // Fridge1.png (developer magnets already on the door)
   cooktop: { width: 2400, height: 1792 }, // Stove.png
   coffeeMachine: { width: 1024, height: 765 }, // coffee-Makaer.png
   hangingPans: { width: 1200, height: 896 }, // Hanging Pans.png
@@ -226,11 +226,18 @@ export const kitchenObjects: WorldObject[] = [
     'kitchen-fridge',
     'kitchen.fridge',
     'REFRIGERATOR',
-    { x: 1453, y: -28 }, // WORLD POSITION — SAFE TO TUNE — leftmost, right after the main work desk
+    // WORLD POSITION — SAFE TO TUNE — the fridge's visible base, leftmost, right after the main work desk.
+    // (360.67 reproduces the exact spot the old `y: -28` produced: that value
+    // was tuned by eye while this asset's natural width was mis-recorded as
+    // 400 instead of 2400, which inflated the padding offset; the width is
+    // now correct so the collider below lines up with the art.)
+    { x: 1453, y: 360.67 },
     KITCHEN_ASSET_NATURAL_SIZE.fridge,
     KITCHEN_ASSET_CONTENT_BBOX.fridge,
     KITCHEN_SCALE.fridge,
     KITCHEN_TARGET_WIDTH.fridge,
+    0,
+    true, // solid — collider matches the visible footprint
   ),
   kitchenObject(
     'kitchen-main-counter',

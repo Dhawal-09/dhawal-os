@@ -1,3 +1,4 @@
+import { Texture, TextureSource, type Sprite } from 'pixi.js'
 import { describe, expect, it, vi } from 'vitest'
 import { GameEventBridge } from '../events/GameEventBridge'
 import type {
@@ -9,6 +10,13 @@ import { CollisionSystem } from '../world/CollisionSystem'
 import { InteractionSystem } from '../world/InteractionSystem'
 import { CollisionBody } from './CollisionBody'
 import { Player } from './Player'
+import {
+  createPlayerFrames,
+  IDLE_FRAME_INDEX,
+  type PlayerFrames,
+} from './playerAnimations'
+import { PLAYER_SPRITE_HEIGHT } from './playerConstants'
+import type { Direction } from './PlayerAnimator'
 import type { PlayerSystems } from './PlayerController'
 
 class MutableInput implements MovementInput, InteractionInput {
@@ -39,6 +47,129 @@ function makeSystems(overrides: Partial<PlayerSystems> = {}): PlayerSystems {
     ...overrides,
   }
 }
+
+function makeFrames(): PlayerFrames {
+  const sheets = {} as Record<Direction, Texture>
+  for (const direction of ['up', 'down', 'left', 'right'] as const) {
+    sheets[direction] = new Texture({
+      source: new TextureSource({ width: 2048, height: 1152 }),
+    })
+  }
+  return createPlayerFrames(sheets)
+}
+
+describe('Player with the character sprite', () => {
+  function spriteOf(player: Player): Sprite {
+    return player.children.find(
+      (child) => child.label === 'PlayerSprite',
+    ) as Sprite
+  }
+
+  it('shows the character sprite instead of the placeholder circle, feet on the collider bottom', () => {
+    const player = new Player(makeSystems(), { frames: makeFrames() })
+    const sprite = spriteOf(player)
+
+    expect(sprite).toBeDefined()
+    expect(sprite.anchor.x).toBe(0.5)
+    expect(sprite.anchor.y).toBeCloseTo(1105 / 1152)
+    // Feet sit exactly on the bottom edge of the feet-sized collider.
+    const collider = player.collisionBody.getRect(0, 0)
+    expect(sprite.y).toBe(collider.y + collider.height)
+    expect(sprite.height).toBeGreaterThan(PLAYER_SPRITE_HEIGHT)
+  })
+
+  it('the collider stays a small feet box — much smaller than the visible character', () => {
+    const player = new Player(makeSystems(), { frames: makeFrames() })
+    const collider = player.collisionBody.getRect(0, 0)
+
+    expect(collider.height).toBeLessThan(PLAYER_SPRITE_HEIGHT / 4)
+    expect(collider.width).toBeLessThan(spriteOf(player).width / 2)
+  })
+
+  it('stands on the idle frame of its facing direction, and cycles frame 0→1→2→3 while walking', () => {
+    const frames = makeFrames()
+    const input = new MutableInput()
+    const player = new Player(makeSystems({ input }), { frames })
+    const sprite = spriteOf(player)
+
+    expect(sprite.texture).toBe(frames.down[IDLE_FRAME_INDEX.down])
+
+    input.vector = { x: 1, y: 0 }
+    const seen: number[] = []
+    for (let i = 0; i < 40; i++) {
+      player.update(1000 / 60)
+      const index = frames.right.indexOf(sprite.texture)
+      if (seen.at(-1) !== index) seen.push(index)
+    }
+    expect(seen.slice(0, 5)).toEqual([0, 1, 2, 3, 0])
+
+    input.vector = { x: 0, y: 0 }
+    player.update(16)
+    expect(sprite.texture).toBe(frames.right[IDLE_FRAME_INDEX.right])
+  })
+
+  it('switches to the new direction’s sheet immediately when the direction changes', () => {
+    const frames = makeFrames()
+    const input = new MutableInput()
+    const player = new Player(makeSystems({ input }), { frames })
+    const sprite = spriteOf(player)
+
+    input.vector = { x: 1, y: 0 }
+    player.update(16)
+    expect(frames.right).toContain(sprite.texture)
+
+    input.vector = { x: 0, y: -1 }
+    player.update(16)
+    expect(frames.up).toContain(sprite.texture)
+    expect(player.animator.state).toBe('WALK_UP')
+
+    input.vector = { x: -1, y: 0 }
+    player.update(16)
+    expect(frames.left).toContain(sprite.texture)
+  })
+
+  it('a diagonal uses the dominant axis’ sheet — there are no diagonal sprites', () => {
+    const frames = makeFrames()
+    const input = new MutableInput()
+    const player = new Player(makeSystems({ input }), { frames })
+
+    input.vector = { x: 0.8, y: -0.6 } // mostly right, a little up
+    player.update(16)
+
+    expect(player.direction).toBe('right')
+    expect(frames.right).toContain(spriteOf(player).texture)
+  })
+
+  it('setFrames upgrades a placeholder player in place — once', () => {
+    const player = new Player(makeSystems())
+    expect(spriteOf(player)).toBeUndefined()
+
+    const frames = makeFrames()
+    player.setFrames(frames)
+    player.setFrames(frames)
+
+    expect(
+      player.children.filter((child) => child.label === 'PlayerSprite'),
+    ).toHaveLength(1)
+  })
+
+  it('does not draw the dev collider outline unless explicitly asked to', () => {
+    const player = new Player(makeSystems(), { frames: makeFrames() })
+
+    // sprite + placeholder graphics + prompt — no extra debug Graphics.
+    expect(player.children).toHaveLength(4)
+  })
+
+  it('destroying the player leaves the shared character textures intact', () => {
+    const frames = makeFrames()
+    const player = new Player(makeSystems(), { frames })
+
+    player.destroy({ children: true, texture: true, textureSource: true })
+
+    expect(frames.down[0].destroyed).toBe(false)
+    expect(frames.down[0].source.destroyed).toBe(false)
+  })
+})
 
 describe('Player', () => {
   it('is a labeled display object with a visible placeholder body', () => {

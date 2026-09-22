@@ -8,7 +8,7 @@ import { contentAlignedCollider, scaleForWidth } from './worldObjectHelpers'
  * of every other room's collider before choosing this spot. Both panels
  * intentionally extend up into the top room-boundary wall band (y<310,
  * `TOP_WALL_INNER_Y` in worldObjectHelpers.ts) — the same "embedded in the
- * wall by design" precedent as the door and entrance-hook, appropriate
+ * wall by design" precedent as the entrance-hook, appropriate
  * here since these literally depict wall material.
  *
  * Both get a `contentAlignedCollider` sized to their own real visible

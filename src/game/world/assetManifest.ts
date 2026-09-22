@@ -2,7 +2,6 @@ import deskLaptopUrl from '../../../assets/world/furniture/desk_laptop.png'
 import deskEducationUrl from '../../../assets/world/furniture/desk_education.png'
 import gamingChairUrl from '../../../assets/world/furniture/GamingChair.png'
 import bedUrl from '../../../assets/world/structural/Double_bed.png'
-import doorUrl from '../../../assets/world/structural/door.png'
 import floorUrl from '../../../assets/world/structural/Background2.png'
 import kitchenMainCounterUrl from '../../../assets/world/Kitchen/MainTable.png'
 import kitchenSideCounterUrl from '../../../assets/world/Kitchen/Main table2.png'
@@ -89,7 +88,6 @@ export const ASSET_MANIFEST: Record<string, string> = {
   'furniture.gamingChair': gamingChairUrl,
   // PHASE 09.1
   'structural.bed': bedUrl,
-  'structural.door': doorUrl,
   // PHASE 10B — the room's floor/background artwork (worldPlaceholders.ts).
   'structural.floor': floorUrl,
   // Kitchen furniture placement pass — approved art dropped into the
