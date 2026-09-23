@@ -70,13 +70,9 @@ describe('appLifecycle', () => {
     )
     expect(appLifecycleReducer('landing', { type: 'RETRY' })).toBe('landing')
     expect(appLifecycleReducer('landing', { type: 'EXIT' })).toBe('landing')
-    expect(appLifecycleReducer('game', { type: 'START_JOURNEY' })).toBe(
-      'game',
-    )
+    expect(appLifecycleReducer('game', { type: 'START_JOURNEY' })).toBe('game')
     expect(appLifecycleReducer('game', { type: 'GAME_ERROR' })).toBe('game')
-    expect(appLifecycleReducer('game', { type: 'ACCESS_GRANTED' })).toBe(
-      'game',
-    )
+    expect(appLifecycleReducer('game', { type: 'ACCESS_GRANTED' })).toBe('game')
     expect(appLifecycleReducer('error', { type: 'START_JOURNEY' })).toBe(
       'error',
     )

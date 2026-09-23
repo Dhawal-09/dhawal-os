@@ -2,10 +2,10 @@ import type { ExperienceEntry } from './types'
 
 /**
  * Transcribed only from `docs/CONTENT.md` "Professional experience". That
- * document names two role periods but no employer and does not map either
- * period to a specific project — so `company` is left undefined and no
- * project/role linkage is invented here. The project write-ups themselves
- * live in `projects.ts` (`category: "professional"`).
+ * document names no employer, so `company` is left undefined. The project
+ * write-ups live in `projects.ts` (`category: "experience"`), which reads
+ * each project's role/period from here by id (Unifi → Software Engineer,
+ * NexCRM → Apprentice) rather than duplicating them.
  */
 export const experience: ExperienceEntry[] = [
   {

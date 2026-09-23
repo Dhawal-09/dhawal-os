@@ -16,6 +16,7 @@
    game must read as the same product. */
 .game-hud-brand {
   margin: 0;
+  font-family: var(--font-pixel);
   font-size: 1.1rem;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -38,7 +39,9 @@
   background: var(--panel-dark, #06142d);
   color: var(--text, #eaf4ff);
   cursor: pointer;
-  font-size: 0.85rem;
+  font-family: var(--font-pixel);
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
 }
 
 .game-hud-menu-toggle {

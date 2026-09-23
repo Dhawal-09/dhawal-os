@@ -37,6 +37,7 @@ import livingSofaLeftUrl from '../../../assets/world/ExpiernceRoom/leftsofa-Phot
 import livingSpeakerUrl from '../../../assets/world/ExpiernceRoom/speaker-Photoroom.png'
 import livingBigPlantUrl from '../../../assets/world/special/Big plant.png'
 import hangingPlantUrl from '../../../assets/world/special/Hangingplant.png'
+import idCardUrl from '../../../assets/world/special/ID_card.png'
 import hobbiesDumbbellRackUrl from '../../../assets/world/HobbiesRoom/Dumbel rack.png'
 import hobbiesGymStationUrl from '../../../assets/world/HobbiesRoom/workout-Photoroom.png'
 import hobbiesGymFloorUrl from '../../../assets/world/HobbiesRoom/GymFloor.png'
@@ -130,6 +131,10 @@ export const ASSET_MANIFEST: Record<string, string> = {
   // ceiling/wall-mounted plant style, instantiated twice across the house
   // (see bedroomRoom.ts / kitchen.ts) — never a second file/manifest entry.
   'special.hangingPlant': hangingPlantUrl,
+  // The CHARACTER ID card lying on the lounge's round side table — the
+  // "About Me" marker's real art (aboutRoom.ts). Cropped from
+  // public/assets/special/ID_card.png to the card itself.
+  'content.aboutMe': idCardUrl,
   'living.sofa': livingSofaUrl,
   'living.sofaLeft': livingSofaLeftUrl,
   'living.speaker': livingSpeakerUrl,

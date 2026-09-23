@@ -15,16 +15,19 @@
 
 .boot-brand {
   margin: 0;
+  font-family: var(--font-pixel);
   font-size: 1.1rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: var(--cyan, #27d7ff);
 }
 
 .boot-heading {
   margin: 0 0 4px;
-  font-size: 0.85rem;
-  letter-spacing: 0.05em;
+  font-family: var(--font-pixel);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
   color: var(--text-muted, #91a9c8);
 }
 
@@ -35,7 +38,9 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  font-size: 0.85rem;
+  font-family: var(--font-pixel);
+  font-size: 0.78rem;
+  line-height: 1.5;
   color: var(--text-muted, #91a9c8);
   min-width: 220px;
   text-align: left;
@@ -69,7 +74,9 @@
 
 .boot-status {
   margin: 4px 0 0;
-  font-size: 0.85rem;
-  letter-spacing: 0.06em;
+  font-family: var(--font-pixel);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
   color: var(--cyan-bright, #57e8ff);
 }

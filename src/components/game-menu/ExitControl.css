@@ -9,7 +9,9 @@
   background: var(--panel-dark, #06142d);
   color: var(--text, #eaf4ff);
   cursor: pointer;
-  font-size: 0.85rem;
+  font-family: var(--font-pixel);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
 }
 
 .exit-control:hover {

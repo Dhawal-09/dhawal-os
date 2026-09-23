@@ -15,7 +15,10 @@
 
 .error-heading {
   margin: 0;
-  font-size: 1.1rem;
+  font-family: var(--font-pixel);
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
   color: var(--warning, #ffd166);
 }
 
@@ -34,6 +37,9 @@
   background: var(--blue, #147bff);
   color: var(--text, #eaf4ff);
   cursor: pointer;
+  font-family: var(--font-pixel);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
 }
 
 .error-retry:hover {

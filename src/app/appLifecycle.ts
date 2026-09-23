@@ -17,7 +17,8 @@
  * about `AuthManager`. `ACCESS_GRANTED` then completes the guest session
  * flow and moves ACCESS -> GAME.
  */
-export type AppLifecycleState = 'landing' | 'loading' | 'access' | 'game' | 'error'
+export type AppLifecycleState =
+  'landing' | 'loading' | 'access' | 'game' | 'error'
 
 export type AppLifecycleAction =
   | { type: 'START_JOURNEY' }

@@ -1,4 +1,5 @@
 import { Container, Graphics, Sprite, Text } from 'pixi.js'
+import { PIXEL_FONT_FAMILY } from '../text/pixelFont'
 import type { InteractableCandidate } from '../world/InteractionSystem'
 import { ManagedAssetSprite } from '../world/WorldObject'
 import { CollisionBody, PLAYER_FEET_OFFSET_Y } from './CollisionBody'
@@ -80,7 +81,7 @@ export class Player extends Container {
    */
   private readonly prompt = new Text({
     text: '[E] INTERACT',
-    style: { fontFamily: 'monospace', fontSize: 12, fill: 0xffffff },
+    style: { fontFamily: PIXEL_FONT_FAMILY, fontSize: 12, fill: 0xffffff },
   })
 
   constructor(systems: PlayerSystems, options: PlayerOptions = {}) {

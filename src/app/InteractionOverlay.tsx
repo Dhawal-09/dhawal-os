@@ -1,11 +1,5 @@
 import { gsap } from 'gsap'
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type ReactElement,
-} from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AboutPanel } from '../components/about-ui/AboutPanel'
 import { CatPanel } from '../components/cat-ui/CatPanel'
 import { CertificatesPanel } from '../components/certificates-ui/CertificatesPanel'
@@ -21,6 +15,7 @@ import {
   type GameEvent,
 } from '../game/events/GameEventBridge'
 import './InteractionOverlay.css'
+import type { PanelContent, PanelHeader } from './panelHeader'
 
 const TITLE_BY_EVENT: Partial<Record<GameEvent, string>> = {
   OPEN_PROJECTS: 'Projects',
@@ -31,10 +26,10 @@ const TITLE_BY_EVENT: Partial<Record<GameEvent, string>> = {
   OPEN_RESUME: 'Resume',
   OPEN_ABOUT: 'About Me',
   OPEN_CONTACT: 'Contact',
-  OPEN_CAT: 'Whiskers',
+  OPEN_CAT: 'GINGER',
 }
 
-const PANEL_BY_EVENT: Partial<Record<GameEvent, () => ReactElement>> = {
+const PANEL_BY_EVENT: Partial<Record<GameEvent, PanelContent>> = {
   OPEN_PROJECTS: ProjectsPanel,
   OPEN_EXPERIENCE: ExperiencePanel,
   OPEN_SKILLS: SkillsPanel,
@@ -45,6 +40,16 @@ const PANEL_BY_EVENT: Partial<Record<GameEvent, () => ReactElement>> = {
   OPEN_CONTACT: ContactPanel,
   OPEN_CAT: CatPanel,
 }
+
+/**
+ * Sections rendered in "window" mode: the panel draws its own system-window
+ * frame and title bar (including Close), and the shell only supplies the
+ * dialog semantics, focus trap, Escape, and pause/resume. Everything else
+ * keeps the shared header + panel chrome.
+ */
+const WINDOW_EVENTS: ReadonlySet<GameEvent> = new Set<GameEvent>(['OPEN_ABOUT'])
+
+const TITLE_ID = 'portfolio-panel-title'
 
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -74,6 +79,7 @@ function prefersReducedMotion(): boolean {
  */
 export function InteractionOverlay() {
   const [openEvent, setOpenEvent] = useState<GameEvent | null>(null)
+  const [header, setHeader] = useState<PanelHeader | null>(null)
   const dialogRef = useRef<HTMLDivElement | null>(null)
   const isOpen = openEvent !== null
 
@@ -124,6 +130,18 @@ export function InteractionOverlay() {
     node.focus()
   }, [openEvent])
 
+  // A panel navigating internally (Projects home → list → detail) swaps
+  // content without the shell re-opening: start each view at the top and
+  // put focus back on the dialog so the removed button doesn't drop focus
+  // to <body>.
+  const headerTitle = header?.title
+  useEffect(() => {
+    const node = dialogRef.current
+    if (!node || headerTitle === undefined) return
+    node.scrollTop = 0
+    node.focus()
+  }, [headerTitle])
+
   useEffect(() => {
     if (!openEvent) return
 
@@ -159,8 +177,32 @@ export function InteractionOverlay() {
   if (!openEvent) return null
 
   const PanelContent = PANEL_BY_EVENT[openEvent]
-  const title = TITLE_BY_EVENT[openEvent]
-  if (!PanelContent || !title) return null
+  const defaultTitle = TITLE_BY_EVENT[openEvent]
+  if (!PanelContent || !defaultTitle) return null
+  const title = header?.title ?? defaultTitle
+  const onBack = header?.onBack
+
+  if (WINDOW_EVENTS.has(openEvent)) {
+    return (
+      <div className="interaction-overlay is-window">
+        <div
+          ref={dialogRef}
+          className="interaction-overlay-window"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={TITLE_ID}
+          tabIndex={-1}
+        >
+          <PanelContent
+            setHeader={setHeader}
+            title={defaultTitle}
+            titleId={TITLE_ID}
+            onClose={close}
+          />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="interaction-overlay">
@@ -169,17 +211,31 @@ export function InteractionOverlay() {
         className="interaction-overlay-panel"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="portfolio-panel-title"
+        aria-labelledby={TITLE_ID}
         tabIndex={-1}
       >
-        <div className="panel-header">
-          <h2 id="portfolio-panel-title">{title}</h2>
+        <div className={onBack ? 'panel-header has-back' : 'panel-header'}>
+          {onBack && (
+            <button
+              type="button"
+              className="panel-close panel-back"
+              onClick={onBack}
+            >
+              Back
+            </button>
+          )}
+          <h2 id={TITLE_ID}>{title}</h2>
           <button type="button" className="panel-close" onClick={close}>
             Close
           </button>
         </div>
         <div className="panel-body">
-          <PanelContent />
+          <PanelContent
+            setHeader={setHeader}
+            title={defaultTitle}
+            titleId={TITLE_ID}
+            onClose={close}
+          />
         </div>
       </div>
     </div>

@@ -6,17 +6,265 @@
   align-items: center;
   justify-content: center;
   padding: 16px;
-  background: var(--bg-deep, #050b1a);
+  background:
+    linear-gradient(
+      rgba(20, 123, 255, 0.05) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      rgba(20, 123, 255, 0.05) 1px,
+      transparent 1px
+    ),
+    var(--bg-deep, #050b1a);
+  background-size:
+    28px 28px,
+    28px 28px,
+    auto;
+  overflow-y: auto;
 }
 
-.access-panel {
+/* ---------- outer device bezel ---------- */
+
+.access-frame {
+  position: relative;
   width: 100%;
-  max-width: 360px;
-  padding: 24px;
+  max-width: 640px;
+  padding: 14px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #101c38 0%, var(--panel-dark, #06142d) 100%);
+  border: 1px solid var(--pixel-border, #1e5fa8);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.4),
+    0 20px 60px rgba(0, 0, 0, 0.55);
+}
+
+.access-frame-hinge {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bg-navy, #08152f);
+  border: 1px solid var(--pixel-border, #1e5fa8);
+}
+
+.access-frame-hinge-tl {
+  top: 8px;
+  left: 8px;
+}
+.access-frame-hinge-tr {
+  top: 8px;
+  right: 8px;
+}
+.access-frame-hinge-bl {
+  bottom: 8px;
+  left: 8px;
+}
+.access-frame-hinge-br {
+  bottom: 8px;
+  right: 8px;
+}
+
+/* ---------- inner screen ---------- */
+
+.access-terminal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 6px;
+  border: 1px solid var(--pixel-border, #1e5fa8);
+  background: var(--panel, #0b2144);
+  color: var(--text, #eaf4ff);
+  overflow: hidden;
+  box-shadow: inset 0 0 40px rgba(20, 123, 255, 0.08);
+}
+
+.access-led {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+.access-led-green {
+  background: var(--green, #39f27a);
+  box-shadow: 0 0 4px var(--green, #39f27a);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .access-led-green {
+    animation: access-led-pulse 2.4s ease-in-out infinite;
+  }
+}
+
+@keyframes access-led-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ---------- top bar ---------- */
+
+.access-topbar {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--pixel-border, #1e5fa8);
+  background: linear-gradient(180deg, rgba(39, 215, 255, 0.08), transparent);
+}
+
+.access-brand {
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--cyan, #27d7ff);
+  text-shadow: 0 0 12px rgba(39, 215, 255, 0.45);
+}
+
+.access-tagline {
+  margin: 4px 0 0;
+  font-family: var(--font-pixel);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  color: var(--text-muted, #91a9c8);
+}
+
+.access-sysinfo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+  font-family: var(--font-pixel);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  color: var(--text-muted, #91a9c8);
+}
+
+.access-sysinfo-online {
+  display: inline-flex;
+  align-items: center;
+  color: var(--green, #39f27a);
+}
+
+/* ---------- tabs ---------- */
+
+.access-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 12px;
+  background: var(--panel-dark, #06142d);
+  border-bottom: 1px solid var(--pixel-border, #1e5fa8);
+  overflow-x: auto;
+}
+
+.access-tab {
+  padding: 8px 12px;
+  font-family: var(--font-pixel);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  color: var(--text-muted, #91a9c8);
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+}
+
+.access-tab-active {
+  color: var(--cyan-bright, #57e8ff);
+  border-bottom-color: var(--cyan, #27d7ff);
+}
+
+/* ---------- body layout ---------- */
+
+.access-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+/* ---------- diagnostics (decorative) ---------- */
+
+.access-diagnostics {
+  padding: 10px 12px;
+  border: 1px solid var(--pixel-border, #1e5fa8);
+  border-radius: 4px;
+  background: var(--panel-dark, #06142d);
+}
+
+.access-diagnostics-title {
+  margin: 0 0 8px;
+  font-family: var(--font-pixel);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  letter-spacing: 0.08em;
+  color: var(--text-muted, #91a9c8);
+}
+
+.access-diagnostics-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 14px;
+  font-family: var(--font-pixel);
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.access-diagnostics-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.access-diagnostics-label {
+  color: var(--text-muted, #91a9c8);
+  letter-spacing: 0.06em;
+}
+
+.access-diagnostics-value {
+  display: inline-flex;
+  align-items: center;
+  color: var(--green, #39f27a);
+}
+
+.access-diagnostics-bars {
+  display: flex;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.access-bar-segment {
+  height: 5px;
+  flex: 1;
+  border-radius: 1px;
+  background: var(--cyan, #27d7ff);
+  opacity: 0.7;
+}
+
+.access-bar-segment-off {
+  background: var(--pixel-border, #1e5fa8);
+  opacity: 0.5;
+}
+
+/* ---------- main access panel ---------- */
+
+.access-panel {
+  padding: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   border: 1px solid var(--pixel-border, #1e5fa8);
   border-radius: 4px;
   background: var(--panel, #0b2144);
@@ -24,18 +272,21 @@
   text-align: center;
 }
 
-.access-brand {
+.access-panel-heading {
   margin: 0;
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-family: var(--font-pixel);
+  font-size: 1rem;
+  line-height: 1.4;
   letter-spacing: 0.08em;
-  color: var(--cyan, #27d7ff);
+  color: var(--cyan-bright, #57e8ff);
 }
 
 .access-subtitle {
   margin: 0;
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
+  font-family: var(--font-pixel);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
   color: var(--text-muted, #91a9c8);
 }
 
@@ -45,29 +296,43 @@
   flex-direction: column;
   gap: 6px;
   width: 100%;
+  max-width: 280px;
 }
 
 .access-fields div {
   display: flex;
   justify-content: space-between;
   gap: 8px;
+  padding: 4px 8px;
+  border: 1px solid var(--pixel-border, #1e5fa8);
+  border-radius: 2px;
+  background: var(--panel-dark, #06142d);
 }
 
 .access-fields dt {
+  margin: 0;
   color: var(--text-muted, #91a9c8);
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
+  font-family: var(--font-pixel);
+  font-size: 0.75rem;
+  line-height: 1.5;
 }
 
 .access-fields dd {
   margin: 0;
   color: var(--text, #eaf4ff);
   font-weight: 600;
+  font-family: var(--font-pixel);
+  font-size: 0.75rem;
+  line-height: 1.5;
 }
 
 .access-session-status {
   margin: 4px 0 0;
+  font-family: var(--font-pixel);
   font-size: 0.85rem;
-  letter-spacing: 0.05em;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
   color: var(--cyan-bright, #57e8ff);
 }
 
@@ -77,21 +342,36 @@
 
 .access-cta {
   width: 100%;
+  max-width: 280px;
   min-height: 44px;
   margin-top: 8px;
   padding: 10px 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   border: 1px solid var(--blue, #147bff);
   border-radius: 4px;
-  background: var(--blue, #147bff);
-  color: var(--text, #eaf4ff);
+  background: var(--panel-dark, #06142d);
+  color: var(--cyan-bright, #57e8ff);
+  font-family: var(--font-pixel);
   font-size: 0.9rem;
-  letter-spacing: 0.05em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   cursor: pointer;
+  transition:
+    background 100ms ease-out,
+    border-color 100ms ease-out,
+    transform 80ms ease-out;
 }
 
-.access-cta:hover {
-  background: var(--cyan, #27d7ff);
-  border-color: var(--cyan, #27d7ff);
+.access-cta-arrow {
+  color: var(--cyan, #27d7ff);
+}
+
+.access-cta:hover:not(:disabled) {
+  border-color: var(--cyan-bright, #57e8ff);
+  background: var(--panel, #0b2144);
 }
 
 .access-cta:focus-visible {
@@ -99,17 +379,42 @@
   outline-offset: 2px;
 }
 
+.access-cta:active:not(:disabled) {
+  transform: translateY(1px);
+  background: var(--bg-navy, #08152f);
+}
+
+.access-cta:disabled {
+  cursor: default;
+  opacity: 0.7;
+  border-color: var(--pixel-border, #1e5fa8);
+  color: var(--text-muted, #91a9c8);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .access-cta {
+    transition: none;
+  }
+  .access-cta:active:not(:disabled) {
+    transform: none;
+  }
+}
+
 .access-lock-status {
   margin: 4px 0 0;
-  font-size: 0.8rem;
-  letter-spacing: 0.05em;
+  font-family: var(--font-pixel);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
   color: var(--warning, #ffd166);
 }
 
 .access-heading {
   margin: 0;
-  font-size: 0.95rem;
-  letter-spacing: 0.05em;
+  font-family: var(--font-pixel);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
   color: var(--cyan-bright, #57e8ff);
 }
 
@@ -124,7 +429,9 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 0.85rem;
+  font-family: var(--font-pixel);
+  font-size: 0.78rem;
+  line-height: 1.5;
   color: var(--text-muted, #91a9c8);
   text-align: left;
 }
@@ -135,11 +442,77 @@
 
 .access-role {
   margin: 4px 0 0;
+  font-family: var(--font-pixel);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--text-muted, #91a9c8);
+}
+
+/* ---------- footer ---------- */
+
+.access-footer {
+  padding: 8px 16px;
+  border-top: 1px solid var(--pixel-border, #1e5fa8);
+  background: var(--panel-dark, #06142d);
+  text-align: center;
+}
+
+.access-footer p {
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
   color: var(--text-muted, #91a9c8);
 }
 
 .access-disclaimer {
-  margin: 8px 0 0;
+  margin: 10px 4px 0;
   font-size: 0.7rem;
+  text-align: center;
   color: var(--text-muted, #91a9c8);
+}
+
+/* ---------- narrow phones: diagnostics rows need the full row width ---------- */
+
+@media (max-width: 440px) {
+  .access-diagnostics-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- desktop: side-by-side diagnostics + access panel ---------- */
+
+@media (min-width: 720px) {
+  .access-body {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .access-diagnostics {
+    flex: 0 0 220px;
+  }
+
+  .access-diagnostics-list {
+    grid-template-columns: 1fr;
+  }
+
+  .access-panel {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .access-screen {
+    animation: access-fade-in 200ms ease-out;
+  }
+}
+
+@keyframes access-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
