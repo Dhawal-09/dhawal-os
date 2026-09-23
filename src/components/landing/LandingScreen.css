@@ -15,6 +15,7 @@
 }
 
 .landing-brand {
+  font-family: var(--font-pixel);
   font-size: 1.1rem;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -52,14 +53,18 @@
 
 .landing-intro h1 {
   margin: 0;
-  font-size: clamp(1.4rem, 5vw, 2rem);
+  font-family: var(--font-pixel);
+  font-size: clamp(1.2rem, 4.5vw, 1.8rem);
+  line-height: 1.4;
 }
 
 .landing-role {
   margin: 0;
+  font-family: var(--font-pixel);
   color: var(--cyan-bright, #57e8ff);
-  font-size: 1rem;
-  letter-spacing: 0.04em;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  letter-spacing: 0.03em;
 }
 
 .landing-summary {
@@ -81,7 +86,9 @@
   min-height: 44px;
   padding: 12px 24px;
   border-radius: 4px;
-  font-size: 0.95rem;
+  font-family: var(--font-pixel);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
   text-align: center;
   text-decoration: none;
   cursor: pointer;
@@ -126,6 +133,9 @@
   min-height: 44px;
   display: inline-flex;
   align-items: center;
+  font-family: var(--font-pixel);
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
   color: var(--text-muted, #91a9c8);
 }
 

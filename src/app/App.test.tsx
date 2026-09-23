@@ -122,9 +122,7 @@ describe('App lifecycle', () => {
 
     await startJourney(user)
 
-    expect(screen.getByRole('status')).toHaveTextContent(
-      /initializing system/i,
-    )
+    expect(screen.getByRole('status')).toHaveTextContent(/initializing system/i)
     expect(screen.getByTestId('game-canvas-stub')).toBeInTheDocument()
     expect(gameAppCreateSpy).toHaveBeenCalledTimes(1)
   })

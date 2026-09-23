@@ -378,7 +378,7 @@ const readingCatPosition = educationPositionForFloorPoint(
  * x≈252), well clear of both and of the reading corner further east.
  */
 const smallPlantPosition = educationPositionForFloorPoint(
-  { x: 130, y: 480 }, // WORLD POSITION — SAFE TO TUNE
+  { x: 1330, y: 290 }, // WORLD POSITION — SAFE TO TUNE
   SMALL_PLANT_NATURAL_SIZE,
   SMALL_PLANT_CONTENT_BBOX,
   SMALL_PLANT_SCALE,

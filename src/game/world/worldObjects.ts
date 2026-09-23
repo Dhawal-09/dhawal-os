@@ -67,8 +67,10 @@ export const worldObjects: WorldObject[] = [
   ...livingRoomObjects,
   ...skillsObjects,
   ...educationObjects,
-  ...aboutObjects,
   ...entranceObjects,
+  // After entranceObjects: the About Me ID card rests on entrance-side-table
+  // and must draw on top of it.
+  ...aboutObjects,
   ...kitchenObjects,
   ...hobbiesObjects,
   ...wallObjects,

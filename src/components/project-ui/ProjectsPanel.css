@@ -1,0 +1,317 @@
+/* Projects computer — same palette, pixel-font labels and 1px pixel-border
+   language as the shared overlay shell (InteractionOverlay.css). Selectable
+   items get a hard offset "pixel" shadow and a cyan border on hover/focus;
+   no gradients, blur, or large radii. */
+
+.projects-home {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.projects-folders,
+.projects-cards,
+.project-tech-chips,
+.project-contributions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.projects-folders {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  /* Room for the folder tabs drawn above each button. */
+  padding-top: 10px;
+}
+
+.projects-folder,
+.projects-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 16px;
+  border: 1px solid var(--pixel-border, #1e5fa8);
+  border-radius: 0;
+  background: var(--panel-dark, #06142d);
+  box-shadow: 3px 3px 0 var(--bg-deep, #050b1a);
+  color: var(--text, #eaf4ff);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.projects-folder:hover,
+.projects-card:hover,
+.projects-folder:focus-visible,
+.projects-card:focus-visible {
+  border-color: var(--cyan, #27d7ff);
+  background: var(--bg-navy, #08152f);
+}
+
+.projects-folder:active,
+.projects-card:active {
+  box-shadow: 1px 1px 0 var(--bg-deep, #050b1a);
+  transform: translate(2px, 2px);
+}
+
+/* Folder tab: a small flat block sitting on the folder's top-left edge. */
+.projects-folder::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -1px;
+  width: 44%;
+  height: 9px;
+  border: 1px solid var(--pixel-border, #1e5fa8);
+  border-bottom: none;
+  background: var(--panel-dark, #06142d);
+}
+
+.projects-folder:hover::before,
+.projects-folder:focus-visible::before {
+  border-color: var(--cyan, #27d7ff);
+  background: var(--bg-navy, #08152f);
+}
+
+.projects-folder {
+  min-height: 132px;
+  justify-content: space-between;
+}
+
+.projects-folder-name,
+.projects-card-name {
+  font-family: var(--font-pixel);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.projects-folder-hint,
+.projects-card-subtitle {
+  color: var(--text-muted, #91a9c8);
+  line-height: 1.4;
+}
+
+.projects-folder-count,
+.projects-card-meta,
+.projects-card-view {
+  font-family: var(--font-pixel);
+  font-size: 0.68rem;
+  line-height: 1.6;
+  letter-spacing: 0.03em;
+}
+
+.projects-folder-count {
+  color: var(--cyan, #27d7ff);
+  text-transform: uppercase;
+}
+
+.projects-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.projects-card {
+  padding-right: 88px;
+}
+
+.projects-card-meta {
+  color: var(--cyan, #27d7ff);
+}
+
+.projects-card-view {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  color: var(--text-muted, #91a9c8);
+  text-transform: uppercase;
+}
+
+.projects-card:hover .projects-card-view,
+.projects-card:focus-visible .projects-card-view {
+  color: var(--cyan-bright, #57e8ff);
+}
+
+/* ---- Single project detail ---- */
+
+.project-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.project-detail-top {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.project-detail-image {
+  aspect-ratio: 4 / 3;
+  border: 3px solid var(--bg-navy, #08152f);
+  background: var(--panel-dark, #06142d);
+  box-shadow:
+    0 0 0 1px var(--pixel-border, #1e5fa8),
+    0 0 0 2px rgba(39, 215, 255, 0.2);
+}
+
+.project-detail-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+
+/* Deliberately unfinished-looking until a real screenshot is added. */
+.project-detail-image-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 100%;
+  border: 1px dashed var(--pixel-border, #1e5fa8);
+  color: var(--text-muted, #91a9c8);
+  font-family: var(--font-pixel);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.project-detail-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.project-detail-subtitle {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.project-detail-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+}
+
+.project-detail-facts dt {
+  margin-bottom: 2px;
+  color: var(--cyan, #27d7ff);
+  font-family: var(--font-pixel);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.project-detail-facts dd {
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  overflow-wrap: anywhere;
+}
+
+.project-detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.project-detail-section p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.project-tech-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.project-tech-chips li {
+  max-width: 100%;
+  padding: 5px 8px;
+  border: 1px solid var(--pixel-border, #1e5fa8);
+  background: var(--panel-dark, #06142d);
+  font-family: var(--font-pixel);
+  font-size: 0.62rem;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  overflow-wrap: anywhere;
+}
+
+.project-contributions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Square pixel bullet instead of the default disc. */
+.project-contributions li {
+  position: relative;
+  padding-left: 18px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.project-contributions li::before {
+  content: '';
+  position: absolute;
+  top: 0.55em;
+  left: 2px;
+  width: 6px;
+  height: 6px;
+  background: var(--cyan, #27d7ff);
+}
+
+@media (max-width: 560px) {
+  .projects-folders {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  .projects-folder {
+    min-height: 96px;
+  }
+
+  /* Stack the image above the text rather than squeezing two columns. */
+  .project-detail-top {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .project-detail-image {
+    width: 100%;
+    max-width: 320px;
+  }
+}
+
+@media (max-width: 380px) {
+  .projects-card {
+    padding-right: 16px;
+  }
+
+  .projects-card-view {
+    position: static;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .projects-folder:active,
+  .projects-card:active {
+    transform: none;
+  }
+}

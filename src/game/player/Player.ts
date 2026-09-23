@@ -1,12 +1,24 @@
-import { Container, Graphics, Text } from 'pixi.js'
+import { Container, Graphics, Sprite, Text } from 'pixi.js'
+import { PIXEL_FONT_FAMILY } from '../text/pixelFont'
 import type { InteractableCandidate } from '../world/InteractionSystem'
-import { CollisionBody } from './CollisionBody'
+import { ManagedAssetSprite } from '../world/WorldObject'
+import { CollisionBody, PLAYER_FEET_OFFSET_Y } from './CollisionBody'
+import {
+  IDLE_FRAME_INDEX,
+  PLAYER_SPRITE_ANCHOR,
+  PLAYER_SPRITE_SCALE,
+  PLAYER_SPRITE_SHEET,
+  type PlayerFrames,
+} from './playerAnimations'
+import { PLAYER_SPRITE_HEIGHT } from './playerConstants'
 import { PlayerAnimator, type Direction } from './PlayerAnimator'
 import { PlayerController, type PlayerSystems } from './PlayerController'
 
 const BODY_RADIUS = 14
 const FACING_LENGTH = 18
 const PROMPT_OFFSET_Y = -26
+/** Gap between the top of the character's head and the interact prompt. */
+const PROMPT_GAP_ABOVE_HEAD = 6
 
 const FACING_OFFSETS: Record<Direction, readonly [number, number]> = {
   down: [0, 1],
@@ -25,19 +37,31 @@ export interface PlayerOptions {
    * render in a production build regardless of what a caller passes.
    */
   showDebugCollider?: boolean
+  /**
+   * The sliced character sheets (playerAnimations.ts). Without them the
+   * player renders as the plain dev placeholder circle — tests, or the brief
+   * moment before the art has loaded; `setFrames` upgrades it in place.
+   */
+  frames?: PlayerFrames | null
 }
 
 /**
  * The player entity (see PLAYER_SPEC.md "Architecture": Player owns
- * PlayerController + PlayerAnimator + CollisionBody). Renders an explicit
- * dev placeholder — a tinted circle plus a facing indicator — never a
- * temporary filename. Swapping in the approved sprite sheet later only
- * touches `redraw()` below; movement, state, input, collision, and
- * interaction are untouched.
+ * PlayerController + PlayerAnimator + CollisionBody). Renders the approved
+ * character sprite once its frames are supplied — a Sprite whose texture is
+ * swapped from the state `PlayerAnimator` reports, so there's no second
+ * animation clock — and an explicit dev placeholder (a tinted circle plus a
+ * facing indicator) until then. Movement, state, input, collision, and
+ * interaction don't know or care which one is showing.
+ *
+ * The origin is the player's collision-body reference point, not the
+ * sprite's feet: the sprite stands with its feet on the bottom edge of the
+ * feet-sized collider (`PLAYER_FEET_OFFSET_Y`) — so walking into furniture
+ * stops the *feet* at the furniture, exactly what the collider tests.
  */
 export class Player extends Container {
   readonly controller: PlayerController
-  readonly animator = new PlayerAnimator()
+  readonly animator = new PlayerAnimator(PLAYER_SPRITE_SHEET)
   readonly collisionBody = new CollisionBody()
 
   direction: Direction = 'down'
@@ -47,6 +71,8 @@ export class Player extends Container {
 
   private readonly body = new Graphics()
   private readonly facing = new Graphics()
+  private sprite: Sprite | null = null
+  private frames: PlayerFrames | null = null
   private readonly debugCollider: Graphics | null
   /**
    * The `[E] INTERACT` prompt (INTERACTION_SPEC.md). Plain text, not tied to
@@ -55,7 +81,7 @@ export class Player extends Container {
    */
   private readonly prompt = new Text({
     text: '[E] INTERACT',
-    style: { fontFamily: 'monospace', fontSize: 12, fill: 0xffffff },
+    style: { fontFamily: PIXEL_FONT_FAMILY, fontSize: 12, fill: 0xffffff },
   })
 
   constructor(systems: PlayerSystems, options: PlayerOptions = {}) {
@@ -74,10 +100,43 @@ export class Player extends Container {
 
     this.controller = new PlayerController(this, systems)
 
+    if (options.frames) this.setFrames(options.frames)
     this.redraw()
   }
 
-  /** Advances input-driven movement, animation timing, interaction eligibility, and the placeholder visual. */
+  /**
+   * Swaps the dev placeholder for the real character sprite. Idempotent for
+   * the same frames; safe to call once the art finishes loading after the
+   * scene is already running.
+   */
+  setFrames(frames: PlayerFrames): void {
+    this.frames = frames
+
+    if (!this.sprite) {
+      // `ManagedAssetSprite`: the frames' textures belong to Pixi's `Assets`
+      // cache, so tearing the scene down (EXIT) must not destroy them.
+      const sprite = new ManagedAssetSprite(frames[this.direction][0])
+      sprite.label = 'PlayerSprite'
+      sprite.anchor.set(PLAYER_SPRITE_ANCHOR.x, PLAYER_SPRITE_ANCHOR.y)
+      sprite.scale.set(PLAYER_SPRITE_SCALE)
+      sprite.position.set(0, PLAYER_FEET_OFFSET_Y)
+      this.sprite = sprite
+      // Bottom of the stack, under the debug collider outline and the prompt.
+      this.addChildAt(sprite, 0)
+
+      this.body.visible = false
+      this.facing.visible = false
+      // Above the head instead of over the torso.
+      this.prompt.position.set(
+        0,
+        PLAYER_FEET_OFFSET_Y - PLAYER_SPRITE_HEIGHT - PROMPT_GAP_ABOVE_HEAD,
+      )
+    }
+
+    this.redraw()
+  }
+
+  /** Advances input-driven movement, animation timing, interaction eligibility, and the visual. */
   update(deltaMS: number): void {
     this.controller.update(deltaMS)
     this.animator.update(this.direction, this.moving, deltaMS)
@@ -85,6 +144,30 @@ export class Player extends Container {
   }
 
   private redraw(): void {
+    if (this.sprite && this.frames) {
+      const index = this.moving
+        ? this.animator.frameIndex
+        : IDLE_FRAME_INDEX[this.direction]
+      const texture = this.frames[this.direction][index]
+      if (this.sprite.texture !== texture) this.sprite.texture = texture
+    } else {
+      this.redrawPlaceholder()
+    }
+
+    this.prompt.visible = this.interactionTarget !== null
+
+    if (this.debugCollider) {
+      // Local space (origin 0,0) — this container is already positioned at
+      // the player's world position, so no extra offset is needed here.
+      const rect = this.collisionBody.getRect(0, 0)
+      this.debugCollider
+        .clear()
+        .rect(rect.x, rect.y, rect.width, rect.height)
+        .stroke({ width: 1, color: 0xff2d2d })
+    }
+  }
+
+  private redrawPlaceholder(): void {
     // Visibly pulse every other walk frame so the animation state machine
     // is obviously "live" even without a real sprite sheet.
     const pulsing = this.moving && this.animator.frameIndex % 2 === 1
@@ -102,17 +185,5 @@ export class Player extends Container {
       .moveTo(0, 0)
       .lineTo(dx * FACING_LENGTH, dy * FACING_LENGTH)
       .stroke({ width: 3, color: 0xffffff })
-
-    this.prompt.visible = this.interactionTarget !== null
-
-    if (this.debugCollider) {
-      // Local space (origin 0,0) — this container is already positioned at
-      // the player's world position, so no extra offset is needed here.
-      const rect = this.collisionBody.getRect(0, 0)
-      this.debugCollider
-        .clear()
-        .rect(rect.x, rect.y, rect.width, rect.height)
-        .stroke({ width: 1, color: 0xff2d2d })
-    }
   }
 }

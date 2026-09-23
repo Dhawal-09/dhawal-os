@@ -4,9 +4,7 @@ import type { CollisionSystem } from '../world/CollisionSystem'
 import type { InteractionSystem } from '../world/InteractionSystem'
 import type { Direction } from './PlayerAnimator'
 import type { Player } from './Player'
-
-/** Placeholder tuning value — canonical world units per second. */
-const SPEED_PER_SECOND = 220
+import { PLAYER_SPEED_PER_SECOND } from './playerConstants'
 
 /**
  * Everything PlayerController needs to drive the player, grouped to keep
@@ -78,8 +76,8 @@ export class PlayerController {
 
   private applyMovement(x: number, y: number, deltaMS: number): void {
     const deltaSeconds = deltaMS / 1000
-    const dx = x * SPEED_PER_SECOND * deltaSeconds
-    const dy = y * SPEED_PER_SECOND * deltaSeconds
+    const dx = x * PLAYER_SPEED_PER_SECOND * deltaSeconds
+    const dy = y * PLAYER_SPEED_PER_SECOND * deltaSeconds
 
     const currentRect = this.player.collisionBody.getRect(
       this.player.position.x,

@@ -1,31 +1,10 @@
 import type { Collider, WorldObject } from '../WorldObject'
-import {
-  contentAlignedCollider,
-  deskCollider,
-  scaleForHeight,
-  scaleForWidth,
-} from './worldObjectHelpers'
-
-/**
- * BOTTOM-MIDDLE: the entrance door, embedded in the bottom wall band. It is
- * decorative/physical-only this phase — no open/close/teleport behavior
- * (there is none yet; PHASE 09.1 / PHASE 10B.1 both exclude it).
- */
-
-/** Natural pixel dimensions of the approved door PNG (assets/world/structural/door.png), read directly from the source file. */
-const DOOR_NATURAL_SIZE = { width: 141, height: 185 }
-
-/** Target rendered height (world px) — a door's height against the wall is the dimension that actually matters; width follows the PNG's own aspect ratio. Reproduces the previous `DOOR_SCALE = 1` (native size) exactly. */
-const DOOR_TARGET_HEIGHT = 185
-const DOOR_SCALE = scaleForHeight(DOOR_NATURAL_SIZE, DOOR_TARGET_HEIGHT)
-
-/** The door's art fills almost its entire canvas (verified: opaque pixels cover ~93% of it) — only a thin anti-aliased edge is trimmed from the footprint. */
-const DOOR_FOOTPRINT = { widthFraction: 0.9, heightFraction: 0.95 }
+import { contentAlignedCollider, scaleForWidth } from './worldObjectHelpers'
 
 /**
  * ABOUT ME / ENTRANCE sitting nook — a small, cozy seating area assembled
  * from the approved Entrance assets (assets/world/Entrance/*), placed near
- * the door. Each piece gets a real collision box matching its own measured
+ * the bottom entrance. Each piece gets a real collision box matching its own measured
  * content bbox exactly (`contentAlignedCollider` — same approach as the
  * bed's), never a hand-picked placeholder size — no new interaction, though.
  *
@@ -77,10 +56,11 @@ const ENTRANCE_ASSET_CONTENT_BBOX = {
  *
  * `mat` is the one exception: its visible content height is capped at ~36px
  * (rather than the ~150px-wide mat this fraction would otherwise imply) —
- * the only floor gap available directly in front of the door, between the
- * CERTIFICATES marker's collider (bottom edge y1148) and the door's own
- * collider (top edge y1194.25), is ~46px tall. Now that the mat has a real,
- * asset-sized collider of its own, a larger one would overlap CERTIFICATES.
+ * the floor gap at the bottom entrance, between the CERTIFICATES marker's
+ * collider (bottom edge y1148) and the bottom wall (y1200), is ~46px tall
+ * (the entrance door that once stood there has since been removed). Now
+ * that the mat has a real, asset-sized collider of its own, a larger one
+ * would overlap CERTIFICATES.
  */
 const ENTRANCE_TARGET_WIDTH = {
   chair: 271.4,
@@ -191,22 +171,6 @@ export const entranceColliders: readonly Collider[] = [
 ]
 
 export const entranceObjects: WorldObject[] = [
-  {
-    id: 'door',
-    asset: 'structural.door',
-    label: 'DOOR',
-    position: { x: 960, y: 1370 }, // WORLD POSITION — SAFE TO TUNE
-    layer: 'object',
-    transform: { height: DOOR_TARGET_HEIGHT },
-    collision: deskCollider(
-      { x: 960, y: 1370 },
-      DOOR_NATURAL_SIZE,
-      DOOR_SCALE,
-      DOOR_FOOTPRINT,
-    ),
-    // No `interaction` yet — physical/visual only this phase; door open/
-    // close and room transition are explicitly out of scope.
-  },
   // Sitting nook — chair / table / chair, left to right, sharing one
   // baseline. Sits in the open floor gap between the CERTIFICATES marker
   // (aboutRoom.ts, centered x960) and the RESUME desk cluster (centered
@@ -224,8 +188,7 @@ export const entranceObjects: WorldObject[] = [
     y: 1040,
   }), // WORLD POSITION — SAFE TO TUNE — same asset as entrance-chair-left, instantiated a second time
   // Painting, centered behind the two-chair arrangement (x1175, matching
-  // the side table), hung on the bottom/entrance wall band the door is
-  // embedded in.
+  // the side table), hung on the bottom/entrance wall band.
   entranceObject('entrance-painting', 'painting', 'WALL PAINTING', {
     x: 1675,
     y: 890,
@@ -233,10 +196,9 @@ export const entranceObjects: WorldObject[] = [
   // Coat hook, mounted in the bottom-right corner near the sitting nook,
   // clear of the RESUME desk cluster and the right room-boundary wall.
   entranceObject('entrance-hook', 'hook', 'COAT HOOK', { x: 1840, y: 850 }), // WORLD POSITION — SAFE TO TUNE
-  // Doormat, directly in front of the door, aligned on its x with the
-  // door's own position. y is tuned to fit its collider inside the narrow
-  // floor gap between CERTIFICATES and the door (see ENTRANCE_TARGET_WIDTH's
-  // comment on `mat`).
+  // Doormat at the bottom entrance (x960). y is tuned to fit its collider
+  // inside the narrow floor gap between CERTIFICATES and the bottom wall
+  // (see ENTRANCE_TARGET_WIDTH's comment on `mat`).
   entranceObject('entrance-mat', 'mat', 'DOORMAT', { x: 960, y: 1188 }), // WORLD POSITION — SAFE TO TUNE
   // Potted plants — one approved asset (plant-Photoroom.png), instantiated
   // four times as independent WorldObjects, same "one asset, many

@@ -21,8 +21,25 @@
   color: var(--text, #eaf4ff);
 }
 
-.interaction-overlay-panel:focus {
+.interaction-overlay-panel:focus,
+.interaction-overlay-window:focus {
   outline: none;
+}
+
+/* "Window" mode (About Me): the panel draws its own system-window frame,
+   so the shell only sizes it and keeps the world visible behind it with a
+   lighter dim than the reading panels. */
+.interaction-overlay.is-window {
+  background: rgba(5, 11, 26, 0.45);
+}
+
+.interaction-overlay-window {
+  width: 100%;
+  max-width: 960px;
+  max-height: calc(100dvh - 32px);
+  display: flex;
+  flex-direction: column;
+  color: var(--text, #eaf4ff);
 }
 
 .panel-header {
@@ -35,7 +52,10 @@
 
 .panel-header h2 {
   margin: 0;
-  font-size: 1.1rem;
+  font-family: var(--font-pixel);
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: 0.03em;
 }
 
 .panel-close {
@@ -48,15 +68,41 @@
   color: var(--text, #eaf4ff);
   cursor: pointer;
   flex-shrink: 0;
+  font-family: var(--font-pixel);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
 }
 
 .panel-close:hover {
   background: var(--blue, #147bff);
 }
 
+/* Back (panels with internal navigation, e.g. Projects): same control as
+   Close, placed before the title. */
+.panel-header.has-back h2 {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  /* Back + Close share the top row; the title gets the full width below
+     instead of being squeezed between them. */
+  .panel-header.has-back {
+    flex-wrap: wrap;
+  }
+
+  .panel-header.has-back h2 {
+    order: 3;
+    flex-basis: 100%;
+    font-size: 0.85rem;
+  }
+}
+
 .panel-close:focus-visible,
 .interaction-overlay-panel a:focus-visible,
-.interaction-overlay-panel button:focus-visible {
+.interaction-overlay-panel button:focus-visible,
+.interaction-overlay-window button:focus-visible {
   outline: 2px solid var(--cyan-bright, #57e8ff);
   outline-offset: 2px;
 }
@@ -73,6 +119,10 @@
 
 .panel-group-title {
   margin: 0;
+  font-family: var(--font-pixel);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  letter-spacing: 0.03em;
   color: var(--cyan, #27d7ff);
 }
 
@@ -87,10 +137,22 @@
 
 .panel-list-item h4 {
   margin: 0 0 4px;
+  font-family: var(--font-pixel);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
 }
 
 .panel-list-item p {
   margin: 0 0 6px;
+}
+
+/* A bare link as the whole list item (ContactPanel) — short label, same
+   treatment as .panel-button, not prose. */
+.panel-list-item > a {
+  font-family: var(--font-pixel);
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
 }
 
 .panel-sublist {
@@ -99,8 +161,11 @@
 }
 
 .panel-meta {
+  font-family: var(--font-pixel);
+  font-size: 0.75rem;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
   color: var(--text-muted, #91a9c8);
-  font-size: 0.9rem;
 }
 
 .panel-empty {
@@ -116,6 +181,9 @@
   background: var(--blue, #147bff);
   color: var(--text, #eaf4ff);
   text-decoration: none;
+  font-family: var(--font-pixel);
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
 }
 
 .panel-button:hover {

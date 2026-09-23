@@ -1,3 +1,17 @@
+/* Press Start 2P — DHAWAL.OS's pixel/game-display typeface (CodeMan38,
+   SIL Open Font License; public/assets/Font/press_start_2p/LICENSE.txt).
+   Local self-hosted file; its internal family name is "Press Start 2P",
+   matching the family name below. `--font-pixel`'s `monospace` fallback
+   plus `font-display: swap` keep every pixel-styled label readable even
+   before/without this loading. */
+@font-face {
+  font-family: 'Press Start 2P';
+  src: url('/assets/Font/press_start_2p/PressStart2P.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   color-scheme: light dark;
 
@@ -17,6 +31,14 @@
   --text-muted: #91a9c8;
   --warning: #ffd166;
   --pixel-border: #1e5fa8;
+
+  /* Typography tokens. --font-pixel is for short, game/system-style labels
+     (brand, headings, buttons, HUD, status readouts) — never long prose.
+     --font-body/--font-mono are unchanged from the project's existing
+     stacks, named here so callers never hardcode a font stack again. */
+  --font-pixel: 'Press Start 2P', ui-monospace, 'Courier New', monospace;
+  --font-body: system-ui, sans-serif;
+  --font-mono: ui-monospace, 'Courier New', monospace;
 }
 
 * {
@@ -25,5 +47,5 @@
 
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-body);
 }

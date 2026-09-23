@@ -10,14 +10,23 @@ export interface ProjectLink {
   url: string
 }
 
-/** The exact shape required by PHASE-08-PORTFOLIO-UI.md "Implementation guidance". */
+/**
+ * One Projects-computer entry. `category` drives the Projects home screen
+ * split (EXPERIENCE vs PERSONAL); `role`/`company`/`period`/`image` are
+ * optional and simply omitted from the detail view when not verified.
+ */
 export interface Project {
   id: string
-  title: string
-  category: 'professional' | 'personal'
+  category: 'experience' | 'personal'
+  name: string
+  subtitle: string
+  role?: string
+  company?: string
+  period?: string
+  image?: string
   description: string
   technologies: string[]
-  highlights: string[]
+  contributions: string[]
   links?: ProjectLink[]
   featured?: boolean
 }

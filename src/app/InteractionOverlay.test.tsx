@@ -26,8 +26,10 @@ describe('InteractionOverlay', () => {
     expect(
       screen.getByRole('heading', { name: 'Projects', level: 2 }),
     ).toBeInTheDocument()
-    // Real content from src/data/projects.ts, not a generic placeholder.
-    expect(screen.getByText(/Unifi/)).toBeInTheDocument()
+    // Projects opens on its home screen (project type selection).
+    expect(
+      screen.getByRole('button', { name: /experience projects/i }),
+    ).toBeInTheDocument()
   })
 
   it('closes on CLOSE_OVERLAY', () => {

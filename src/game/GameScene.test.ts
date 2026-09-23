@@ -3,7 +3,7 @@ import { gameEventBridge } from './events/GameEventBridge'
 import { GameScene } from './GameScene'
 import { Player } from './player/Player'
 import { World } from './world/World'
-import { WORLD_HEIGHT, WORLD_WIDTH } from './world/worldConstants'
+import { PLAYER_SPAWN_POSITION } from './player/playerConstants'
 
 function press(code: string): void {
   window.dispatchEvent(new KeyboardEvent('keydown', { code }))
@@ -33,13 +33,13 @@ describe('GameScene', () => {
     expect(scene.children[0]).toBe(scene.world)
   })
 
-  it('mounts the player into World.playerLayer, at the world center', () => {
+  it('mounts the player into World.playerLayer, at the configured spawn position', () => {
     scene = new GameScene()
 
     expect(scene.player).toBeInstanceOf(Player)
     expect(scene.world.playerLayer.children).toContain(scene.player)
-    expect(scene.player.position.x).toBe(WORLD_WIDTH / 2)
-    expect(scene.player.position.y).toBe(WORLD_HEIGHT / 2)
+    expect(scene.player.position.x).toBe(PLAYER_SPAWN_POSITION.x)
+    expect(scene.player.position.y).toBe(PLAYER_SPAWN_POSITION.y)
   })
 
   it('resize does not throw and is safe to call before/after any viewport size', () => {

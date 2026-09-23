@@ -2,7 +2,6 @@ import deskLaptopUrl from '../../../assets/world/furniture/desk_laptop.png'
 import deskEducationUrl from '../../../assets/world/furniture/desk_education.png'
 import gamingChairUrl from '../../../assets/world/furniture/GamingChair.png'
 import bedUrl from '../../../assets/world/structural/Double_bed.png'
-import doorUrl from '../../../assets/world/structural/door.png'
 import floorUrl from '../../../assets/world/structural/Background2.png'
 import kitchenMainCounterUrl from '../../../assets/world/Kitchen/MainTable.png'
 import kitchenSideCounterUrl from '../../../assets/world/Kitchen/Main table2.png'
@@ -38,6 +37,7 @@ import livingSofaLeftUrl from '../../../assets/world/ExpiernceRoom/leftsofa-Phot
 import livingSpeakerUrl from '../../../assets/world/ExpiernceRoom/speaker-Photoroom.png'
 import livingBigPlantUrl from '../../../assets/world/special/Big plant.png'
 import hangingPlantUrl from '../../../assets/world/special/Hangingplant.png'
+import idCardUrl from '../../../assets/world/special/ID_card.png'
 import hobbiesDumbbellRackUrl from '../../../assets/world/HobbiesRoom/Dumbel rack.png'
 import hobbiesGymStationUrl from '../../../assets/world/HobbiesRoom/workout-Photoroom.png'
 import hobbiesGymFloorUrl from '../../../assets/world/HobbiesRoom/GymFloor.png'
@@ -89,7 +89,6 @@ export const ASSET_MANIFEST: Record<string, string> = {
   'furniture.gamingChair': gamingChairUrl,
   // PHASE 09.1
   'structural.bed': bedUrl,
-  'structural.door': doorUrl,
   // PHASE 10B — the room's floor/background artwork (worldPlaceholders.ts).
   'structural.floor': floorUrl,
   // Kitchen furniture placement pass — approved art dropped into the
@@ -132,6 +131,10 @@ export const ASSET_MANIFEST: Record<string, string> = {
   // ceiling/wall-mounted plant style, instantiated twice across the house
   // (see bedroomRoom.ts / kitchen.ts) — never a second file/manifest entry.
   'special.hangingPlant': hangingPlantUrl,
+  // The CHARACTER ID card lying on the lounge's round side table — the
+  // "About Me" marker's real art (aboutRoom.ts). Cropped from
+  // public/assets/special/ID_card.png to the card itself.
+  'content.aboutMe': idCardUrl,
   'living.sofa': livingSofaUrl,
   'living.sofaLeft': livingSofaLeftUrl,
   'living.speaker': livingSpeakerUrl,

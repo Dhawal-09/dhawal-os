@@ -29,9 +29,13 @@ export const aboutObjects: WorldObject[] = [
     // somewhere accessible without blocking the main path".
     position: { x: 1670, y: 1040 }, // WORLD POSITION — SAFE TO TUNE
     layer: 'object',
+    // The ID card resting on the round side table, slightly askew.
+    transform: { width: 22, rotation: -0.18, anchor: { x: 0.5, y: 0.5 } },
     // Intentionally no `collision` — an ambient/info area, not a physical
     // obstacle, and it must never block the player's own spawn point.
-    interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_ABOUT' },
+    // Wider than the default INTERACTION_RADIUS: the card sits on a table
+    // walled in by the two lounge chairs, so approach from any open side.
+    interaction: { radius: 130, action: 'OPEN_ABOUT' },
   },
   {
     id: 'certificates',

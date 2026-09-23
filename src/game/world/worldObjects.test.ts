@@ -71,6 +71,7 @@ describe('worldObjects', () => {
       'hobbies-dumbbell-rack',
       'hobbies-gym-station',
       'hobbies-stand',
+      'kitchen-fridge',
       // 'wall-one' is deliberately off by a larger margin than the rest:
       // its own content isn't centered in its canvas at all (flush-left),
       // so `position` is intentionally shifted away from the content
@@ -238,11 +239,10 @@ describe('desk furniture (PHASE-10A)', () => {
   })
 })
 
-describe('structural: bed + door (PHASE 09.1)', () => {
-  const structuralIds = ['bed', 'door'] as const
+describe('structural: bed (PHASE 09.1)', () => {
+  const structuralIds = ['bed'] as const
   const expectedAsset: Record<(typeof structuralIds)[number], string> = {
     bed: 'structural.bed',
-    door: 'structural.door',
   }
 
   function findStructural(id: (typeof structuralIds)[number]): WorldObject {
@@ -251,7 +251,7 @@ describe('structural: bed + door (PHASE 09.1)', () => {
     return object!
   }
 
-  it('both the bed and the door exist in the shipped world', () => {
+  it('the bed exists in the shipped world', () => {
     for (const id of structuralIds) {
       expect(worldObjects.some((object) => object.id === id)).toBe(true)
     }
@@ -301,7 +301,7 @@ describe('structural: bed + door (PHASE 09.1)', () => {
     }
   })
 
-  it('both asset ids resolve through the existing asset-manifest mechanism — no silent placeholder fallback', () => {
+  it('its asset id resolves through the existing asset-manifest mechanism — no silent placeholder fallback', () => {
     for (const id of structuralIds) {
       expect(getFurnitureAssetUrl(findStructural(id).asset)).toBeTruthy()
     }
@@ -356,37 +356,8 @@ describe('structural: bed + door (PHASE 09.1)', () => {
     expect(resolved.y + playerHeight).toBeGreaterThan(bed.collision!.y - 5)
   })
 
-  it('a player-sized body cannot move through the door — the CollisionSystem stops it at the door footprint', () => {
-    const door = findStructural('door')
-    const mat = worldObjects.find((object) => object.id === 'entrance-mat')!
-    // Door-only system: the gym's dumbbell rack (hobbiesRoom.ts) now has a
-    // solid, asset-sized collider whose right edge extends past the door's
-    // left edge, right above the door, so testing against every object would
-    // stop the player at the rack instead of the door. Any furniture placed
-    // near the door later would do the same — this test is about the door.
-    const collisionSystem = CollisionSystem.fromWorldObjects(
-      [door],
-      WORLD_WIDTH,
-      WORLD_HEIGHT,
-    )
-
-    const playerWidth = 20
-    const playerHeight = 12
-    // The doormat (entrance.ts) has its own asset-sized collider directly in
-    // front of the door, narrower than the door itself — this walks down a
-    // column between the door's left edge and the mat's left edge, clear of
-    // the mat's footprint.
-    const startRect = {
-      x: (door.collision!.x + mat.collision!.x) / 2 - playerWidth / 2,
-      y: door.collision!.y - 50,
-      width: playerWidth,
-      height: playerHeight,
-    }
-
-    const resolved = walkDownUntilBlocked(collisionSystem, startRect, 200, 5)
-
-    expect(resolved.y + playerHeight).toBeLessThanOrEqual(door.collision!.y)
-    expect(resolved.y + playerHeight).toBeGreaterThan(door.collision!.y - 5)
+  it('the entrance door has been removed from the world', () => {
+    expect(worldObjects.some((object) => object.id === 'door')).toBe(false)
   })
 })
 
@@ -674,7 +645,7 @@ describe('PHASE 10B layout (1920x1440 expansion)', () => {
     })
   })
 
-  it('no two physical (collision-bearing) objects overlap each other — every desk/marker/door/bed has real breathing room', () => {
+  it('no two physical (collision-bearing) objects overlap each other — every desk/marker/bed has real breathing room', () => {
     const blocking = worldObjects.filter((object) => object.collision)
 
     for (let i = 0; i < blocking.length; i++) {
@@ -718,8 +689,6 @@ describe('PHASE 10B.1 CLEANUP — no redundant overlap with the room boundary, r
     // of scope for PHASE 10B.1 CLEANUP, which asked only about the
     // education/resume-vs-bottom-wall overlap; flagged in the phase report
     // instead of silently fixed here too.
-    // - 'door': deliberately embedded in the bottom wall band by design
-    //   (PHASE 10B.1 report) — intentional.
     // - 'main-work-desk': sits entirely inside the top wall band.
     //   "projects" reachability is independently verified elsewhere in this
     //   file via its actual tested (side) approach path, never through
@@ -727,7 +696,7 @@ describe('PHASE 10B.1 CLEANUP — no redundant overlap with the room boundary, r
     // - 'bed': overlaps both the top and left walls (it's a corner piece).
     // - 'education-desk': overlaps the left wall.
     // - 'entrance-hook': deliberately mounted in the bottom wall band,
-    //   same "embedded by design" precedent as 'door' (entrance.ts).
+    //   embedded in the wall by design (entrance.ts).
     // - 'entrance-plant': positioned flush against the right wall
     //   (entrance.ts), same "embedded by design" precedent as the hook —
     //   both sit at the same x column.
@@ -735,7 +704,6 @@ describe('PHASE 10B.1 CLEANUP — no redundant overlap with the room boundary, r
     //   deliberately extend up into the top wall band, since they depict
     //   wall material themselves; same "embedded by design" precedent.
     const knownOverlaps = new Set([
-      'door',
       'main-work-desk',
       'bed',
       'education-desk',

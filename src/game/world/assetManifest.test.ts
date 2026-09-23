@@ -12,12 +12,14 @@ describe('assetManifest', () => {
     }
   })
 
-  it('maps both approved structural (bed, door) asset ids to a resolved, non-empty URL (PHASE 09.1)', () => {
-    for (const id of ['structural.bed', 'structural.door']) {
-      const url = getFurnitureAssetUrl(id)
-      expect(typeof url).toBe('string')
-      expect(url!.length).toBeGreaterThan(0)
-    }
+  it('maps the approved structural bed asset id to a resolved, non-empty URL (PHASE 09.1)', () => {
+    const url = getFurnitureAssetUrl('structural.bed')
+    expect(typeof url).toBe('string')
+    expect(url!.length).toBeGreaterThan(0)
+  })
+
+  it('no longer maps the removed door asset id', () => {
+    expect(getFurnitureAssetUrl('structural.door')).toBeUndefined()
   })
 
   it('maps the approved floor/background asset id to a resolved, non-empty URL (PHASE 10B)', () => {
