@@ -9,6 +9,7 @@ import { ExperiencePanel } from '../components/experience-ui/ExperiencePanel'
 import { ProjectsPanel } from '../components/project-ui/ProjectsPanel'
 import { ResumePanel } from '../components/resume-ui/ResumePanel'
 import { SkillsPanel } from '../components/skills-ui/SkillsPanel'
+import { audioManager } from '../game/audio/AudioManager'
 import {
   gameEventBridge,
   OPEN_EVENTS,
@@ -92,6 +93,16 @@ export function InteractionOverlay() {
       }
     })
   }, [])
+
+  // Close SFX on the real OPEN -> CLOSED transition only — whatever caused
+  // it (Escape, Close, a panel's own close, CLOSE_OVERLAY), exactly once.
+  // Tracked with a ref, not an effect cleanup, so StrictMode's dev-only
+  // effect re-run can't fire it on open.
+  const wasOpenRef = useRef(false)
+  useEffect(() => {
+    if (wasOpenRef.current && !isOpen) audioManager.playInteractClose()
+    wasOpenRef.current = isOpen
+  }, [isOpen])
 
   const close = useCallback(() => {
     setOpenEvent(null)

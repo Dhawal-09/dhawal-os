@@ -1,9 +1,10 @@
-import { useCallback, useReducer, useState } from 'react'
+import { useCallback, useEffect, useReducer, useState } from 'react'
 import { AccessPanel } from '../components/access-ui/AccessPanel'
 import { ErrorScreen } from '../components/error/ErrorScreen'
 import { GameHud } from '../components/game-menu/GameHud'
 import { LandingScreen } from '../components/landing/LandingScreen'
 import { BootScreen } from '../components/loading/BootScreen'
+import { audioManager } from '../game/audio/AudioManager'
 import { authManager } from '../game/auth/AuthManager'
 import {
   appLifecycleReducer,
@@ -58,6 +59,17 @@ function App() {
   // — the only real signal BootScreen gates its own completion on
   // (BootScreen.tsx). Reset on every fresh attempt (retry/exit).
   const [engineReady, setEngineReady] = useState(false)
+
+  // Background music belongs to GAME only — never LANDING, LOADING or
+  // ACCESS (the world runs behind those overlays, so GameApp being ready
+  // isn't the signal). Leaving GAME (EXIT -> LANDING) stops and rewinds it;
+  // panels don't change the lifecycle, so they never restart it.
+  const inGame = lifecycle === 'game'
+  useEffect(() => {
+    if (!inGame) return
+    audioManager.playMusic('house-theme')
+    return () => audioManager.stopMusic()
+  }, [inGame])
 
   const handleStartJourney = useCallback(() => {
     dispatch({ type: 'START_JOURNEY' })

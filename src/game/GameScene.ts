@@ -1,4 +1,5 @@
 import { Container } from 'pixi.js'
+import { audioManager } from './audio/AudioManager'
 import { gameEventBridge, OPEN_EVENTS } from './events/GameEventBridge'
 import { InputManager } from './input/InputManager'
 import { Player } from './player/Player'
@@ -50,6 +51,17 @@ export class GameScene extends Container {
    * (INTERACTION_SPEC.md "without unnecessarily resetting world state").
    */
   private paused = false
+  /**
+   * True only while `player.update()` runs — the one place an `[E]`
+   * interaction emits its `OPEN_*` action. Distinguishes a real interaction
+   * from the HUD menu (PortfolioNav) opening the same panel.
+   */
+  private updatingPlayer = false
+
+  /** The Pixi ticker stops while the tab is hidden, so `update()` can't be relied on to silence footsteps then. */
+  private readonly handleVisibilityChange = (): void => {
+    if (document.hidden) audioManager.stopWalking()
+  }
 
   constructor() {
     super({ label: 'GameScene' })
@@ -107,11 +119,17 @@ export class GameScene extends Container {
 
     this.unsubscribeFromBridge = gameEventBridge.subscribe((event) => {
       if (OPEN_EVENTS.has(event) || event === 'PAUSE_WORLD') {
+        if (this.updatingPlayer && OPEN_EVENTS.has(event)) {
+          audioManager.playInteractOpen()
+        }
         this.setPaused(true)
       } else if (event === 'CLOSE_OVERLAY' || event === 'RETURN_TO_WORLD') {
         this.setPaused(false)
       }
     })
+
+    document.addEventListener('visibilitychange', this.handleVisibilityChange)
+    audioManager.preloadWalking()
   }
 
   /** Refits the canonical world space to the given viewport dimensions. */
@@ -133,12 +151,24 @@ export class GameScene extends Container {
   private setPaused(paused: boolean): void {
     if (paused === this.paused) return
     this.paused = paused
-    if (!paused) this.inputManager.reset()
+    if (paused) audioManager.stopWalking()
+    else this.inputManager.reset()
   }
 
   update(deltaMS: number): void {
     if (this.paused) return
-    this.player.update(deltaMS)
+    const { x, y } = this.player.position
+    this.updatingPlayer = true
+    try {
+      this.player.update(deltaMS)
+    } finally {
+      this.updatingPlayer = false
+    }
+    // Footsteps follow the player's *actual* displacement, not raw input —
+    // walking straight into a wall (collision resolves to zero) is silent.
+    audioManager.setWalking(
+      this.player.position.x !== x || this.player.position.y !== y,
+    )
     // PHASE 10B: keeps the player centered as the Camera pans a larger-
     // than-viewport world (CAMERA_SPEC.md) — a no-op whenever the whole
     // room already fits the viewport (see Camera.ts's `apply()`).
@@ -149,6 +179,11 @@ export class GameScene extends Container {
   override destroy(options?: Parameters<Container['destroy']>[0]): void {
     this.unsubscribeFromBridge()
     this.inputManager.destroy()
+    document.removeEventListener(
+      'visibilitychange',
+      this.handleVisibilityChange,
+    )
+    audioManager.stopWalking()
     super.destroy(options)
   }
 }

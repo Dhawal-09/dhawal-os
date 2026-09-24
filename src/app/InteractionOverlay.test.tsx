@@ -1,6 +1,7 @@
 import { act, cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { audioManager } from '../game/audio/AudioManager'
 import { gameEventBridge } from '../game/events/GameEventBridge'
 import { InteractionOverlay } from './InteractionOverlay'
 
@@ -253,5 +254,57 @@ describe('InteractionOverlay', () => {
 
       window.matchMedia = original
     })
+  })
+})
+
+describe('InteractionOverlay close SFX', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('plays once when Escape closes the panel', async () => {
+    const playClose = vi.spyOn(audioManager, 'playInteractClose')
+    const user = userEvent.setup()
+    render(<InteractionOverlay />)
+    act(() => {
+      gameEventBridge.emit('OPEN_PROJECTS')
+    })
+    expect(playClose).not.toHaveBeenCalled()
+
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(playClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('plays once when the Close button closes the panel (its RETURN_TO_WORLD echo does not double it)', async () => {
+    const playClose = vi.spyOn(audioManager, 'playInteractClose')
+    const user = userEvent.setup()
+    render(<InteractionOverlay />)
+    act(() => {
+      gameEventBridge.emit('OPEN_RESUME')
+    })
+
+    await user.click(screen.getByRole('button', { name: /^close$/i }))
+    expect(playClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('stays silent for a close event when no panel is open, and when switching sections', () => {
+    const playClose = vi.spyOn(audioManager, 'playInteractClose')
+    render(<InteractionOverlay />)
+    act(() => {
+      gameEventBridge.emit('RETURN_TO_WORLD')
+    })
+    act(() => {
+      gameEventBridge.emit('OPEN_PROJECTS')
+    })
+    act(() => {
+      gameEventBridge.emit('OPEN_SKILLS')
+    })
+    expect(playClose).not.toHaveBeenCalled()
+
+    act(() => {
+      gameEventBridge.emit('CLOSE_OVERLAY')
+    })
+    expect(playClose).toHaveBeenCalledTimes(1)
   })
 })
