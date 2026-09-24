@@ -8,6 +8,7 @@ import {
 import userEvent from '@testing-library/user-event'
 import { useEffect } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { audioManager } from '../game/audio/AudioManager'
 import { authManager } from '../game/auth/AuthManager'
 import { RESUME_PDF_PATH } from '../data/resume'
 import App from './App'
@@ -470,5 +471,40 @@ describe('App exit flow', () => {
     expect(window.sessionStorage.getItem('dhawalos:game-session-active')).toBe(
       'true',
     )
+  })
+})
+
+describe('App background music', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('stays silent through LANDING, LOADING and ACCESS, starts in GAME, stops on EXIT, and starts again on re-entry', async () => {
+    const playMusic = vi.spyOn(audioManager, 'playMusic')
+    const stopMusic = vi.spyOn(audioManager, 'stopMusic')
+    const user = userEvent.setup()
+
+    render(<App />)
+    await startJourney(user)
+    await waitForAccessPanel()
+    expect(playMusic).not.toHaveBeenCalled()
+
+    await grantAccess(user)
+    expect(playMusic).toHaveBeenCalledTimes(1)
+    expect(playMusic).toHaveBeenCalledWith('house-theme')
+    expect(stopMusic).not.toHaveBeenCalled()
+
+    await user.click(screen.getByRole('button', { name: /^exit$/i }))
+    await user.click(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: /^exit$/i,
+      }),
+    )
+    expect(stopMusic).toHaveBeenCalledTimes(1)
+
+    await startJourney(user)
+    await waitForAccessPanel()
+    await grantAccess(user)
+    expect(playMusic).toHaveBeenCalledTimes(2)
   })
 })

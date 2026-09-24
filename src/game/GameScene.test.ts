@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { audioManager } from './audio/AudioManager'
 import { gameEventBridge } from './events/GameEventBridge'
 import { GameScene } from './GameScene'
 import { Player } from './player/Player'
@@ -287,5 +288,123 @@ describe('GameScene', () => {
 
     addSpy.mockRestore()
     removeSpy.mockRestore()
+  })
+})
+
+describe('GameScene walking audio', () => {
+  let scene: GameScene | null = null
+
+  afterEach(() => {
+    scene?.destroy()
+    scene = null
+    vi.restoreAllMocks()
+  })
+
+  it('reports actual movement each frame — continuous across multi-key presses and releases', () => {
+    const setWalking = vi.spyOn(audioManager, 'setWalking')
+    scene = new GameScene()
+    const lastWalking = () => setWalking.mock.lastCall?.[0]
+
+    scene.update(16)
+    expect(lastWalking()).toBe(false)
+
+    press('KeyW')
+    scene.update(16)
+    expect(lastWalking()).toBe(true)
+
+    press('KeyD')
+    scene.update(16)
+    expect(lastWalking()).toBe(true)
+
+    // D still held after W is released — still walking.
+    release('KeyW')
+    scene.update(16)
+    expect(lastWalking()).toBe(true)
+
+    release('KeyD')
+    scene.update(16)
+    expect(lastWalking()).toBe(false)
+  })
+
+  it('stops footsteps when a panel/modal pauses the world, and on destroy', () => {
+    const stopWalking = vi.spyOn(audioManager, 'stopWalking')
+    scene = new GameScene()
+
+    gameEventBridge.emit('PAUSE_WORLD')
+    expect(stopWalking).toHaveBeenCalledTimes(1)
+    gameEventBridge.emit('RETURN_TO_WORLD')
+
+    scene.destroy()
+    scene = null
+    expect(stopWalking).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('GameScene interact-open SFX', () => {
+  let scene: GameScene | null = null
+
+  afterEach(() => {
+    scene?.destroy()
+    scene = null
+    vi.restoreAllMocks()
+  })
+
+  /** Walks right from spawn until the first interactable (currently "skills") is in range — layout-agnostic. */
+  function walkToInteractable(current: GameScene): void {
+    press('KeyD')
+    for (let i = 0; i < 80 && !current.player.interactionTarget; i++) {
+      current.update(50)
+    }
+    release('KeyD')
+  }
+
+  it('plays once when E actually opens a panel, and not again for E spam while it is open', () => {
+    const playOpen = vi.spyOn(audioManager, 'playInteractOpen')
+    const received: unknown[] = []
+    const unsubscribe = gameEventBridge.subscribe((event) =>
+      received.push(event),
+    )
+    scene = new GameScene()
+    walkToInteractable(scene)
+    const target = scene.player.interactionTarget
+    expect(target).not.toBeNull()
+
+    press('KeyE')
+    scene.update(16)
+    release('KeyE')
+    expect(received).toEqual([target?.action])
+    expect(playOpen).toHaveBeenCalledTimes(1)
+
+    for (let i = 0; i < 3; i++) {
+      press('KeyE')
+      scene.update(16)
+      release('KeyE')
+    }
+    expect(playOpen).toHaveBeenCalledTimes(1)
+    gameEventBridge.emit('RETURN_TO_WORLD')
+    unsubscribe()
+  })
+
+  it('stays silent for E away from any interactable', () => {
+    const playOpen = vi.spyOn(audioManager, 'playInteractOpen')
+    scene = new GameScene()
+    // Nothing is in range at the spawn point.
+    scene.update(16)
+    expect(scene.player.interactionTarget).toBeNull()
+
+    press('KeyE')
+    scene.update(16)
+    release('KeyE')
+    expect(playOpen).not.toHaveBeenCalled()
+  })
+
+  it('stays silent when a panel is opened from the HUD menu, not by interaction', () => {
+    const playOpen = vi.spyOn(audioManager, 'playInteractOpen')
+    scene = new GameScene()
+    gameEventBridge.emit('OPEN_PROJECTS')
+    gameEventBridge.emit('RETURN_TO_WORLD')
+    gameEventBridge.emit('PAUSE_WORLD')
+    gameEventBridge.emit('RETURN_TO_WORLD')
+    expect(playOpen).not.toHaveBeenCalled()
   })
 })
