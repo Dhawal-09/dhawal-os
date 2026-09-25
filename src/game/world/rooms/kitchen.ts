@@ -300,16 +300,19 @@ export const kitchenObjects: WorldObject[] = [
     KITCHEN_SCALE.cooktop,
     KITCHEN_TARGET_WIDTH.cooktop,
   ),
-  kitchenObject(
-    'kitchen-coffee-machine',
-    'kitchen.coffeeMachine',
-    'COFFEE MACHINE',
-    { x: 1725, y: 205 }, // WORLD POSITION — SAFE TO TUNE — sits at the counter's right/end, per reference
-    KITCHEN_ASSET_NATURAL_SIZE.coffeeMachine,
-    KITCHEN_ASSET_CONTENT_BBOX.coffeeMachine,
-    KITCHEN_SCALE.coffeeMachine,
-    KITCHEN_TARGET_WIDTH.coffeeMachine,
-  ),
+  {
+    ...kitchenObject(
+      'kitchen-coffee-machine',
+      'kitchen.coffeeMachine',
+      'COFFEE MACHINE',
+      { x: 1725, y: 205 }, // WORLD POSITION — SAFE TO TUNE — sits at the counter's right/end, per reference
+      KITCHEN_ASSET_NATURAL_SIZE.coffeeMachine,
+      KITCHEN_ASSET_CONTENT_BBOX.coffeeMachine,
+      KITCHEN_SCALE.coffeeMachine,
+      KITCHEN_TARGET_WIDTH.coffeeMachine,
+    ),
+    message: { type: 'flavor', text: 'Coffee first. Code later.', radius: 110 },
+  },
   kitchenObject(
     'kitchen-counter-prop-holder',
     'kitchen.propHolder',

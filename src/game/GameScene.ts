@@ -10,7 +10,15 @@ import {
 import { PLAYER_SPAWN_POSITION } from './player/playerConstants'
 import { Camera } from './world/Camera'
 import { CollisionSystem } from './world/CollisionSystem'
-import { InteractionSystem } from './world/InteractionSystem'
+import {
+  ContextualMessageView,
+  messageForTarget,
+} from './world/ContextualMessageView'
+import {
+  InteractionSystem,
+  type AmbientCandidate,
+  type InteractableCandidate,
+} from './world/InteractionSystem'
 import { World } from './world/World'
 import { WORLD_HEIGHT, WORLD_WIDTH } from './world/worldConstants'
 import {
@@ -57,6 +65,24 @@ export class GameScene extends Container {
    * from the HUD menu (PortfolioNav) opening the same panel.
    */
   private updatingPlayer = false
+  /** The single in-world contextual prompt (INTERACTION_SPEC.md "Contextual messages"). */
+  readonly contextualMessage = new ContextualMessageView({
+    width: WORLD_WIDTH,
+    height: WORLD_HEIGHT,
+  })
+  /**
+   * The target the prompt currently describes — the player's interaction
+   * target if any, else the nearest info/flavor spot. Candidates are stable
+   * objects built once by InteractionSystem, so a reference comparison
+   * detects a change without allocating anything per frame.
+   */
+  private messageTarget: InteractableCandidate | AmbientCandidate | null = null
+  /**
+   * The interactable whose prompt last played the appear SFX. Cleared only
+   * when the player leaves it — not by a panel opening — so re-showing the
+   * same prompt after a panel closes stays silent.
+   */
+  private announcedTarget: InteractableCandidate | null = null
 
   /** The Pixi ticker stops while the tab is hidden, so `update()` can't be relied on to silence footsteps then. */
   private readonly handleVisibilityChange = (): void => {
@@ -104,6 +130,9 @@ export class GameScene extends Container {
       },
     )
     this.world.playerLayer.addChild(this.player)
+    // Above every world layer, but still inside World — the Camera
+    // transform moves (and clips) it together with its target.
+    this.world.addChild(this.contextualMessage)
     this.camera.follow(this.player.position.x, this.player.position.y)
 
     if (!playerFrames) {
@@ -151,8 +180,41 @@ export class GameScene extends Container {
   private setPaused(paused: boolean): void {
     if (paused === this.paused) return
     this.paused = paused
-    if (paused) audioManager.stopWalking()
-    else this.inputManager.reset()
+    if (paused) {
+      audioManager.stopWalking()
+      // Hidden under any React panel/modal; the first update after resuming
+      // re-derives it from the (unchanged) current target.
+      this.contextualMessage.hide()
+      this.messageTarget = null
+    } else {
+      this.inputManager.reset()
+    }
+  }
+
+  /**
+   * Keeps the prompt on the current target. A no-op unless the target
+   * changed — `show`/`hide` (and the SFX) run only on transitions.
+   */
+  private updateContextualMessage(): void {
+    const target =
+      this.player.interactionTarget ??
+      this.interactionSystem.findNearestAmbientInRange(this.player.position)
+    if (target === this.messageTarget) return
+    this.messageTarget = target
+
+    if (!target) {
+      this.contextualMessage.hide()
+      this.announcedTarget = null
+      return
+    }
+
+    this.contextualMessage.show(messageForTarget(target, this.player.position))
+    if ('action' in target) {
+      if (target !== this.announcedTarget) audioManager.playInteractOpen()
+      this.announcedTarget = target
+    } else {
+      this.announcedTarget = null
+    }
   }
 
   update(deltaMS: number): void {
@@ -164,11 +226,17 @@ export class GameScene extends Container {
     } finally {
       this.updatingPlayer = false
     }
-    // Footsteps follow the player's *actual* displacement, not raw input —
-    // walking straight into a wall (collision resolves to zero) is silent.
-    audioManager.setWalking(
-      this.player.position.x !== x || this.player.position.y !== y,
-    )
+    // An [E] interaction this frame pauses the world from inside
+    // `player.update()` — don't restart footsteps or re-show the prompt
+    // underneath the panel that just opened.
+    if (!this.paused) {
+      // Footsteps follow the player's *actual* displacement, not raw input —
+      // walking straight into a wall (collision resolves to zero) is silent.
+      audioManager.setWalking(
+        this.player.position.x !== x || this.player.position.y !== y,
+      )
+      this.updateContextualMessage()
+    }
     // PHASE 10B: keeps the player centered as the Camera pans a larger-
     // than-viewport world (CAMERA_SPEC.md) — a no-op whenever the whole
     // room already fits the viewport (see Camera.ts's `apply()`).

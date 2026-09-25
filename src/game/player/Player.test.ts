@@ -156,8 +156,9 @@ describe('Player with the character sprite', () => {
   it('does not draw the dev collider outline unless explicitly asked to', () => {
     const player = new Player(makeSystems(), { frames: makeFrames() })
 
-    // sprite + placeholder graphics + prompt — no extra debug Graphics.
-    expect(player.children).toHaveLength(4)
+    // sprite + placeholder graphics — no extra debug Graphics. (The
+    // interaction prompt lives in GameScene's ContextualMessageView.)
+    expect(player.children).toHaveLength(3)
   })
 
   it('destroying the player leaves the shared character textures intact', () => {

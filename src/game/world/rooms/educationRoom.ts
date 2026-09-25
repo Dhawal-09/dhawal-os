@@ -1,3 +1,4 @@
+import { cat } from '../../../data/cat'
 import type { Collider, WorldObject } from '../WorldObject'
 import {
   BOTTOM_WALL_INNER_Y,
@@ -471,6 +472,7 @@ export const educationObjects: WorldObject[] = [
     label: 'BOOKSHELF',
     position: shelfPosition,
     layer: 'object',
+    message: { type: 'flavor', text: 'Knowledge checkpoint.', radius: 120 },
     transform: { width: SHELF_TARGET_WIDTH },
     collision: contentAlignedCollider(
       shelfPosition,
@@ -545,6 +547,10 @@ export const educationObjects: WorldObject[] = [
       READING_CAT_SCALE,
     ),
     interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_CAT' },
+    message: {
+      type: 'interactive',
+      text: `Request audience with ${cat.name}?`,
+    },
   },
   {
     id: 'education-reading-chair',
@@ -586,5 +592,6 @@ export const educationObjects: WorldObject[] = [
       BOTTOM_WALL_INNER_Y,
     ),
     interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_EDUCATION' },
+    message: { type: 'interactive', text: 'Wanna see where he studied?' },
   },
 ]

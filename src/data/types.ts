@@ -37,6 +37,12 @@ export interface ExperienceEntry {
   period: string
   /** Left undefined where CONTENT.md does not name an employer — never fabricated. */
   company?: string
+  /**
+   * Id of the `projects.ts` entry this role's main product lives in. The
+   * Experience panel reads the product's name/subtitle from there instead
+   * of duplicating them here.
+   */
+  projectId?: string
   technologies?: string[]
   responsibilities: string[]
 }
