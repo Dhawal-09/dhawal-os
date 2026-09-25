@@ -219,6 +219,11 @@ export const livingRoomObjects: WorldObject[] = [
     id: 'living-tv',
     asset: 'living.tv',
     label: 'TV',
+    message: {
+      type: 'info',
+      text: 'Work history is down by the rug.',
+      radius: 110,
+    },
     position: LIVING_TV_POSITION,
     layer: 'object',
     transform: { width: LIVING_TV_TARGET_WIDTH },
@@ -266,7 +271,13 @@ export const livingRoomObjects: WorldObject[] = [
     label: 'EXPERIENCE',
     position: { x: 380, y: 720 }, // WORLD POSITION — SAFE TO TUNE
     layer: 'object',
+    // CareerTimeline.png's artwork is centered in its 640x1088 canvas, so a
+    // center anchor keeps the stand centered on its collider. 76px wide
+    // renders the visible stand at ~68x110 — shelf-scale, clear of the TV
+    // console above (y≤620).
+    transform: { width: 76, anchor: { x: 0.5, y: 0.5 } },
     collision: centeredCollider({ x: 380, y: 720 }),
     interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_EXPERIENCE' },
+    message: { type: 'interactive', text: 'Wanna see where he worked?' },
   },
 ]

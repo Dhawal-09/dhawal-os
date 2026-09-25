@@ -33,6 +33,44 @@ export type InteractionAction =
   | 'OPEN_CAT'
 
 /**
+ * The three kinds of contextual message (INTERACTION_SPEC.md "Contextual
+ * messages"), all shown in the same in-world prompt:
+ *
+ * - `interactive` — describes what the object's `interaction` does, shown
+ *   with the `[E]` / `[TAP]` hint. Only valid on an object that has an
+ *   `interaction`; the action itself always comes from `interaction.action`,
+ *   never from the message.
+ * - `info` — useful context. No hint, no action.
+ * - `flavor` — atmosphere/personality. No hint, no action.
+ */
+export type ContextualMessageType = 'interactive' | 'info' | 'flavor'
+
+interface ContextualMessageBase {
+  text: string
+  /**
+   * How far (world units) above `position` the prompt's pointer sits.
+   * Defaults to `DEFAULT_MESSAGE_ELEVATION` (ContextualMessageView.ts) —
+   * tune per object so the prompt clears the object's artwork.
+   */
+  elevation?: number
+}
+
+export interface InteractiveMessage extends ContextualMessageBase {
+  type: 'interactive'
+}
+
+/**
+ * Info/flavor objects have no `interaction`, so they carry their own
+ * proximity radius. They're only picked up when no interactable is in range.
+ */
+export interface AmbientMessage extends ContextualMessageBase {
+  type: 'info' | 'flavor'
+  radius: number
+}
+
+export type ContextualMessage = InteractiveMessage | AmbientMessage
+
+/**
  * Independently configurable per-asset visual transform. `width`/`height`
  * are fully independent of one another (see `resolveAssetSize`) — setting
  * one never implicitly changes the other, and neither is tied to
@@ -73,6 +111,8 @@ export interface WorldObject {
     radius: number
     action: InteractionAction
   }
+  /** Optional contextual prompt text — see `ContextualMessage`. */
+  message?: ContextualMessage
 }
 
 /**

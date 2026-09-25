@@ -1,20 +1,27 @@
 import type { ExperienceEntry } from './types'
 
 /**
- * Transcribed only from `docs/CONTENT.md` "Professional experience". That
- * document names no employer, so `company` is left undefined. The project
- * write-ups live in `projects.ts` (`category: "experience"`), which reads
- * each project's role/period from here by id (Unifi → Software Engineer,
- * NexCRM → Apprentice) rather than duplicating them.
+ * Transcribed only from `docs/CONTENT.md` "Professional experience". The
+ * project write-ups live in `projects.ts` (`category: "experience"`), which
+ * reads each project's role/period from here by id (Unifi → Software
+ * Engineer, NexCRM → Apprentice) rather than duplicating them; `projectId`
+ * is the reverse link the Experience panel uses to name each role's
+ * product.
+ *
+ * Ordered newest first — the Experience panel renders this array as-is, so
+ * the order here IS the reverse-chronological timeline order.
  */
 export const experience: ExperienceEntry[] = [
   {
     id: 'software-engineer',
     role: 'Software Engineer',
     period: 'Jul 2025 – Jul 2026',
+    company: 'Haptiq Lab',
+    projectId: 'unifi',
     responsibilities: [
       'RESTful APIs for asset, modem and financial management',
       'Role-based access control (RBAC) and request validation',
+      'Intercard API integration',
       'Cron-based revenue synchronization',
       'Reusable React reconciliation dashboards',
       'Production debugging: SQL queries, Postman, Chrome DevTools, logs, Jira RCA',
@@ -25,13 +32,15 @@ export const experience: ExperienceEntry[] = [
       'Express.js',
       'PostgreSQL',
       'Sequelize ORM',
-      'TypeScript',
+      'Material UI',
     ],
   },
   {
     id: 'apprentice',
     role: 'Apprentice',
     period: 'Nov 2024 – Jun 2025',
+    company: 'Haptiq Lab',
+    projectId: 'nexcrm',
     responsibilities: [
       'Full-stack multi-tenant CRM development',
       'JWT authentication and REST APIs',

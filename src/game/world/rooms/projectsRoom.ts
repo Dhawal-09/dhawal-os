@@ -46,6 +46,11 @@ export const projectsObjects: WorldObject[] = [
     label: 'MAIN WORK DESK',
     position: { x: 1000, y: 360 }, // WORLD POSITION — SAFE TO TUNE
     layer: 'object',
+    message: {
+      type: 'info',
+      text: 'This is where the backend magic happens.',
+      radius: 160,
+    },
     transform: { width: MAIN_WORK_DESK_TARGET_WIDTH },
     collision: deskCollider(
       { x: 1000, y: 340 },
@@ -78,6 +83,7 @@ export const projectsObjects: WorldObject[] = [
     layer: 'object',
     collision: centeredCollider({ x: 1000, y: 400 }),
     interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_PROJECTS' },
+    message: { type: 'interactive', text: 'Wanna see what he built?' },
   },
   {
     id: 'projects-code-poster',
@@ -87,5 +93,13 @@ export const projectsObjects: WorldObject[] = [
     layer: 'object',
     transform: { width: 60 },
     // No `collision` — wall-mounted decor, visual placement pass only.
+    message: {
+      type: 'flavor',
+      text: 'Another day. Another build.',
+      // The closest walkable point is ~140 below the wall-mounted frame.
+      radius: 150,
+      // Already high on the wall — the default would push it off the top.
+      elevation: 60,
+    },
   },
 ]

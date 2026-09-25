@@ -14,6 +14,7 @@ export const skillsObjects: WorldObject[] = [
     layer: 'object',
     collision: centeredCollider({ x: 1540, y: 720 }),
     interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_SKILLS' },
+    message: { type: 'interactive', text: 'Curious what he works with?' },
   },
 ]
 

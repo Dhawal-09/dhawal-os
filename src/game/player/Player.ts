@@ -1,5 +1,4 @@
-import { Container, Graphics, Sprite, Text } from 'pixi.js'
-import { PIXEL_FONT_FAMILY } from '../text/pixelFont'
+import { Container, Graphics, Sprite } from 'pixi.js'
 import type { InteractableCandidate } from '../world/InteractionSystem'
 import { ManagedAssetSprite } from '../world/WorldObject'
 import { CollisionBody, PLAYER_FEET_OFFSET_Y } from './CollisionBody'
@@ -10,15 +9,11 @@ import {
   PLAYER_SPRITE_SHEET,
   type PlayerFrames,
 } from './playerAnimations'
-import { PLAYER_SPRITE_HEIGHT } from './playerConstants'
 import { PlayerAnimator, type Direction } from './PlayerAnimator'
 import { PlayerController, type PlayerSystems } from './PlayerController'
 
 const BODY_RADIUS = 14
 const FACING_LENGTH = 18
-const PROMPT_OFFSET_Y = -26
-/** Gap between the top of the character's head and the interact prompt. */
-const PROMPT_GAP_ABOVE_HEAD = 6
 
 const FACING_OFFSETS: Record<Direction, readonly [number, number]> = {
   down: [0, 1],
@@ -74,15 +69,6 @@ export class Player extends Container {
   private sprite: Sprite | null = null
   private frames: PlayerFrames | null = null
   private readonly debugCollider: Graphics | null
-  /**
-   * The `[E] INTERACT` prompt (INTERACTION_SPEC.md). Plain text, not tied to
-   * any visual asset — visibility alone tracks `interactionTarget`, so it
-   * works identically for whichever object the player is near.
-   */
-  private readonly prompt = new Text({
-    text: '[E] INTERACT',
-    style: { fontFamily: PIXEL_FONT_FAMILY, fontSize: 12, fill: 0xffffff },
-  })
 
   constructor(systems: PlayerSystems, options: PlayerOptions = {}) {
     super({ label: 'Player' })
@@ -92,11 +78,6 @@ export class Player extends Container {
 
     this.addChild(this.body, this.facing)
     if (this.debugCollider) this.addChild(this.debugCollider)
-
-    this.prompt.anchor.set(0.5, 1)
-    this.prompt.position.set(0, PROMPT_OFFSET_Y)
-    this.prompt.visible = false
-    this.addChild(this.prompt)
 
     this.controller = new PlayerController(this, systems)
 
@@ -121,16 +102,11 @@ export class Player extends Container {
       sprite.scale.set(PLAYER_SPRITE_SCALE)
       sprite.position.set(0, PLAYER_FEET_OFFSET_Y)
       this.sprite = sprite
-      // Bottom of the stack, under the debug collider outline and the prompt.
+      // Bottom of the stack, under the debug collider outline.
       this.addChildAt(sprite, 0)
 
       this.body.visible = false
       this.facing.visible = false
-      // Above the head instead of over the torso.
-      this.prompt.position.set(
-        0,
-        PLAYER_FEET_OFFSET_Y - PLAYER_SPRITE_HEIGHT - PROMPT_GAP_ABOVE_HEAD,
-      )
     }
 
     this.redraw()
@@ -153,8 +129,6 @@ export class Player extends Container {
     } else {
       this.redrawPlaceholder()
     }
-
-    this.prompt.visible = this.interactionTarget !== null
 
     if (this.debugCollider) {
       // Local space (origin 0,0) — this container is already positioned at

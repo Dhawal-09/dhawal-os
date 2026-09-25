@@ -401,6 +401,11 @@ export const hobbiesObjects: WorldObject[] = [
     label: 'GYM STATION',
     position: GYM_STATION_POSITION,
     layer: 'object',
+    message: {
+      type: 'flavor',
+      text: 'Debugging burns calories too.',
+      radius: 160,
+    },
     transform: GYM_STATION_TRANSFORM,
     collision: spriteFootprintCollider(
       GYM_STATION_POSITION,
@@ -420,6 +425,11 @@ export const hobbiesObjects: WorldObject[] = [
     label: 'FOOTBALL RACK',
     position: footballRackFit.position,
     layer: 'object',
+    message: {
+      type: 'flavor',
+      text: 'Some problems need a different tackle.',
+      radius: 130,
+    },
     transform: footballRackFit.transform,
   },
 ]

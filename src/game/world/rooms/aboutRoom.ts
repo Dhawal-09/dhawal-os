@@ -36,6 +36,7 @@ export const aboutObjects: WorldObject[] = [
     // Wider than the default INTERACTION_RADIUS: the card sits on a table
     // walled in by the two lounge chairs, so approach from any open side.
     interaction: { radius: 130, action: 'OPEN_ABOUT' },
+    message: { type: 'interactive', text: 'Wanna see his ID card?' },
   },
   {
     id: 'certificates',
@@ -45,6 +46,7 @@ export const aboutObjects: WorldObject[] = [
     layer: 'object',
     collision: centeredCollider({ x: 960, y: 1100 }),
     interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_CERTIFICATES' },
+    message: { type: 'interactive', text: 'Check out his certificates?' },
   },
   {
     id: 'resume',
@@ -60,5 +62,6 @@ export const aboutObjects: WorldObject[] = [
       BOTTOM_WALL_INNER_Y,
     ),
     interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_RESUME' },
+    message: { type: 'interactive', text: 'Take a look at his resume?' },
   },
 ]

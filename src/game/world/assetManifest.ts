@@ -35,6 +35,7 @@ import livingTvUrl from '../../../assets/world/ExpiernceRoom/TV.png'
 import livingSofaUrl from '../../../assets/world/ExpiernceRoom/sofa-Photoroom.png'
 import livingSofaLeftUrl from '../../../assets/world/ExpiernceRoom/leftsofa-Photoroom.png'
 import livingSpeakerUrl from '../../../assets/world/ExpiernceRoom/speaker-Photoroom.png'
+import careerTimelineUrl from '../../../assets/world/ExpiernceRoom/CareerTimeline.png'
 import livingBigPlantUrl from '../../../assets/world/special/Big plant.png'
 import hangingPlantUrl from '../../../assets/world/special/Hangingplant.png'
 import idCardUrl from '../../../assets/world/special/ID_card.png'
@@ -135,6 +136,9 @@ export const ASSET_MANIFEST: Record<string, string> = {
   // "About Me" marker's real art (aboutRoom.ts). Cropped from
   // public/assets/special/ID_card.png to the card itself.
   'content.aboutMe': idCardUrl,
+  // The freestanding CAREER TIMELINE stand — the "Experience" marker's real
+  // art (livingRoom.ts).
+  'content.experience': careerTimelineUrl,
   'living.sofa': livingSofaUrl,
   'living.sofaLeft': livingSofaLeftUrl,
   'living.speaker': livingSpeakerUrl,

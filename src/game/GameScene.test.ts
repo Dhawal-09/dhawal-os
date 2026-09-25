@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import '../test/stubPixiTextMetrics'
 import { audioManager } from './audio/AudioManager'
 import { gameEventBridge } from './events/GameEventBridge'
 import { GameScene } from './GameScene'
@@ -368,6 +369,9 @@ describe('GameScene interact-open SFX', () => {
     walkToInteractable(scene)
     const target = scene.player.interactionTarget
     expect(target).not.toBeNull()
+    // Reaching it already played the prompt-appear SFX once (see the
+    // contextual message tests) — count only the interaction from here.
+    playOpen.mockClear()
 
     press('KeyE')
     scene.update(16)
