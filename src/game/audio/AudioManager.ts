@@ -283,7 +283,7 @@ export class AudioManager {
     })
   }
 
-  /** Played by GameScene only when an [E] interaction actually fires. */
+  /** Played by GameScene when an [E] interaction actually fires, and by the ACCESS SYSTEM button. */
   playInteractOpen(): void {
     this.playSfx(INTERACT_OPEN_VOICES)
   }

@@ -65,7 +65,7 @@ describe('GameScene contextual messages', () => {
 
   it('shows nothing with no target nearby', () => {
     scene = new GameScene()
-    scene.update(16)
+    standAt(scene, 960, 720) // open floor, nothing in range
     expect(scene.contextualMessage.current).toBeNull()
   })
 

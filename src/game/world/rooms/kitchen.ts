@@ -642,7 +642,7 @@ export const kitchenObjects: WorldObject[] = [
     'kitchen-acc-dining-table',
     'accDiningTable',
     'DINING TABLE',
-    { x: 1468, y: 575 },
+    { x: 1468, y: 515 },
     true,
   ), // WORLD POSITION — SAFE TO TUNE — second table, open floor below the fridge
   // On the main counter.
@@ -671,23 +671,23 @@ export const kitchenObjects: WorldObject[] = [
   // On the new second table.
   kitchenAccessory('kitchen-acc-bottle', 'accBottle', 'WATER BOTTLE', {
     x: 872,
-    y: 170,
+    y: 80,
   }), // WORLD POSITION — SAFE TO TUNE
   kitchenAccessory('kitchen-acc-mug', 'accMug', 'COFFEE MUG', {
     x: 1450,
-    y: 510,
+    y: 470,
   }), // WORLD POSITION — SAFE TO TUNE
   kitchenAccessory('kitchen-acc-mobile', 'accMobile', 'PHONE', {
     x: 1488,
-    y: 512,
+    y: 472,
   }), // WORLD POSITION — SAFE TO TUNE
   kitchenAccessory('kitchen-acc-dal', 'accDal', 'DAL BOWL', {
     x: 1450,
-    y: 545,
+    y: 445,
   }), // WORLD POSITION — SAFE TO TUNE
   kitchenAccessory('kitchen-acc-plates', 'accPlates', 'PLATE STACK', {
     x: 1505,
-    y: 545,
+    y: 445,
   }), // WORLD POSITION — SAFE TO TUNE
   kitchenAccessory('kitchen-acc-snacks', 'accSnacks', 'SNACK BOWL', {
     x: 1117,

@@ -5,6 +5,7 @@ import { gameEventBridge } from './events/GameEventBridge'
 import { GameScene } from './GameScene'
 import { Player } from './player/Player'
 import { World } from './world/World'
+import { CAMERA_CONFIG } from './world/cameraConstants'
 import { PLAYER_SPAWN_POSITION } from './player/playerConstants'
 
 function press(code: string): void {
@@ -392,7 +393,8 @@ describe('GameScene interact-open SFX', () => {
   it('stays silent for E away from any interactable', () => {
     const playOpen = vi.spyOn(audioManager, 'playInteractOpen')
     scene = new GameScene()
-    // Nothing is in range at the spawn point.
+    // Open floor with nothing in range (the spawn itself is next to About Me).
+    scene.player.position.set(960, 720)
     scene.update(16)
     expect(scene.player.interactionTarget).toBeNull()
 
@@ -410,5 +412,111 @@ describe('GameScene interact-open SFX', () => {
     gameEventBridge.emit('PAUSE_WORLD')
     gameEventBridge.emit('RETURN_TO_WORLD')
     expect(playOpen).not.toHaveBeenCalled()
+  })
+})
+
+describe('GameScene camera modes', () => {
+  let scene: GameScene | null = null
+
+  afterEach(() => {
+    gameEventBridge.emit('CAMERA_EXPLORE')
+    scene?.destroy()
+    scene = null
+  })
+
+  it('starts in EXPLORE, framed on the spawn point at the entrance', () => {
+    scene = new GameScene()
+    scene.resize(1440, 900)
+    expect(scene.cameraState.mode).toBe('explore')
+    expect(scene.cameraState.zoom).toBeCloseTo(CAMERA_CONFIG.exploreZoom)
+    // Scene-level: the World is the camera's only target — nothing else moves.
+    expect(scene.children).toHaveLength(1)
+  })
+
+  it('OVERVIEW is camera framing only: the player keeps moving while the camera stays on the whole world', () => {
+    scene = new GameScene()
+    scene.resize(1440, 900)
+    gameEventBridge.emit('CAMERA_OVERVIEW')
+    for (let i = 0; i < 60; i++) scene.update(16)
+    const framing = {
+      x: scene.cameraState.cameraX,
+      y: scene.cameraState.cameraY,
+    }
+    const before = { x: scene.player.position.x, y: scene.player.position.y }
+
+    press('KeyA')
+    for (let i = 0; i < 20; i++) scene.update(16)
+    release('KeyA')
+
+    expect(scene.player.position.x).toBeLessThan(before.x)
+    expect(scene.cameraState.mode).toBe('overview')
+    expect(scene.cameraState.zoom).toBe(1)
+    // Still whole-world framing — the camera did not follow the player.
+    expect(scene.cameraState.cameraX).toBe(framing.x)
+    expect(scene.cameraState.cameraY).toBe(framing.y)
+  })
+
+  it('[E] interactions work in OVERVIEW (spawn is inside the About Me radius)', () => {
+    const received: string[] = []
+    const unsubscribe = gameEventBridge.subscribe((event) =>
+      received.push(event),
+    )
+    scene = new GameScene()
+    scene.resize(1440, 900)
+    gameEventBridge.emit('CAMERA_OVERVIEW')
+    scene.update(16)
+
+    press('KeyE')
+    scene.update(16)
+    release('KeyE')
+    unsubscribe()
+
+    expect(received).toContain('OPEN_ABOUT')
+    gameEventBridge.emit('RETURN_TO_WORLD')
+  })
+
+  it('switching views never moves the player, and movement carries on in both directions', () => {
+    scene = new GameScene()
+    scene.resize(1440, 900)
+
+    gameEventBridge.emit('CAMERA_OVERVIEW')
+    for (let i = 0; i < 60; i++) scene.update(16)
+    press('KeyA')
+    for (let i = 0; i < 10; i++) scene.update(16)
+    release('KeyA')
+    const inOverview = {
+      x: scene.player.position.x,
+      y: scene.player.position.y,
+    }
+
+    gameEventBridge.emit('CAMERA_EXPLORE')
+    for (let i = 0; i < 60; i++) scene.update(16)
+    expect(scene.player.position.x).toBe(inOverview.x)
+    expect(scene.player.position.y).toBe(inOverview.y)
+    expect(scene.cameraState.zoom).toBeCloseTo(CAMERA_CONFIG.exploreZoom)
+
+    press('KeyA')
+    for (let i = 0; i < 10; i++) scene.update(16)
+    release('KeyA')
+    expect(scene.player.position.x).toBeLessThan(inOverview.x)
+    const inExplore = { x: scene.player.position.x, y: scene.player.position.y }
+
+    gameEventBridge.emit('CAMERA_OVERVIEW')
+    for (let i = 0; i < 60; i++) scene.update(16)
+    expect(scene.player.position.x).toBe(inExplore.x)
+    expect(scene.player.position.y).toBe(inExplore.y)
+  })
+
+  it('a resize keeps the current camera mode and never moves the player', () => {
+    scene = new GameScene()
+    scene.resize(1440, 900)
+    gameEventBridge.emit('CAMERA_OVERVIEW')
+    for (let i = 0; i < 60; i++) scene.update(16)
+    const before = { x: scene.player.position.x, y: scene.player.position.y }
+
+    scene.resize(390, 844)
+    expect(scene.cameraState.mode).toBe('overview')
+    expect(scene.player.position.x).toBe(before.x)
+    expect(scene.player.position.y).toBe(before.y)
   })
 })

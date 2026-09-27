@@ -78,4 +78,14 @@ describe('GameHud', () => {
     rerender(<GameHud onExitConfirmed={vi.fn()} />)
     expect(screen.getByRole('button', { name: /^exit$/i })).toBeInTheDocument()
   })
+
+  it('renders VIEW only when a camera view is provided (GAME state only)', () => {
+    const { rerender } = render(<GameHud />)
+    expect(
+      screen.queryByRole('button', { name: /view/i }),
+    ).not.toBeInTheDocument()
+
+    rerender(<GameHud cameraView={{ mode: 'explore', onChange: vi.fn() }} />)
+    expect(screen.getByRole('button', { name: /view/i })).toBeInTheDocument()
+  })
 })

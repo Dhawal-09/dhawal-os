@@ -1,12 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
+import type { CameraMode } from '../../game/world/cameraConstants'
 import { PortfolioNav } from '../portfolio/PortfolioNav'
 import { ExitControl } from './ExitControl'
 import './GameHud.css'
 import { SoundToggle } from './SoundToggle'
+import { ViewToggle } from './ViewToggle'
 
 export interface GameHudProps {
   /** Present only while lifecycle === 'game' — EXIT has no meaning during LOADING/ERROR. */
   onExitConfirmed?: () => void
+  /**
+   * Present only while lifecycle === 'game' — the camera selector only
+   * makes sense once the world is live. App owns the mode.
+   */
+  cameraView?: {
+    mode: CameraMode
+    onChange: (mode: CameraMode) => void
+  }
 }
 
 /**
@@ -22,7 +32,7 @@ export interface GameHudProps {
  * unchanged) — not a new navigation system (PHASE 09 "Do NOT build the
  * complete game menu in this phase").
  */
-export function GameHud({ onExitConfirmed }: GameHudProps) {
+export function GameHud({ onExitConfirmed, cameraView }: GameHudProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuButtonRef = useRef<HTMLButtonElement | null>(null)
 
@@ -46,6 +56,9 @@ export function GameHud({ onExitConfirmed }: GameHudProps) {
         <h1 className="game-hud-brand">DHAWAL.OS</h1>
         <div className="game-hud-actions">
           <SoundToggle />
+          {cameraView && (
+            <ViewToggle mode={cameraView.mode} onChange={cameraView.onChange} />
+          )}
           <button
             ref={menuButtonRef}
             type="button"

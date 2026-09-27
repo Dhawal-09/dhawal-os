@@ -1,5 +1,3 @@
-import { WORLD_HEIGHT, WORLD_WIDTH } from '../world/worldConstants'
-
 /** Walking speed, canonical world units per second. Independent of `WALK_ANIMATION_FPS`. */
 export const PLAYER_SPEED_PER_SECOND = 220
 
@@ -10,16 +8,17 @@ export const WALK_ANIMATION_FPS = 8
  * Where the player starts, in world space — the point CollisionBody's feet
  * box is measured from (the player's origin), not the sprite's feet.
  *
- * The world center: verified walkable open wood floor between the living
- * room and the kitchen — clear of every wall/furniture collider with plenty
- * of room to move (see the spawn tests in worldObjects.test.ts /
- * roomBoundary.test.ts, which check it against the real, current collider
- * set). If furniture is ever moved onto this spot, retune it here.
+ * The main entrance / About Me nook: on the open floor in front of the left
+ * armchair, just left of the side table holding the ID card (`aboutMe`,
+ * 1670×1040) — offset sideways so the 160-unit-tall sprite doesn't hide
+ * the table. 117 units from the card, inside its 130-unit interaction
+ * radius, so the first prompt a visitor sees is "Wanna see his ID card?". Verified clear of every wall/furniture
+ * collider with a margin (see the spawn tests in worldObjects.test.ts,
+ * roomBoundary.test.ts and playerWorldMovement.test.ts). If the entrance
+ * furniture is ever moved, retune it here.
  */
-export const PLAYER_SPAWN_POSITION = {
-  x: WORLD_WIDTH / 2,
-  y: WORLD_HEIGHT / 2,
-} as const
+export const PLAYER_SPAWN_POSITION: { readonly x: number; readonly y: number } =
+  { x: 1610, y: 1140 }
 
 /**
  * Rendered height of the character in world px, measured head-to-feet on

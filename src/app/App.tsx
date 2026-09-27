@@ -1,11 +1,14 @@
-import { useCallback, useEffect, useReducer, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react'
 import { AccessPanel } from '../components/access-ui/AccessPanel'
 import { ErrorScreen } from '../components/error/ErrorScreen'
 import { GameHud } from '../components/game-menu/GameHud'
 import { LandingScreen } from '../components/landing/LandingScreen'
 import { BootScreen } from '../components/loading/BootScreen'
+import { ViewSelectScreen } from '../components/view-select/ViewSelectScreen'
 import { audioManager } from '../game/audio/AudioManager'
 import { authManager } from '../game/auth/AuthManager'
+import { gameEventBridge } from '../game/events/GameEventBridge'
+import { CameraMode } from '../game/world/cameraConstants'
 import {
   appLifecycleReducer,
   INITIAL_APP_LIFECYCLE_STATE,
@@ -23,11 +26,11 @@ import './App.css'
 /**
  * Owns the small explicit application lifecycle (PHASE-08.5, extended by the
  * DHAWAL.OS boot + guest-access flow): LANDING -> (START JOURNEY) -> LOADING
- * -> ACCESS -> GAME, with an ERROR branch that can retry and an EXIT branch
+ * -> ACCESS -> VIEW_SELECT -> GAME, with an ERROR branch that can retry and an EXIT branch
  * (GAME -> LANDING) once the visitor confirms they want to leave.
  * `GameCanvas` — the single Pixi bootstrap path — mounts once the visitor
  * leaves LANDING and stays mounted unchanged through LOADING -> ACCESS ->
- * GAME, so `GameApp`/`GameScene` are created exactly once per game session;
+ * VIEW_SELECT -> GAME, so `GameApp`/`GameScene` are created exactly once per game session;
  * the world is fully loaded and running *behind* the BootScreen/AccessPanel
  * overlays, which is what lets ACCESS complete instantly once the guest
  * clicks ACCESS SYSTEM (PixiJS never even knows authentication exists — see
@@ -59,6 +62,13 @@ function App() {
   // — the only real signal BootScreen gates its own completion on
   // (BootScreen.tsx). Reset on every fresh attempt (retry/exit).
   const [engineReady, setEngineReady] = useState(false)
+  // The single camera-mode selection (VIEW_SELECT screen + HUD VIEW
+  // selector). React owns the choice; the Pixi Camera owns the behavior —
+  // every change is forwarded over the event bridge, never per frame. Null
+  // until the visitor picks on VIEW_SELECT; a fresh GameScene always starts
+  // in EXPLORE, so `null` reads as EXPLORE everywhere else (e.g. after a
+  // refresh, which skips VIEW_SELECT).
+  const [cameraMode, setCameraMode] = useState<CameraMode | null>(null)
 
   // Background music belongs to GAME only — never LANDING, LOADING or
   // ACCESS (the world runs behind those overlays, so GameApp being ready
@@ -95,6 +105,25 @@ function App() {
     dispatch({ type: 'ACCESS_GRANTED' })
   }, [])
 
+  const handleCameraModeChange = useCallback((mode: CameraMode) => {
+    setCameraMode(mode)
+    gameEventBridge.emit(
+      mode === CameraMode.OVERVIEW ? 'CAMERA_OVERVIEW' : 'CAMERA_EXPLORE',
+    )
+  }, [])
+
+  const handleViewSelected = useCallback(() => {
+    dispatch({ type: 'VIEW_SELECTED' })
+  }, [])
+
+  const hudCameraView = useMemo(
+    () => ({
+      mode: cameraMode ?? CameraMode.EXPLORE,
+      onChange: handleCameraModeChange,
+    }),
+    [cameraMode, handleCameraModeChange],
+  )
+
   const handleGameError = useCallback((error: unknown) => {
     console.error('Failed to initialize DHAWAL.OS.', error)
     dispatch({ type: 'GAME_ERROR' })
@@ -102,6 +131,7 @@ function App() {
 
   const handleRetry = useCallback(() => {
     setEngineReady(false)
+    setCameraMode(null)
     setSessionKey((key) => key + 1)
     dispatch({ type: 'RETRY' })
   }, [])
@@ -110,6 +140,7 @@ function App() {
     clearGameSession()
     authManager.logout()
     setEngineReady(false)
+    setCameraMode(null)
     setSessionKey((key) => key + 1)
     dispatch({ type: 'EXIT' })
   }, [])
@@ -124,12 +155,16 @@ function App() {
   // ready, or failed (ACCESSIBILITY.md "a recruiter must be able to bypass
   // exploration entirely").
   const mountGameCanvas =
-    lifecycle === 'loading' || lifecycle === 'access' || lifecycle === 'game'
+    lifecycle === 'loading' ||
+    lifecycle === 'access' ||
+    lifecycle === 'view-select' ||
+    lifecycle === 'game'
 
   return (
     <div className="app-shell">
       <GameHud
         onExitConfirmed={lifecycle === 'game' ? handleExitConfirmed : undefined}
+        cameraView={lifecycle === 'game' ? hudCameraView : undefined}
       />
       {/* A real <main> landmark for the game world, sibling to (not
           nested inside) GameHud's <header> — a <header> descendant of
@@ -153,6 +188,13 @@ function App() {
       )}
       {lifecycle === 'access' && (
         <AccessPanel onAccessGranted={handleAccessGranted} />
+      )}
+      {lifecycle === 'view-select' && (
+        <ViewSelectScreen
+          selected={cameraMode}
+          onSelect={handleCameraModeChange}
+          onConfirm={handleViewSelected}
+        />
       )}
       {lifecycle === 'error' && <ErrorScreen onRetry={handleRetry} />}
     </div>

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { getFurnitureAssetUrl } from './assetManifest'
 import { CollisionBody } from '../player/CollisionBody'
+import { PLAYER_SPAWN_POSITION } from '../player/playerConstants'
 import { CollisionSystem, rectsOverlap } from './CollisionSystem'
 import { InteractionSystem } from './InteractionSystem'
 import { educationColliders } from './rooms/educationRoom'
@@ -72,11 +73,7 @@ describe('worldObjects', () => {
       'hobbies-gym-station',
       'hobbies-stand',
       'kitchen-fridge',
-      // 'wall-one' is deliberately off by a larger margin than the rest:
-      // its own content isn't centered in its canvas at all (flush-left),
-      // so `position` is intentionally shifted away from the content
-      // center to compensate — see walls.ts's `wallOnePositionForVisibleCenter`.
-      'wall-one',
+      'wall-three',
       'wall-two',
     ])
     for (const object of worldObjects) {
@@ -570,7 +567,7 @@ describe('Education room desk + chair (asset-sized collision)', () => {
 })
 
 describe('Decorative wall panels (asset-sized collision)', () => {
-  const wallIds = ['wall-one', 'wall-two'] as const
+  const wallIds = ['wall-three', 'wall-two'] as const
 
   function findWall(id: (typeof wallIds)[number]): WorldObject {
     const object = worldObjects.find((candidate) => candidate.id === id)
@@ -629,8 +626,8 @@ describe('PHASE 10B layout (1920x1440 expansion)', () => {
     }
   })
 
-  it("the player's spawn point (world center) is walkable — no collision rect covers it", () => {
-    const spawn = { x: WORLD_WIDTH / 2, y: WORLD_HEIGHT / 2 }
+  it("the player's spawn point is walkable — no collision rect covers it", () => {
+    const spawn = PLAYER_SPAWN_POSITION
     const spawnRect = new CollisionBody().getRect(spawn.x, spawn.y)
 
     for (const object of worldObjects) {
@@ -639,12 +636,13 @@ describe('PHASE 10B layout (1920x1440 expansion)', () => {
     }
   })
 
-  it("the player's spawn point coincides with 'aboutMe', per GameScene.ts — reachable with zero movement", () => {
+  it("the player spawns at the entrance, inside 'aboutMe's interaction radius — reachable with zero movement", () => {
     const aboutMe = worldObjects.find((object) => object.id === 'aboutMe')!
-    expect(aboutMe.position).toEqual({
-      x: WORLD_WIDTH / 2,
-      y: WORLD_HEIGHT / 2,
-    })
+    const distance = Math.hypot(
+      aboutMe.position.x - PLAYER_SPAWN_POSITION.x,
+      aboutMe.position.y - PLAYER_SPAWN_POSITION.y,
+    )
+    expect(distance).toBeLessThanOrEqual(aboutMe.interaction!.radius)
   })
 
   it('no two physical (collision-bearing) objects overlap each other — every desk/marker/bed has real breathing room', () => {
@@ -702,16 +700,16 @@ describe('PHASE 10B.1 CLEANUP — no redundant overlap with the room boundary, r
     // - 'entrance-plant': positioned flush against the right wall
     //   (entrance.ts), same "embedded by design" precedent as the hook —
     //   both sit at the same x column.
-    // - 'wall-one'/'wall-two': decorative wall panels (walls.ts) —
-    //   deliberately extend up into the top wall band, since they depict
-    //   wall material themselves; same "embedded by design" precedent.
+    // - 'wall-two': decorative wall post (walls.ts) — deliberately extends
+    //   up into the top wall band, since it depicts wall material itself;
+    //   same "embedded by design" precedent. ('wall-three' is short enough
+    //   to stay clear, so it is checked like everything else.)
     const knownOverlaps = new Set([
       'main-work-desk',
       'bed',
       'education-desk',
       'entrance-hook',
       'entrance-plant',
-      'wall-one',
       'wall-two',
     ])
 
@@ -764,8 +762,7 @@ describe('PHASE 10B.1 CLEANUP — no redundant overlap with the room boundary, r
   const interactionSystem = InteractionSystem.fromWorldObjects(worldObjects)
 
   it("ABOUT ME is reachable with zero movement (it's the spawn point)", () => {
-    const spawn = { x: WORLD_WIDTH / 2, y: WORLD_HEIGHT / 2 }
-    const nearest = interactionSystem.findNearestInRange(spawn)
+    const nearest = interactionSystem.findNearestInRange(PLAYER_SPAWN_POSITION)
     expect(nearest?.id).toBe('aboutMe')
   })
 

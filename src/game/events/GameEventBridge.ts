@@ -27,6 +27,14 @@ export type GameEvent =
   | 'PAUSE_WORLD'
   | 'CLOSE_OVERLAY'
   | 'RETURN_TO_WORLD'
+  /**
+   * Emitted by the view selection / HUD VIEW selector: switch the camera
+   * to the whole-world overview or back to the default follow camera.
+   * Camera framing only — the player stays playable in both. Handled by
+   * GameScene only; panels ignore them.
+   */
+  | 'CAMERA_OVERVIEW'
+  | 'CAMERA_EXPLORE'
 
 export type GameEventListener = (event: GameEvent) => void
 

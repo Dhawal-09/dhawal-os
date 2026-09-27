@@ -22,3 +22,10 @@
   outline: 2px solid var(--cyan-bright, #57e8ff);
   outline-offset: 2px;
 }
+
+/* Narrow phones — see the matching HUD compaction in GameHud.css. */
+@media (max-width: 480px) {
+  .exit-control {
+    padding: 8px 10px;
+  }
+}

@@ -82,8 +82,8 @@ import educationPinboardUrl from '../../../assets/world/Education/pin board-Phot
 import educationFilesUrl from '../../../assets/world/Education/Files.png'
 import educationTableWithBooksUrl from '../../../assets/world/Education/education_table_with_books.png'
 import bedroomNightstandUrl from '../../../assets/world/BedRoom/desk-Photoroom.png'
-import wallOneUrl from '../../../assets/world/Walls/Wall one.png'
 import wallTwoUrl from '../../../assets/world/Walls/Wall2.png'
+import wallThreeUrl from '../../../assets/world/Walls/Wall3.png'
 import glassWallUrl from '../../../assets/world/Walls/glasswall.png'
 import frameCodeUrl from '../../../assets/world/Frames/code.png'
 import frameCafeMenuUrl from '../../../assets/world/Frames/menu-Photoroom.png'
@@ -207,8 +207,8 @@ export const ASSET_MANIFEST: Record<string, string> = {
   'education.files': educationFilesUrl,
   'education.tableWithBooks': educationTableWithBooksUrl,
   // Decorative architectural wall panels (see walls.ts).
-  'walls.wallOne': wallOneUrl,
   'walls.wallTwo': wallTwoUrl,
+  'walls.wallThree': wallThreeUrl,
   'walls.glassWall': glassWallUrl,
   // Framed wall art (assets/world/Frames/*.png) — see projectsRoom.ts/kitchen.ts.
   'frames.codePoster': frameCodeUrl,

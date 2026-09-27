@@ -1,0 +1,286 @@
+/* Same full-screen system-overlay treatment as .access-screen
+   (AccessPanel.css) — the view selection reads as the next page of the
+   same DHAWAL.OS boot sequence. */
+.view-select-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background:
+    linear-gradient(rgba(20, 123, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 123, 255, 0.05) 1px, transparent 1px),
+    var(--bg-deep, #050b1a);
+  background-size:
+    28px 28px,
+    28px 28px,
+    auto;
+  overflow-y: auto;
+}
+
+.view-select-frame {
+  width: 100%;
+  max-width: 920px;
+  margin: auto;
+  padding: 20px clamp(14px, 3vw, 28px) 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--pixel-border, #1e5fa8);
+  border-radius: 4px;
+  background: var(--panel-dark, #06142d);
+  box-shadow:
+    inset 0 0 0 3px var(--bg-navy, #08152f),
+    inset 0 0 0 4px rgba(77, 40, 172, 0.55),
+    0 20px 60px rgba(0, 0, 0, 0.55);
+  color: var(--text, #eaf4ff);
+  text-align: center;
+}
+
+.view-select-brand {
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--text-muted, #91a9c8);
+}
+
+.view-select-heading {
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-size: clamp(1rem, 3vw, 1.4rem);
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  color: var(--cyan, #27d7ff);
+  text-shadow: 0 0 12px rgba(39, 215, 255, 0.4);
+}
+
+.view-select-subtitle {
+  margin: 0 0 6px;
+  font-family: var(--font-pixel);
+  font-size: 0.68rem;
+  line-height: 1.6;
+  letter-spacing: 0.06em;
+  color: var(--text-muted, #91a9c8);
+}
+
+.view-select-options {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* ---------- cards ---------- */
+
+.view-select-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 2px solid var(--pixel-border, #1e5fa8);
+  border-radius: 2px;
+  background: var(--panel, #0b2144);
+  cursor: pointer;
+  text-align: left;
+  opacity: 0.72;
+  transition:
+    opacity 120ms ease-out,
+    border-color 120ms ease-out,
+    box-shadow 120ms ease-out;
+}
+
+.view-select-card:hover {
+  opacity: 0.9;
+  border-color: var(--blue, #147bff);
+}
+
+.view-select-card-selected,
+.view-select-card-selected:hover {
+  opacity: 1;
+  border-color: var(--cyan, #27d7ff);
+  box-shadow:
+    0 0 0 2px rgba(39, 215, 255, 0.25),
+    0 0 18px rgba(39, 215, 255, 0.3);
+}
+
+/* The native radio stays in the accessibility tree and keyboard order;
+   the whole card is its visible label. */
+.view-select-radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+
+.view-select-card:has(.view-select-radio:focus-visible) {
+  outline: 2px solid var(--cyan-bright, #57e8ff);
+  outline-offset: 3px;
+}
+
+.view-select-preview {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  border-bottom: 2px solid var(--pixel-border, #1e5fa8);
+  background: var(--bg-deep, #050b1a);
+  overflow: hidden;
+}
+
+.view-select-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+  filter: saturate(0.7) brightness(0.8);
+  transition: filter 120ms ease-out;
+}
+
+.view-select-card-selected .view-select-preview {
+  border-bottom-color: var(--cyan, #27d7ff);
+}
+
+.view-select-card-selected .view-select-preview img {
+  filter: none;
+}
+
+.view-select-preview-missing {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-pixel);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  color: var(--text-muted, #91a9c8);
+}
+
+.view-select-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 5px 8px;
+  border: 1px solid var(--cyan, #27d7ff);
+  background: var(--panel-dark, #06142d);
+  font-family: var(--font-pixel);
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  color: var(--cyan-bright, #57e8ff);
+}
+
+.view-select-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px 14px;
+}
+
+.view-select-card-title {
+  font-family: var(--font-pixel);
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  color: var(--text, #eaf4ff);
+}
+
+.view-select-card-selected .view-select-card-title {
+  color: var(--cyan-bright, #57e8ff);
+}
+
+.view-select-card-desc {
+  font-family: var(--font-pixel);
+  font-size: 0.62rem;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #91a9c8);
+}
+
+/* ---------- enter ---------- */
+
+.view-select-enter {
+  width: 100%;
+  max-width: 320px;
+  min-height: 44px;
+  margin-top: 10px;
+  padding: 10px 20px;
+  border: 1px solid var(--blue, #147bff);
+  border-radius: 2px;
+  background: var(--panel, #0b2144);
+  color: var(--cyan-bright, #57e8ff);
+  font-family: var(--font-pixel);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+.view-select-enter:hover:not(:disabled) {
+  border-color: var(--cyan-bright, #57e8ff);
+  background: var(--bg-navy, #08152f);
+}
+
+.view-select-enter:focus-visible {
+  outline: 2px solid var(--cyan-bright, #57e8ff);
+  outline-offset: 2px;
+}
+
+.view-select-enter:disabled {
+  cursor: default;
+  border-color: var(--pixel-border, #1e5fa8);
+  color: var(--text-muted, #91a9c8);
+  font-size: 0.66rem;
+}
+
+/* ---------- mobile: stacked ---------- */
+
+@media (max-width: 640px) {
+  .view-select-options {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .view-select-preview {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+/* ---------- short viewports (phone landscape): keep ENTER in view ---------- */
+
+@media (max-height: 520px) and (min-width: 641px) {
+  .view-select-frame {
+    padding: 12px 16px 14px;
+    gap: 6px;
+  }
+
+  .view-select-brand {
+    display: none;
+  }
+
+  .view-select-subtitle {
+    margin-bottom: 2px;
+  }
+
+  .view-select-preview {
+    aspect-ratio: 8 / 3;
+  }
+
+  .view-select-card-body {
+    padding: 8px 10px 10px;
+    gap: 4px;
+  }
+
+  .view-select-enter {
+    margin-top: 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .view-select-card,
+  .view-select-preview img {
+    transition: none;
+  }
+}

@@ -76,15 +76,18 @@ describe('player spawn', () => {
     }
   })
 
-  it('has room to move: nothing solid within 60px of the feet box on any side', () => {
+  // 40px, not more: the spawn sits in the About Me nook, whose open floor
+  // between the furniture (bottom edge y≈1080) and the bottom wall (y=1200)
+  // is only ~120px tall — the feet box has ~66px above it and ~42px below.
+  it('has room to move: nothing solid within 40px of the feet box on any side', () => {
     const rect = feetRect(
       new Player({} as PlayerSystems, { ...PLAYER_SPAWN_POSITION }),
     )
     const padded: Rect = {
-      x: rect.x - 60,
-      y: rect.y - 60,
-      width: rect.width + 120,
-      height: rect.height + 120,
+      x: rect.x - 40,
+      y: rect.y - 40,
+      width: rect.width + 80,
+      height: rect.height + 80,
     }
 
     for (const obstacle of realObstacles) {

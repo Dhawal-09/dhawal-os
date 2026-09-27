@@ -33,10 +33,25 @@ describe('appLifecycle', () => {
     ).toBe('game')
   })
 
-  it('ACCESS_GRANTED moves access -> game', () => {
+  it('ACCESS_GRANTED moves access -> view-select', () => {
     expect(appLifecycleReducer('access', { type: 'ACCESS_GRANTED' })).toBe(
+      'view-select',
+    )
+  })
+
+  it('VIEW_SELECTED moves view-select -> game, and is ignored anywhere else', () => {
+    expect(appLifecycleReducer('view-select', { type: 'VIEW_SELECTED' })).toBe(
       'game',
     )
+    for (const state of [
+      'landing',
+      'loading',
+      'access',
+      'game',
+      'error',
+    ] as const) {
+      expect(appLifecycleReducer(state, { type: 'VIEW_SELECTED' })).toBe(state)
+    }
   })
 
   it('GAME_ERROR moves loading -> error', () => {

@@ -1,4 +1,4 @@
-import { Container } from 'pixi.js'
+import { Container, Text } from 'pixi.js'
 import { audioManager } from './audio/AudioManager'
 import { gameEventBridge, OPEN_EVENTS } from './events/GameEventBridge'
 import { InputManager } from './input/InputManager'
@@ -9,6 +9,7 @@ import {
 } from './player/playerAnimations'
 import { PLAYER_SPAWN_POSITION } from './player/playerConstants'
 import { Camera } from './world/Camera'
+import { CameraMode } from './world/cameraConstants'
 import { CollisionSystem } from './world/CollisionSystem'
 import {
   ContextualMessageView,
@@ -45,6 +46,13 @@ const DEBUG_COLLISION_OVERLAY =
 const DEBUG_INTERACTIONS =
   import.meta.env.DEV && import.meta.env.VITE_DEBUG_INTERACTIONS === 'true'
 
+/**
+ * Screen-space readout of camera/player/viewport/bounds numbers. Same
+ * opt-in rules: `VITE_DEBUG_CAMERA=true`, dev builds only, off by default.
+ */
+const DEBUG_CAMERA =
+  import.meta.env.DEV && import.meta.env.VITE_DEBUG_CAMERA === 'true'
+
 /** How long a flavor message stays up before fading on its own. */
 export const FLAVOR_HOLD_MS = 3200
 /** After a flavor message ends (or the player walks off), how long before it can appear again. */
@@ -59,13 +67,15 @@ export type PromptState =
   'none' | 'prompt' | 'response' | 'info' | 'flavor' | 'flavor-done'
 
 /**
- * Root scene container. Owns the World, its static Camera fit, collision,
+ * Root scene container. Owns the World, its follow Camera, collision,
  * interaction, and the player.
  */
 export class GameScene extends Container {
   readonly world: World
   readonly player: Player
   private readonly camera: Camera
+  /** Dev-only (`DEBUG_CAMERA`) — a scene child, not a World child, so it stays screen-space. */
+  private readonly cameraDebugText: Text | null = null
   private readonly inputManager: InputManager
   private readonly collisionSystem: CollisionSystem
   private readonly interactionSystem: InteractionSystem
@@ -167,7 +177,17 @@ export class GameScene extends Container {
     // Above every world layer, but still inside World — the Camera
     // transform moves (and clips) it together with its target.
     this.world.addChild(this.contextualMessage)
+    // Spawn framing: the first `resize()` snaps the camera onto this point.
     this.camera.follow(this.player.position.x, this.player.position.y)
+
+    if (DEBUG_CAMERA) {
+      this.cameraDebugText = new Text({
+        text: '',
+        style: { fill: 0x00ff88, fontFamily: 'monospace', fontSize: 12 },
+      })
+      this.cameraDebugText.position.set(8, 56)
+      this.addChild(this.cameraDebugText)
+    }
 
     if (!playerFrames) {
       // Preload timed out or failed — the placeholder circle stands in, and
@@ -188,6 +208,14 @@ export class GameScene extends Container {
         if (this.updatingPlayer && target?.response) this.showResponse(target)
         return
       }
+      if (event === 'CAMERA_OVERVIEW' || event === 'CAMERA_EXPLORE') {
+        this.setCameraMode(
+          event === 'CAMERA_OVERVIEW'
+            ? CameraMode.OVERVIEW
+            : CameraMode.EXPLORE,
+        )
+        return
+      }
       if (OPEN_EVENTS.has(event) || event === 'PAUSE_WORLD') {
         if (this.updatingPlayer && OPEN_EVENTS.has(event)) {
           audioManager.playInteractOpen()
@@ -202,9 +230,10 @@ export class GameScene extends Container {
     audioManager.preloadWalking()
   }
 
-  /** Refits the canonical world space to the given viewport dimensions. */
+  /** Recomputes the camera's scale and bounds for the given viewport dimensions. Never moves the player. */
   resize(viewportWidth: number, viewportHeight: number): void {
     this.camera.resize(viewportWidth, viewportHeight)
+    this.updateCameraDebugText()
   }
 
   /** The minimal mobile "tap to interact" stub — wired from the canvas host's pointerdown (see GameCanvas.tsx). */
@@ -232,6 +261,15 @@ export class GameScene extends Container {
     } else {
       this.inputManager.reset()
     }
+  }
+
+  /**
+   * EXPLORE ⇄ OVERVIEW. Camera framing only — the player keeps moving,
+   * colliding and interacting in either mode, and switching never touches
+   * the player's world position.
+   */
+  private setCameraMode(mode: CameraMode): void {
+    this.camera.setMode(mode)
   }
 
   /**
@@ -378,7 +416,20 @@ export class GameScene extends Container {
   }
 
   update(deltaMS: number): void {
-    if (this.paused) return
+    // The camera keeps animating under a panel; only the world (player
+    // input, prompts, their timers) is frozen then. Camera mode never
+    // gates the world.
+    if (!this.paused) {
+      this.updateWorld(deltaMS)
+    }
+    // Purely visual — collision and interaction above already ran on the
+    // player's world position (CAMERA_SPEC.md).
+    this.camera.follow(this.player.position.x, this.player.position.y)
+    this.camera.update(deltaMS)
+    this.updateCameraDebugText()
+  }
+
+  private updateWorld(deltaMS: number): void {
     this.clockMS += deltaMS
     const { x, y } = this.player.position
     this.updatingPlayer = true
@@ -398,10 +449,25 @@ export class GameScene extends Container {
       )
       this.updateContextualMessage()
     }
-    // PHASE 10B: keeps the player centered as the Camera pans a larger-
-    // than-viewport world (CAMERA_SPEC.md) — a no-op whenever the whole
-    // room already fits the viewport (see Camera.ts's `apply()`).
-    this.camera.follow(this.player.position.x, this.player.position.y)
+  }
+
+  /** Read-only camera snapshot — for tests and the dev debug overlay. */
+  get cameraState() {
+    return this.camera.debugState
+  }
+
+  private updateCameraDebugText(): void {
+    if (!this.cameraDebugText) return
+    const c = this.camera.debugState
+    const { x, y } = this.player.position
+    const b = c.bounds
+    this.cameraDebugText.text = [
+      `mode ${c.mode}  zoom ${c.zoom.toFixed(3)}`,
+      `camera ${c.cameraX.toFixed(1)}, ${c.cameraY.toFixed(1)}  scale ${c.scale.toFixed(3)}`,
+      `player ${x.toFixed(1)}, ${y.toFixed(1)}`,
+      `viewport ${c.viewportWidth}x${c.viewportHeight}  world ${c.worldWidth}x${c.worldHeight}`,
+      `bounds x[${b.minX.toFixed(0)}..${b.maxX.toFixed(0)}] y[${b.minY.toFixed(0)}..${b.maxY.toFixed(0)}]`,
+    ].join('\n')
   }
 
   /** Also tears down non-Pixi resources (the keyboard listener, the event bridge subscription) that a plain `Container.destroy()` cascade can't reach. */
