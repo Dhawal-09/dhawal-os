@@ -23,10 +23,10 @@ export const aboutObjects: WorldObject[] = [
     id: 'aboutMe',
     asset: 'content.aboutMe',
     label: 'ABOUT ME',
-    // The exact world center — also the player's spawn point
-    // (GameScene.ts: `{ x: WORLD_WIDTH / 2, y: WORLD_HEIGHT / 2 }`).
-    // Reachable immediately with no walking, per PHASE 10B "About Me
-    // somewhere accessible without blocking the main path".
+    // The player spawns just in front of this table, inside its radius
+    // (PLAYER_SPAWN_POSITION). Reachable immediately with no walking, per
+    // PHASE 10B "About Me somewhere accessible without blocking the main
+    // path".
     position: { x: 1670, y: 1040 }, // WORLD POSITION — SAFE TO TUNE
     layer: 'object',
     // The ID card resting on the round side table, slightly askew.

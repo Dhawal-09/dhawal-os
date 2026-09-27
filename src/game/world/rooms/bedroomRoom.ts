@@ -130,6 +130,11 @@ export const bedroomObjects: WorldObject[] = [
     position: { x: 440, y: 340 }, // WORLD POSITION — SAFE TO TUNE — open floor, right side of the room
     layer: 'object',
     transform: { width: 180 },
+    message: {
+      type: 'flavor',
+      text: 'DAMNNN, nice jersey collection!',
+      radius: 90,
+    },
   },
   {
     id: 'bedroom-hanging-plant',

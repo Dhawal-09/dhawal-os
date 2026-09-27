@@ -17,7 +17,7 @@ import {
 const MAIN_WORK_DESK_NATURAL_SIZE = { width: 1279, height: 764 }
 
 /** Target rendered width (world px) — reproduces the previous shared `FURNITURE_SCALE = 0.28` exactly. Change this single number to resize just this desk. */
-const MAIN_WORK_DESK_TARGET_WIDTH = 358.12
+const MAIN_WORK_DESK_TARGET_WIDTH = 338.12
 const MAIN_WORK_DESK_SCALE = scaleForWidth(
   MAIN_WORK_DESK_NATURAL_SIZE,
   MAIN_WORK_DESK_TARGET_WIDTH,

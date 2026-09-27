@@ -1,4 +1,4 @@
-import { Container } from 'pixi.js'
+import { Container, Text } from 'pixi.js'
 import { audioManager } from './audio/AudioManager'
 import { gameEventBridge, OPEN_EVENTS } from './events/GameEventBridge'
 import { InputManager } from './input/InputManager'
@@ -9,6 +9,7 @@ import {
 } from './player/playerAnimations'
 import { PLAYER_SPAWN_POSITION } from './player/playerConstants'
 import { Camera } from './world/Camera'
+import { CameraMode } from './world/cameraConstants'
 import { CollisionSystem } from './world/CollisionSystem'
 import {
   ContextualMessageView,
@@ -38,13 +39,43 @@ const DEBUG_COLLISION_OVERLAY =
   import.meta.env.DEV && import.meta.env.VITE_DEBUG_COLLISION === 'true'
 
 /**
- * Root scene container. Owns the World, its static Camera fit, collision,
+ * Logs every contextual-prompt transition (object id, mode, radius, what's
+ * shown) to the console. Same opt-in rules as the collider overlay:
+ * `VITE_DEBUG_INTERACTIONS=true`, dev builds only, off by default.
+ */
+const DEBUG_INTERACTIONS =
+  import.meta.env.DEV && import.meta.env.VITE_DEBUG_INTERACTIONS === 'true'
+
+/**
+ * Screen-space readout of camera/player/viewport/bounds numbers. Same
+ * opt-in rules: `VITE_DEBUG_CAMERA=true`, dev builds only, off by default.
+ */
+const DEBUG_CAMERA =
+  import.meta.env.DEV && import.meta.env.VITE_DEBUG_CAMERA === 'true'
+
+/** How long a flavor message stays up before fading on its own. */
+export const FLAVOR_HOLD_MS = 3200
+/** After a flavor message ends (or the player walks off), how long before it can appear again. */
+export const FLAVOR_COOLDOWN_MS = 4000
+/** How long an `[E]` response replaces the prompt before the prompt returns. */
+export const RESPONSE_HOLD_MS = 2800
+
+type MessageTarget = InteractableCandidate | AmbientCandidate
+
+/** What the contextual prompt is doing right now — for tests and `DEBUG_INTERACTIONS`. */
+export type PromptState =
+  'none' | 'prompt' | 'response' | 'info' | 'flavor' | 'flavor-done'
+
+/**
+ * Root scene container. Owns the World, its follow Camera, collision,
  * interaction, and the player.
  */
 export class GameScene extends Container {
   readonly world: World
   readonly player: Player
   private readonly camera: Camera
+  /** Dev-only (`DEBUG_CAMERA`) — a scene child, not a World child, so it stays screen-space. */
+  private readonly cameraDebugText: Text | null = null
   private readonly inputManager: InputManager
   private readonly collisionSystem: CollisionSystem
   private readonly interactionSystem: InteractionSystem
@@ -76,7 +107,20 @@ export class GameScene extends Container {
    * objects built once by InteractionSystem, so a reference comparison
    * detects a change without allocating anything per frame.
    */
-  private messageTarget: InteractableCandidate | AmbientCandidate | null = null
+  private messageTarget: MessageTarget | null = null
+  /** What the prompt is showing for `messageTarget`. */
+  private promptState: PromptState = 'none'
+  /**
+   * Scene time (ms of unpaused `update`s) — drives flavor/response timing,
+   * so it freezes while a panel is open.
+   */
+  private clockMS = 0
+  /** When the current flavor/response display ends, or null if it doesn't time out. */
+  private messageEndsAt: number | null = null
+  /** Per flavor spot: scene time before which it can't reappear. */
+  private readonly flavorCooldownUntil = new Map<AmbientCandidate, number>()
+  /** Per flavor spot: times shown this session — picks the next variant, and enforces `once`. */
+  private readonly flavorShownCount = new Map<AmbientCandidate, number>()
   /**
    * The interactable whose prompt last played the appear SFX. Cleared only
    * when the player leaves it — not by a panel opening — so re-showing the
@@ -133,7 +177,17 @@ export class GameScene extends Container {
     // Above every world layer, but still inside World — the Camera
     // transform moves (and clips) it together with its target.
     this.world.addChild(this.contextualMessage)
+    // Spawn framing: the first `resize()` snaps the camera onto this point.
     this.camera.follow(this.player.position.x, this.player.position.y)
+
+    if (DEBUG_CAMERA) {
+      this.cameraDebugText = new Text({
+        text: '',
+        style: { fill: 0x00ff88, fontFamily: 'monospace', fontSize: 12 },
+      })
+      this.cameraDebugText.position.set(8, 56)
+      this.addChild(this.cameraDebugText)
+    }
 
     if (!playerFrames) {
       // Preload timed out or failed — the placeholder circle stands in, and
@@ -147,6 +201,21 @@ export class GameScene extends Container {
     }
 
     this.unsubscribeFromBridge = gameEventBridge.subscribe((event) => {
+      if (event === 'WORLD_RESPONSE') {
+        // Emitted by the player's own `[E]` (PlayerController), which sets
+        // `interactionTarget` first — the response belongs to that target.
+        const target = this.player.interactionTarget
+        if (this.updatingPlayer && target?.response) this.showResponse(target)
+        return
+      }
+      if (event === 'CAMERA_OVERVIEW' || event === 'CAMERA_EXPLORE') {
+        this.setCameraMode(
+          event === 'CAMERA_OVERVIEW'
+            ? CameraMode.OVERVIEW
+            : CameraMode.EXPLORE,
+        )
+        return
+      }
       if (OPEN_EVENTS.has(event) || event === 'PAUSE_WORLD') {
         if (this.updatingPlayer && OPEN_EVENTS.has(event)) {
           audioManager.playInteractOpen()
@@ -161,9 +230,10 @@ export class GameScene extends Container {
     audioManager.preloadWalking()
   }
 
-  /** Refits the canonical world space to the given viewport dimensions. */
+  /** Recomputes the camera's scale and bounds for the given viewport dimensions. Never moves the player. */
   resize(viewportWidth: number, viewportHeight: number): void {
     this.camera.resize(viewportWidth, viewportHeight)
+    this.updateCameraDebugText()
   }
 
   /** The minimal mobile "tap to interact" stub — wired from the canvas host's pointerdown (see GameCanvas.tsx). */
@@ -184,41 +254,183 @@ export class GameScene extends Container {
       audioManager.stopWalking()
       // Hidden under any React panel/modal; the first update after resuming
       // re-derives it from the (unchanged) current target.
+      this.leaveTarget()
       this.contextualMessage.hide()
       this.messageTarget = null
+      this.setPromptState('none')
     } else {
       this.inputManager.reset()
     }
   }
 
   /**
-   * Keeps the prompt on the current target. A no-op unless the target
-   * changed — `show`/`hide` (and the SFX) run only on transitions.
+   * EXPLORE ⇄ OVERVIEW. Camera framing only — the player keeps moving,
+   * colliding and interacting in either mode, and switching never touches
+   * the player's world position.
+   */
+  private setCameraMode(mode: CameraMode): void {
+    this.camera.setMode(mode)
+  }
+
+  /**
+   * Keeps the prompt on the current target. Target changes drive
+   * `show`/`hide` (and the SFX) — never a per-frame restart. The only
+   * per-frame work on an unchanged target is checking whether a flavor
+   * message or `[E]` response has run its course.
+   *
+   * Priority (one message at a time): an in-range interactable's prompt,
+   * else the nearest info/flavor spot, else nothing. A panel being open
+   * pauses all of this (`setPaused`).
    */
   private updateContextualMessage(): void {
     const target =
       this.player.interactionTarget ??
       this.interactionSystem.findNearestAmbientInRange(this.player.position)
-    if (target === this.messageTarget) return
-    this.messageTarget = target
+
+    if (target !== this.messageTarget) {
+      this.leaveTarget()
+      this.messageTarget = target
+      this.enterTarget(target)
+      return
+    }
+
+    if (this.messageEndsAt === null || this.clockMS < this.messageEndsAt) {
+      return
+    }
+    this.messageEndsAt = null
+    if (this.promptState === 'response' && target && 'action' in target) {
+      // Back to the prompt, silently — pressing E again answers again.
+      this.contextualMessage.show(
+        messageForTarget(target, this.player.position),
+      )
+      this.setPromptState('prompt')
+    } else if (
+      this.promptState === 'flavor' &&
+      target &&
+      !('action' in target)
+    ) {
+      this.contextualMessage.hide()
+      this.startFlavorCooldown(target)
+      this.setPromptState('flavor-done')
+    }
+  }
+
+  private enterTarget(target: MessageTarget | null): void {
+    this.messageEndsAt = null
 
     if (!target) {
       this.contextualMessage.hide()
       this.announcedTarget = null
+      this.setPromptState('none')
       return
     }
 
-    this.contextualMessage.show(messageForTarget(target, this.player.position))
     if ('action' in target) {
+      this.contextualMessage.show(
+        messageForTarget(target, this.player.position),
+      )
       if (target !== this.announcedTarget) audioManager.playInteractOpen()
       this.announcedTarget = target
-    } else {
-      this.announcedTarget = null
+      this.setPromptState('prompt')
+      return
+    }
+
+    // Info/flavor: text only, never a sound.
+    this.announcedTarget = null
+    if (target.message.type === 'info') {
+      this.contextualMessage.show(
+        messageForTarget(target, this.player.position),
+      )
+      this.setPromptState('info')
+      return
+    }
+
+    const shown = this.flavorShownCount.get(target) ?? 0
+    const coolingDown =
+      this.clockMS < (this.flavorCooldownUntil.get(target) ?? 0)
+    if (coolingDown || (target.message.once && shown > 0)) {
+      this.contextualMessage.hide()
+      this.setPromptState('flavor-done')
+      return
+    }
+    const lines = [target.message.text, ...(target.message.variants ?? [])]
+    this.contextualMessage.show(
+      messageForTarget(target, this.player.position, {
+        text: lines[shown % lines.length],
+      }),
+    )
+    this.flavorShownCount.set(target, shown + 1)
+    this.messageEndsAt = this.clockMS + FLAVOR_HOLD_MS
+    this.setPromptState('flavor')
+  }
+
+  /** Walking off a flavor spot mid-message still starts its cooldown — no spam from stepping in and out. */
+  private leaveTarget(): void {
+    const target = this.messageTarget
+    if (target && this.promptState === 'flavor' && !('action' in target)) {
+      this.startFlavorCooldown(target)
     }
   }
 
+  private startFlavorCooldown(target: AmbientCandidate): void {
+    this.flavorCooldownUntil.set(target, this.clockMS + FLAVOR_COOLDOWN_MS)
+  }
+
+  /** `[E]` on a `WORLD_RESPONSE` interactable: its response replaces the prompt for a moment. */
+  private showResponse(target: InteractableCandidate): void {
+    audioManager.playInteractOpen()
+    this.messageTarget = target
+    this.announcedTarget = target
+    this.contextualMessage.show(
+      messageForTarget(target, this.player.position, {
+        type: 'info',
+        text: (target.response ?? []).join('\n'),
+      }),
+    )
+    this.messageEndsAt = this.clockMS + RESPONSE_HOLD_MS
+    this.setPromptState('response')
+  }
+
+  /** The prompt's current target and state — exposed for tests and debugging. */
+  get promptDebugState(): {
+    id: string | null
+    mode: 'interactive' | 'info' | 'flavor' | null
+    radius: number | null
+    state: PromptState
+  } {
+    const target = this.messageTarget
+    let mode: 'interactive' | 'info' | 'flavor' | null = null
+    if (target) mode = 'action' in target ? 'interactive' : target.message.type
+    return {
+      id: target?.id ?? null,
+      mode,
+      radius: target?.radius ?? null,
+      state: this.promptState,
+    }
+  }
+
+  private setPromptState(state: PromptState): void {
+    this.promptState = state
+    if (DEBUG_INTERACTIONS)
+      console.debug('[interaction]', this.promptDebugState)
+  }
+
   update(deltaMS: number): void {
-    if (this.paused) return
+    // The camera keeps animating under a panel; only the world (player
+    // input, prompts, their timers) is frozen then. Camera mode never
+    // gates the world.
+    if (!this.paused) {
+      this.updateWorld(deltaMS)
+    }
+    // Purely visual — collision and interaction above already ran on the
+    // player's world position (CAMERA_SPEC.md).
+    this.camera.follow(this.player.position.x, this.player.position.y)
+    this.camera.update(deltaMS)
+    this.updateCameraDebugText()
+  }
+
+  private updateWorld(deltaMS: number): void {
+    this.clockMS += deltaMS
     const { x, y } = this.player.position
     this.updatingPlayer = true
     try {
@@ -237,10 +449,25 @@ export class GameScene extends Container {
       )
       this.updateContextualMessage()
     }
-    // PHASE 10B: keeps the player centered as the Camera pans a larger-
-    // than-viewport world (CAMERA_SPEC.md) — a no-op whenever the whole
-    // room already fits the viewport (see Camera.ts's `apply()`).
-    this.camera.follow(this.player.position.x, this.player.position.y)
+  }
+
+  /** Read-only camera snapshot — for tests and the dev debug overlay. */
+  get cameraState() {
+    return this.camera.debugState
+  }
+
+  private updateCameraDebugText(): void {
+    if (!this.cameraDebugText) return
+    const c = this.camera.debugState
+    const { x, y } = this.player.position
+    const b = c.bounds
+    this.cameraDebugText.text = [
+      `mode ${c.mode}  zoom ${c.zoom.toFixed(3)}`,
+      `camera ${c.cameraX.toFixed(1)}, ${c.cameraY.toFixed(1)}  scale ${c.scale.toFixed(3)}`,
+      `player ${x.toFixed(1)}, ${y.toFixed(1)}`,
+      `viewport ${c.viewportWidth}x${c.viewportHeight}  world ${c.worldWidth}x${c.worldHeight}`,
+      `bounds x[${b.minX.toFixed(0)}..${b.maxX.toFixed(0)}] y[${b.minY.toFixed(0)}..${b.maxY.toFixed(0)}]`,
+    ].join('\n')
   }
 
   /** Also tears down non-Pixi resources (the keyboard listener, the event bridge subscription) that a plain `Container.destroy()` cascade can't reach. */

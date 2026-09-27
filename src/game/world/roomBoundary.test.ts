@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { CollisionBody } from '../player/CollisionBody'
+import { PLAYER_SPAWN_POSITION } from '../player/playerConstants'
 import { CollisionSystem, rectsOverlap, type Rect } from './CollisionSystem'
 import { ROOM_BOUNDARY_COLLIDERS, worldObjects } from './worldObjects'
 import { WORLD_HEIGHT, WORLD_WIDTH } from './worldConstants'
@@ -62,8 +63,8 @@ describe('room boundary geometry (PHASE 10B.1)', () => {
     }
   })
 
-  it("the world center (the player's spawn point) is not inside any wall band", () => {
-    const spawn = { x: WORLD_WIDTH / 2, y: WORLD_HEIGHT / 2 }
+  it("the player's spawn point is not inside any wall band", () => {
+    const spawn = PLAYER_SPAWN_POSITION
     const spawnRect = collisionBody.getRect(spawn.x, spawn.y)
     for (const wall of ROOM_BOUNDARY_COLLIDERS) {
       expect(rectsOverlap(spawnRect, wall)).toBe(false)
@@ -200,7 +201,10 @@ describe('combined system (real worldObjects + ROOM_BOUNDARY_COLLIDERS, as GameS
   })
 
   it('spawn point is collision-free against the combined obstacle set (furniture + walls)', () => {
-    const spawnRect = collisionBody.getRect(WORLD_WIDTH / 2, WORLD_HEIGHT / 2)
+    const spawnRect = collisionBody.getRect(
+      PLAYER_SPAWN_POSITION.x,
+      PLAYER_SPAWN_POSITION.y,
+    )
     const allObstacles: Rect[] = [...ROOM_BOUNDARY_COLLIDERS]
     for (const object of worldObjects) {
       if (object.collision) allObstacles.push(object.collision)

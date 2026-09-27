@@ -4,7 +4,7 @@ import gamingChairUrl from '../../../assets/world/furniture/GamingChair.png'
 import bedUrl from '../../../assets/world/structural/Double_bed.png'
 import floorUrl from '../../../assets/world/structural/Background2.png'
 import kitchenMainCounterUrl from '../../../assets/world/Kitchen/MainTable.png'
-import kitchenSideCounterUrl from '../../../assets/world/Kitchen/Main table2.png'
+import kitchenSideCounterUrl from '../../../assets/world/Kitchen/Vertical-Coridor.png'
 import kitchenFridgeUrl from '../../../assets/world/Kitchen/Fridge1.png'
 import kitchenCooktopUrl from '../../../assets/world/Kitchen/Stove.png'
 import kitchenCoffeeMachineUrl from '../../../assets/world/Kitchen/coffee-Makaer.png'
@@ -21,6 +21,19 @@ import kitchenPropHolderUrl from '../../../assets/world/Kitchen/Utensil/holder.p
 import kitchenPropSaltUrl from '../../../assets/world/Kitchen/Utensil/salt.png'
 import kitchenPropBowlUrl from '../../../assets/world/Kitchen/Utensil/bowl.png'
 import kitchenPropPlateUrl from '../../../assets/world/Kitchen/Utensil/plate.png'
+import kitchenAccDiningTableUrl from '../../../assets/world/Kitchen/Acccesories/Diningtable.png'
+import kitchenAccBottleUrl from '../../../assets/world/Kitchen/Acccesories/bottle.png'
+import kitchenAccMugUrl from '../../../assets/world/Kitchen/Acccesories/coffe mug.png'
+import kitchenAccDalUrl from '../../../assets/world/Kitchen/Acccesories/dal.png'
+import kitchenAccFruitsUrl from '../../../assets/world/Kitchen/Acccesories/fruits.png'
+import kitchenAccJarUrl from '../../../assets/world/Kitchen/Acccesories/jar.png'
+import kitchenAccMobileUrl from '../../../assets/world/Kitchen/Acccesories/mobile.png'
+import kitchenAccPepperUrl from '../../../assets/world/Kitchen/Acccesories/pepper.png'
+import kitchenAccMealUrl from '../../../assets/world/Kitchen/Acccesories/plate.png'
+import kitchenAccPlatesUrl from '../../../assets/world/Kitchen/Acccesories/plates.png'
+import kitchenAccRamenUrl from '../../../assets/world/Kitchen/Acccesories/ramen.png'
+import kitchenAccWaterUrl from '../../../assets/world/Kitchen/Acccesories/water.png'
+import kitchenAccSnacksUrl from '../../../assets/world/Kitchen/Acccesories/snaks.png'
 import bedroomArtUrl from '../../../assets/world/BedRoom/Art.png'
 import bedroomWallLampUrl from '../../../assets/world/BedRoom/Bedroomlight.png'
 import bedroomJerseyRackUrl from '../../../assets/world/BedRoom/ClothStand.png'
@@ -55,7 +68,7 @@ import entranceChairUrl from '../../../assets/world/Entrance/Entrance_lounge.png
 import entranceTableUrl from '../../../assets/world/Entrance/table1-Photoroom.png'
 import entranceHookUrl from '../../../assets/world/Entrance/Hook.png'
 import entranceMatUrl from '../../../assets/world/Entrance/mat.png'
-import entrancePaintingUrl from '../../../assets/world/Entrance/Photo.png'
+import entrancePaintingUrl from '../../../assets/world/Entrance/Painting.png'
 import entrancePlantUrl from '../../../assets/world/Entrance/plant-Photoroom.png'
 import educationGlobeUrl from '../../../assets/world/Education/Globe.png'
 import educationBookshelfUrl from '../../../assets/world/Education/shelf-Photoroom.png'
@@ -67,9 +80,11 @@ import educationSmallPlantUrl from '../../../assets/world/special/small plant-Ph
 import educationReadingCatUrl from '../../../assets/world/special/cat.png'
 import educationPinboardUrl from '../../../assets/world/Education/pin board-Photoroom.png'
 import educationFilesUrl from '../../../assets/world/Education/Files.png'
+import educationTableWithBooksUrl from '../../../assets/world/Education/education_table_with_books.png'
 import bedroomNightstandUrl from '../../../assets/world/BedRoom/desk-Photoroom.png'
-import wallOneUrl from '../../../assets/world/Walls/Wall one.png'
 import wallTwoUrl from '../../../assets/world/Walls/Wall2.png'
+import wallThreeUrl from '../../../assets/world/Walls/Wall3.png'
+import glassWallUrl from '../../../assets/world/Walls/glasswall.png'
 import frameCodeUrl from '../../../assets/world/Frames/code.png'
 import frameCafeMenuUrl from '../../../assets/world/Frames/menu-Photoroom.png'
 
@@ -113,6 +128,20 @@ export const ASSET_MANIFEST: Record<string, string> = {
   'kitchen.propSalt': kitchenPropSaltUrl,
   'kitchen.propBowl': kitchenPropBowlUrl,
   'kitchen.propPlate': kitchenPropPlateUrl,
+  // Kitchen accessories (assets/world/Kitchen/Acccesories/*) — see kitchen.ts.
+  'kitchen.accDiningTable': kitchenAccDiningTableUrl,
+  'kitchen.accBottle': kitchenAccBottleUrl,
+  'kitchen.accMug': kitchenAccMugUrl,
+  'kitchen.accDal': kitchenAccDalUrl,
+  'kitchen.accFruits': kitchenAccFruitsUrl,
+  'kitchen.accJar': kitchenAccJarUrl,
+  'kitchen.accMobile': kitchenAccMobileUrl,
+  'kitchen.accPepper': kitchenAccPepperUrl,
+  'kitchen.accMeal': kitchenAccMealUrl,
+  'kitchen.accPlates': kitchenAccPlatesUrl,
+  'kitchen.accRamen': kitchenAccRamenUrl,
+  'kitchen.accWater': kitchenAccWaterUrl,
+  'kitchen.accSnacks': kitchenAccSnacksUrl,
   // Bedroom asset-integration pass — visual placement only (see bedroomRoom.ts).
   'bedroom.art': bedroomArtUrl,
   'bedroom.wallLamp': bedroomWallLampUrl,
@@ -176,9 +205,11 @@ export const ASSET_MANIFEST: Record<string, string> = {
   'education.readingCat': educationReadingCatUrl,
   'education.pinboard': educationPinboardUrl,
   'education.files': educationFilesUrl,
+  'education.tableWithBooks': educationTableWithBooksUrl,
   // Decorative architectural wall panels (see walls.ts).
-  'walls.wallOne': wallOneUrl,
   'walls.wallTwo': wallTwoUrl,
+  'walls.wallThree': wallThreeUrl,
+  'walls.glassWall': glassWallUrl,
   // Framed wall art (assets/world/Frames/*.png) — see projectsRoom.ts/kitchen.ts.
   'frames.codePoster': frameCodeUrl,
   'frames.cafeMenu': frameCafeMenuUrl,

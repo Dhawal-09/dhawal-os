@@ -67,7 +67,7 @@ const ENTRANCE_TARGET_WIDTH = {
   table: 171.9,
   hook: 169.7,
   mat: 151,
-  painting: 123.7,
+  painting: 133.7,
   plant: 151.3, // visible content ~110px wide × ~139px tall potted plant
 } as const
 
@@ -85,7 +85,10 @@ const ENTRANCE_SCALE = {
     ENTRANCE_ASSET_NATURAL_SIZE.hook,
     ENTRANCE_TARGET_WIDTH.hook,
   ),
-  mat: scaleForWidth(ENTRANCE_ASSET_NATURAL_SIZE.mat, ENTRANCE_TARGET_WIDTH.mat),
+  mat: scaleForWidth(
+    ENTRANCE_ASSET_NATURAL_SIZE.mat,
+    ENTRANCE_TARGET_WIDTH.mat,
+  ),
   painting: scaleForWidth(
     ENTRANCE_ASSET_NATURAL_SIZE.painting,
     ENTRANCE_TARGET_WIDTH.painting,
@@ -219,9 +222,21 @@ export const entranceObjects: WorldObject[] = [
     x: 1300,
     y: 950,
   }), // WORLD POSITION — SAFE TO TUNE
-  entranceObject('entrance-plant-4', 'plant', 'POTTED PLANT', {
-    x: 1350,
-    y: 650,
-  }), // WORLD POSITION — SAFE TO TUNE — nudged from (1700,820), which the
-  // new `entranceColliders` mantel-lip collider above now occupies
+  {
+    ...entranceObject('entrance-plant-4', 'plant', 'POTTED PLANT', {
+      x: 1350,
+      y: 650,
+    }), // WORLD POSITION — SAFE TO TUNE — nudged from (1700,820), which the
+    // new `entranceColliders` mantel-lip collider above now occupies
+    // At the kitchen doorway — the kitchen's plant line (kitchen.ts). Solid,
+    // so the spot is the floor just in front of it.
+    interactionPoint: { x: 1350, y: 690 },
+    message: {
+      type: 'flavor',
+      text: 'Plant status: operational.',
+      variants: ['Still alive. Impressive.', 'Photosynthesis detected.'],
+      // Reaches across the doorway (y≈745–790) so walking through triggers it.
+      radius: 90,
+    },
+  },
 ]

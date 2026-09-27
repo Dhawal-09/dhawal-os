@@ -18,9 +18,23 @@ export type GameEvent =
   | 'OPEN_ABOUT'
   | 'OPEN_CONTACT'
   | 'OPEN_CAT'
+  /**
+   * World-only: an `[E]` on an interactable whose answer is a short in-world
+   * response instead of a panel. Handled by GameScene; not in `OPEN_EVENTS`,
+   * so React never opens or pauses anything for it.
+   */
+  | 'WORLD_RESPONSE'
   | 'PAUSE_WORLD'
   | 'CLOSE_OVERLAY'
   | 'RETURN_TO_WORLD'
+  /**
+   * Emitted by the view selection / HUD VIEW selector: switch the camera
+   * to the whole-world overview or back to the default follow camera.
+   * Camera framing only — the player stays playable in both. Handled by
+   * GameScene only; panels ignore them.
+   */
+  | 'CAMERA_OVERVIEW'
+  | 'CAMERA_EXPLORE'
 
 export type GameEventListener = (event: GameEvent) => void
 

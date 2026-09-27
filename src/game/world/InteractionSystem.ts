@@ -12,6 +12,8 @@ export interface InteractableCandidate {
   radius: number
   /** The object's `interactive` message, if configured — the prompt text for this action. */
   message?: InteractiveMessage
+  /** `WORLD_RESPONSE` only: the lines shown in the prompt after `[E]`. */
+  response?: readonly string[]
 }
 
 /**
@@ -92,19 +94,23 @@ export class InteractionSystem {
     const candidates: InteractableCandidate[] = []
     const ambientCandidates: AmbientCandidate[] = []
     for (const object of objects) {
-      const { message } = object
-      if (object.interaction) {
+      const { message, interaction } = object
+      const position = object.interactionPoint ?? object.position
+      if (interaction) {
         candidates.push({
           id: object.id,
-          action: object.interaction.action,
-          position: object.position,
-          radius: object.interaction.radius,
+          action: interaction.action,
+          position,
+          radius: interaction.radius,
           message: message?.type === 'interactive' ? message : undefined,
+          ...(interaction.action === 'WORLD_RESPONSE' && {
+            response: interaction.response,
+          }),
         })
       } else if (message && message.type !== 'interactive') {
         ambientCandidates.push({
           id: object.id,
-          position: object.position,
+          position,
           radius: message.radius,
           message,
         })

@@ -15,15 +15,21 @@
  * session (a refresh mid-game), in which case it goes straight to GAME —
  * the caller decides which via `alreadyAuthenticated`, since only it knows
  * about `AuthManager`. `ACCESS_GRANTED` then completes the guest session
- * flow and moves ACCESS -> GAME.
+ * flow and moves ACCESS -> VIEW_SELECT.
+ *
+ * VIEW_SELECT (ViewSelectScreen.tsx) is the last step before the world: the
+ * visitor picks the starting camera mode (EXPLORE / OVERVIEW), and
+ * `VIEW_SELECTED` moves VIEW_SELECT -> GAME. A refresh mid-game skips it
+ * along with ACCESS — the camera can still be switched from the HUD.
  */
 export type AppLifecycleState =
-  'landing' | 'loading' | 'access' | 'game' | 'error'
+  'landing' | 'loading' | 'access' | 'view-select' | 'game' | 'error'
 
 export type AppLifecycleAction =
   | { type: 'START_JOURNEY' }
   | { type: 'GAME_READY'; alreadyAuthenticated: boolean }
   | { type: 'ACCESS_GRANTED' }
+  | { type: 'VIEW_SELECTED' }
   | { type: 'GAME_ERROR' }
   | { type: 'RETRY' }
   | { type: 'EXIT' }
@@ -41,7 +47,9 @@ export function appLifecycleReducer(
       if (state !== 'loading') return state
       return action.alreadyAuthenticated ? 'game' : 'access'
     case 'ACCESS_GRANTED':
-      return state === 'access' ? 'game' : state
+      return state === 'access' ? 'view-select' : state
+    case 'VIEW_SELECTED':
+      return state === 'view-select' ? 'game' : state
     case 'GAME_ERROR':
       return state === 'loading' ? 'error' : state
     case 'RETRY':

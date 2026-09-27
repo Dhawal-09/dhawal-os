@@ -10,6 +10,7 @@ import { useEffect } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { audioManager } from '../game/audio/AudioManager'
 import { authManager } from '../game/auth/AuthManager'
+import { gameEventBridge } from '../game/events/GameEventBridge'
 import { RESUME_PDF_PATH } from '../data/resume'
 import App from './App'
 
@@ -69,9 +70,27 @@ async function waitForAccessPanel() {
   )
 }
 
-/** Clicks ACCESS SYSTEM and waits through the (brief) guest-access animation into GAME. */
-async function grantAccess(user: ReturnType<typeof userEvent.setup>) {
+/** Clicks ACCESS SYSTEM and waits through the (brief) guest-access animation into VIEW_SELECT. */
+async function passAccess(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByRole('button', { name: /access system/i }))
+  await waitFor(
+    () => {
+      expect(
+        screen.getByRole('heading', { name: /select your view/i }),
+      ).toBeInTheDocument()
+    },
+    { timeout: 3000 },
+  )
+}
+
+/** ACCESS -> VIEW_SELECT (picking `view`) -> GAME. */
+async function grantAccess(
+  user: ReturnType<typeof userEvent.setup>,
+  view: RegExp = /explore view/i,
+) {
+  await passAccess(user)
+  await user.click(screen.getByRole('radio', { name: view }))
+  await user.click(screen.getByRole('button', { name: /enter dhawal\.os/i }))
   await waitFor(
     () => {
       expect(
@@ -471,6 +490,65 @@ describe('App exit flow', () => {
     expect(window.sessionStorage.getItem('dhawalos:game-session-active')).toBe(
       'true',
     )
+  })
+})
+
+describe('App view selection', () => {
+  it('ACCESS leads to VIEW_SELECT — not straight into GAME — and there is no HUD VIEW control yet', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await startJourney(user)
+    await waitForAccessPanel()
+    await passAccess(user)
+
+    expect(
+      screen.queryByRole('button', { name: /^exit$/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /camera view/i }),
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /select a view/i }),
+    ).toBeDisabled()
+  })
+
+  it('picking OVERVIEW sends it to the camera, and the HUD selector reflects it once in GAME', async () => {
+    const received: string[] = []
+    const unsubscribe = gameEventBridge.subscribe((event) =>
+      received.push(event),
+    )
+    const user = userEvent.setup()
+    render(<App />)
+    await startJourney(user)
+    await waitForAccessPanel()
+    await grantAccess(user, /overview/i)
+    unsubscribe()
+
+    expect(received).toContain('CAMERA_OVERVIEW')
+    expect(
+      screen.queryByRole('heading', { name: /select your view/i }),
+    ).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /view/i }))
+    expect(screen.getByRole('radio', { name: /overview/i })).toBeChecked()
+  })
+
+  it('switching from the HUD selector during GAME sends the new mode without leaving GAME', async () => {
+    const user = userEvent.setup()
+    await enterGame(user)
+    const received: string[] = []
+    const unsubscribe = gameEventBridge.subscribe((event) =>
+      received.push(event),
+    )
+
+    await user.click(screen.getByRole('button', { name: /view/i }))
+    await user.click(screen.getByRole('radio', { name: /overview/i }))
+    await user.click(screen.getByRole('radio', { name: /explore/i }))
+    unsubscribe()
+
+    expect(received).toEqual(['CAMERA_OVERVIEW', 'CAMERA_EXPLORE'])
+    expect(screen.getByRole('button', { name: /^exit$/i })).toBeInTheDocument()
+    expect(gameAppCreateSpy).toHaveBeenCalledTimes(1)
   })
 })
 

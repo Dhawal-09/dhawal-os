@@ -1,9 +1,14 @@
 import { expect, test, type Page } from 'playwright/test'
 
+/** LANDING -> BOOT -> ACCESS -> VIEW SELECT (EXPLORE) -> GAME. */
 async function startJourney(page: Page): Promise<void> {
   await page.getByRole('button', { name: /start journey/i }).click()
   await page.locator('.game-canvas-host canvas').waitFor()
+  await page.getByRole('button', { name: /access system/i }).click()
+  await page.getByText('EXPLORE VIEW', { exact: true }).click()
+  await page.getByRole('button', { name: /enter dhawal\.os/i }).click()
   await expect(page.getByRole('status')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^exit$/i })).toBeVisible()
 }
 
 /** The portfolio nav is a disclosure behind the HUD's menu toggle (PHASE 09 GameHud) — opens it. */
@@ -241,8 +246,7 @@ test('mobile viewport: landing is usable with no horizontal overflow', async ({
   )
   expect(scrollWidth).toBeLessThanOrEqual(clientWidth + 1) // +1 for sub-pixel rounding
 
-  await startButton.click()
-  await page.locator('.game-canvas-host canvas').waitFor()
+  await startJourney(page)
   await expect(page.locator('.game-canvas-host canvas')).toBeVisible()
 
   // The game view (HUD + fullscreen canvas) is also overflow-free and usable.

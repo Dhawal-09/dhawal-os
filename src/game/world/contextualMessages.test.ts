@@ -21,11 +21,39 @@ describe('contextual message data', () => {
     }
   })
 
-  it('messages stay short enough for a one-line in-world prompt', () => {
+  it('messages stay short: one-line [E] prompts, at most two wrapped lines of flavor/info, one-line response lines', () => {
+    const ONE_LINE = 42 // ContextualMessageView wraps at 42 glyphs
     for (const object of worldObjects) {
-      if (!object.message) continue
-      expect(object.message.text.length, object.id).toBeLessThanOrEqual(42)
-      expect(object.message.text.trim(), object.id).toBe(object.message.text)
+      const { message, interaction } = object
+      if (message) {
+        const texts =
+          message.type === 'interactive'
+            ? [message.text]
+            : [message.text, ...(message.variants ?? [])]
+        const limit = message.type === 'interactive' ? ONE_LINE : ONE_LINE * 2
+        for (const text of texts) {
+          expect(text.length, object.id).toBeLessThanOrEqual(limit)
+          expect(text.trim(), object.id).toBe(text)
+        }
+      }
+      if (interaction?.action === 'WORLD_RESPONSE') {
+        expect(interaction.response.length, object.id).toBeGreaterThan(0)
+        expect(interaction.response.length, object.id).toBeLessThanOrEqual(3)
+        for (const line of interaction.response) {
+          expect(line.length, object.id).toBeLessThanOrEqual(ONE_LINE * 2)
+        }
+      }
+    }
+  })
+
+  it('variants and `once` are flavor-only', () => {
+    for (const object of worldObjects) {
+      const message = object.message
+      if (!message || message.type === 'flavor') continue
+      if (message.type === 'info') {
+        expect(message.variants, object.id).toBeUndefined()
+        expect(message.once, object.id).toBeUndefined()
+      }
     }
   })
 
@@ -41,14 +69,18 @@ describe('contextual message data', () => {
     const system = InteractionSystem.fromWorldObjects(worldObjects)
     for (const object of worldObjects) {
       if (!object.interaction) continue
-      const candidate = system.findNearestInRange(object.position)
+      const point = object.interactionPoint ?? object.position
+      const candidate = system.findNearestInRange(point)
       expect(candidate?.id, object.id).toBe(object.id)
       expect(candidate?.action).toBe(object.interaction.action)
       expect(candidate?.message).toBe(object.message)
+      if (object.interaction.action === 'WORLD_RESPONSE') {
+        expect(candidate?.response).toBe(object.interaction.response)
+      }
     }
   })
 
-  it('every info/flavor spot can actually be triggered: reachable from spawn, in range, and not overridden by an interactable', () => {
+  it('every info/flavor spot, and every [E]-response spot, can actually be triggered from somewhere the player can stand', () => {
     const collision = CollisionSystem.fromWorldObjects(
       worldObjects,
       WORLD_WIDTH,
@@ -87,6 +119,13 @@ describe('contextual message data', () => {
 
     const unreachable: string[] = []
     for (const object of worldObjects) {
+      if (object.interaction?.action === 'WORLD_RESPONSE') {
+        const triggered = reachable.some(
+          (point) => interactions.findNearestInRange(point)?.id === object.id,
+        )
+        if (!triggered) unreachable.push(object.id)
+        continue
+      }
       if (!object.message || object.message.type === 'interactive') continue
       const triggered = reachable.some(
         (point) =>

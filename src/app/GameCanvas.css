@@ -1,7 +1,10 @@
 .game-canvas-host {
   position: relative;
   width: 100%;
-  min-height: 480px;
+  /* Takes exactly the space left below the HUD (App.css) — a fixed floor
+     here would push the canvas past the bottom of short viewports (phone
+     landscape), cropping the Overview camera's whole-world fit. */
+  min-height: 0;
   flex: 1;
   overflow: hidden;
   background: #000;

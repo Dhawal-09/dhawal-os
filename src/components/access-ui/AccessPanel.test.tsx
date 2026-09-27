@@ -1,6 +1,7 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { audioManager } from '../../game/audio/AudioManager'
 import { authManager } from '../../game/auth/AuthManager'
 import { AccessPanel } from './AccessPanel'
 
@@ -46,6 +47,17 @@ describe('AccessPanel', () => {
     expect(authManager.getSession()?.role).toBe('GUEST')
   })
 
+  it('ACCESS SYSTEM plays the same SFX as an [E] interaction, once per click', async () => {
+    const playOpen = vi.spyOn(audioManager, 'playInteractOpen')
+    const user = userEvent.setup()
+    render(<AccessPanel onAccessGranted={vi.fn()} />)
+
+    expect(playOpen).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: /access system/i }))
+    expect(playOpen).toHaveBeenCalledTimes(1)
+    playOpen.mockRestore()
+  })
+
   it('calls onAccessGranted exactly once, shortly after reaching ACCESS GRANTED', async () => {
     const onAccessGranted = vi.fn()
     const user = userEvent.setup()
@@ -62,10 +74,26 @@ describe('AccessPanel', () => {
     expect(onAccessGranted).toHaveBeenCalledTimes(1)
   })
 
-  it('never claims a server validated anything — an honest local-guest-session disclaimer is present', () => {
+  it('shows only access essentials — no boot/status dashboard, and no claim of server validation', () => {
     render(<AccessPanel onAccessGranted={vi.fn()} />)
 
-    expect(screen.getByText(/local guest session/i)).toBeInTheDocument()
-    expect(screen.getByText(/local demo/i)).toBeInTheDocument()
+    expect(screen.getByText('DHAWAL.OS')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'SYSTEM ACCESS' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('GUEST SESSION')).toBeInTheDocument()
+
+    for (const removed of [
+      /SYSTEM STATUS/,
+      /RENDERER/,
+      /ASSETS/,
+      /PROFILE/,
+      /SYS 01/,
+      /ONLINE/,
+    ]) {
+      expect(screen.queryByText(removed)).not.toBeInTheDocument()
+    }
+    expect(screen.queryByText(/server/i)).not.toBeInTheDocument()
+    expect(screen.getAllByRole('button')).toHaveLength(1)
   })
 })
