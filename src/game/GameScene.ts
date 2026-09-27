@@ -38,6 +38,27 @@ const DEBUG_COLLISION_OVERLAY =
   import.meta.env.DEV && import.meta.env.VITE_DEBUG_COLLISION === 'true'
 
 /**
+ * Logs every contextual-prompt transition (object id, mode, radius, what's
+ * shown) to the console. Same opt-in rules as the collider overlay:
+ * `VITE_DEBUG_INTERACTIONS=true`, dev builds only, off by default.
+ */
+const DEBUG_INTERACTIONS =
+  import.meta.env.DEV && import.meta.env.VITE_DEBUG_INTERACTIONS === 'true'
+
+/** How long a flavor message stays up before fading on its own. */
+export const FLAVOR_HOLD_MS = 3200
+/** After a flavor message ends (or the player walks off), how long before it can appear again. */
+export const FLAVOR_COOLDOWN_MS = 4000
+/** How long an `[E]` response replaces the prompt before the prompt returns. */
+export const RESPONSE_HOLD_MS = 2800
+
+type MessageTarget = InteractableCandidate | AmbientCandidate
+
+/** What the contextual prompt is doing right now — for tests and `DEBUG_INTERACTIONS`. */
+export type PromptState =
+  'none' | 'prompt' | 'response' | 'info' | 'flavor' | 'flavor-done'
+
+/**
  * Root scene container. Owns the World, its static Camera fit, collision,
  * interaction, and the player.
  */
@@ -76,7 +97,20 @@ export class GameScene extends Container {
    * objects built once by InteractionSystem, so a reference comparison
    * detects a change without allocating anything per frame.
    */
-  private messageTarget: InteractableCandidate | AmbientCandidate | null = null
+  private messageTarget: MessageTarget | null = null
+  /** What the prompt is showing for `messageTarget`. */
+  private promptState: PromptState = 'none'
+  /**
+   * Scene time (ms of unpaused `update`s) — drives flavor/response timing,
+   * so it freezes while a panel is open.
+   */
+  private clockMS = 0
+  /** When the current flavor/response display ends, or null if it doesn't time out. */
+  private messageEndsAt: number | null = null
+  /** Per flavor spot: scene time before which it can't reappear. */
+  private readonly flavorCooldownUntil = new Map<AmbientCandidate, number>()
+  /** Per flavor spot: times shown this session — picks the next variant, and enforces `once`. */
+  private readonly flavorShownCount = new Map<AmbientCandidate, number>()
   /**
    * The interactable whose prompt last played the appear SFX. Cleared only
    * when the player leaves it — not by a panel opening — so re-showing the
@@ -147,6 +181,13 @@ export class GameScene extends Container {
     }
 
     this.unsubscribeFromBridge = gameEventBridge.subscribe((event) => {
+      if (event === 'WORLD_RESPONSE') {
+        // Emitted by the player's own `[E]` (PlayerController), which sets
+        // `interactionTarget` first — the response belongs to that target.
+        const target = this.player.interactionTarget
+        if (this.updatingPlayer && target?.response) this.showResponse(target)
+        return
+      }
       if (OPEN_EVENTS.has(event) || event === 'PAUSE_WORLD') {
         if (this.updatingPlayer && OPEN_EVENTS.has(event)) {
           audioManager.playInteractOpen()
@@ -184,41 +225,161 @@ export class GameScene extends Container {
       audioManager.stopWalking()
       // Hidden under any React panel/modal; the first update after resuming
       // re-derives it from the (unchanged) current target.
+      this.leaveTarget()
       this.contextualMessage.hide()
       this.messageTarget = null
+      this.setPromptState('none')
     } else {
       this.inputManager.reset()
     }
   }
 
   /**
-   * Keeps the prompt on the current target. A no-op unless the target
-   * changed — `show`/`hide` (and the SFX) run only on transitions.
+   * Keeps the prompt on the current target. Target changes drive
+   * `show`/`hide` (and the SFX) — never a per-frame restart. The only
+   * per-frame work on an unchanged target is checking whether a flavor
+   * message or `[E]` response has run its course.
+   *
+   * Priority (one message at a time): an in-range interactable's prompt,
+   * else the nearest info/flavor spot, else nothing. A panel being open
+   * pauses all of this (`setPaused`).
    */
   private updateContextualMessage(): void {
     const target =
       this.player.interactionTarget ??
       this.interactionSystem.findNearestAmbientInRange(this.player.position)
-    if (target === this.messageTarget) return
-    this.messageTarget = target
+
+    if (target !== this.messageTarget) {
+      this.leaveTarget()
+      this.messageTarget = target
+      this.enterTarget(target)
+      return
+    }
+
+    if (this.messageEndsAt === null || this.clockMS < this.messageEndsAt) {
+      return
+    }
+    this.messageEndsAt = null
+    if (this.promptState === 'response' && target && 'action' in target) {
+      // Back to the prompt, silently — pressing E again answers again.
+      this.contextualMessage.show(
+        messageForTarget(target, this.player.position),
+      )
+      this.setPromptState('prompt')
+    } else if (
+      this.promptState === 'flavor' &&
+      target &&
+      !('action' in target)
+    ) {
+      this.contextualMessage.hide()
+      this.startFlavorCooldown(target)
+      this.setPromptState('flavor-done')
+    }
+  }
+
+  private enterTarget(target: MessageTarget | null): void {
+    this.messageEndsAt = null
 
     if (!target) {
       this.contextualMessage.hide()
       this.announcedTarget = null
+      this.setPromptState('none')
       return
     }
 
-    this.contextualMessage.show(messageForTarget(target, this.player.position))
     if ('action' in target) {
+      this.contextualMessage.show(
+        messageForTarget(target, this.player.position),
+      )
       if (target !== this.announcedTarget) audioManager.playInteractOpen()
       this.announcedTarget = target
-    } else {
-      this.announcedTarget = null
+      this.setPromptState('prompt')
+      return
     }
+
+    // Info/flavor: text only, never a sound.
+    this.announcedTarget = null
+    if (target.message.type === 'info') {
+      this.contextualMessage.show(
+        messageForTarget(target, this.player.position),
+      )
+      this.setPromptState('info')
+      return
+    }
+
+    const shown = this.flavorShownCount.get(target) ?? 0
+    const coolingDown =
+      this.clockMS < (this.flavorCooldownUntil.get(target) ?? 0)
+    if (coolingDown || (target.message.once && shown > 0)) {
+      this.contextualMessage.hide()
+      this.setPromptState('flavor-done')
+      return
+    }
+    const lines = [target.message.text, ...(target.message.variants ?? [])]
+    this.contextualMessage.show(
+      messageForTarget(target, this.player.position, {
+        text: lines[shown % lines.length],
+      }),
+    )
+    this.flavorShownCount.set(target, shown + 1)
+    this.messageEndsAt = this.clockMS + FLAVOR_HOLD_MS
+    this.setPromptState('flavor')
+  }
+
+  /** Walking off a flavor spot mid-message still starts its cooldown — no spam from stepping in and out. */
+  private leaveTarget(): void {
+    const target = this.messageTarget
+    if (target && this.promptState === 'flavor' && !('action' in target)) {
+      this.startFlavorCooldown(target)
+    }
+  }
+
+  private startFlavorCooldown(target: AmbientCandidate): void {
+    this.flavorCooldownUntil.set(target, this.clockMS + FLAVOR_COOLDOWN_MS)
+  }
+
+  /** `[E]` on a `WORLD_RESPONSE` interactable: its response replaces the prompt for a moment. */
+  private showResponse(target: InteractableCandidate): void {
+    audioManager.playInteractOpen()
+    this.messageTarget = target
+    this.announcedTarget = target
+    this.contextualMessage.show(
+      messageForTarget(target, this.player.position, {
+        type: 'info',
+        text: (target.response ?? []).join('\n'),
+      }),
+    )
+    this.messageEndsAt = this.clockMS + RESPONSE_HOLD_MS
+    this.setPromptState('response')
+  }
+
+  /** The prompt's current target and state — exposed for tests and debugging. */
+  get promptDebugState(): {
+    id: string | null
+    mode: 'interactive' | 'info' | 'flavor' | null
+    radius: number | null
+    state: PromptState
+  } {
+    const target = this.messageTarget
+    let mode: 'interactive' | 'info' | 'flavor' | null = null
+    if (target) mode = 'action' in target ? 'interactive' : target.message.type
+    return {
+      id: target?.id ?? null,
+      mode,
+      radius: target?.radius ?? null,
+      state: this.promptState,
+    }
+  }
+
+  private setPromptState(state: PromptState): void {
+    this.promptState = state
+    if (DEBUG_INTERACTIONS)
+      console.debug('[interaction]', this.promptDebugState)
   }
 
   update(deltaMS: number): void {
     if (this.paused) return
+    this.clockMS += deltaMS
     const { x, y } = this.player.position
     this.updatingPlayer = true
     try {

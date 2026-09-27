@@ -556,7 +556,9 @@ describe('Education room desk + chair (asset-sized collision)', () => {
     )
     const interactionSystem = InteractionSystem.fromWorldObjects(worldObjects)
     const collisionBody = new CollisionBody()
-    let rect = collisionBody.getRect(700, 1180)
+    // East of the marker, in the open floor between it and the table with
+    // books (education-table-with-books, x≈460–710 along the bottom wall).
+    let rect = collisionBody.getRect(430, 1180)
     for (let i = 0; i < 100; i++) {
       const resolved = collisionSystem.resolveMovement(rect, -10, 0)
       if (resolved.x === rect.x && resolved.y === rect.y) break
@@ -782,10 +784,11 @@ describe('PHASE 10B.1 CLEANUP — no redundant overlap with the room boundary, r
   it('EDUCATION is still reachable via the open-floor (east) side, approaching after the bottom-edge clip', () => {
     // Start east of the education marker/desk cluster, in open floor, and
     // walk west — the realistic approach path (straight-down from spawn's
-    // column is blocked by the desk itself, unrelated to this cleanup).
+    // column is blocked by the desk itself, unrelated to this cleanup). Starts
+    // west of the table with books (x≈460–710 along the bottom wall).
     const final = walkUntilBlocked(
       combined,
-      { x: 700, y: 1180 },
+      { x: 430, y: 1180 },
       { dx: -1, dy: 0 },
       10,
       100,

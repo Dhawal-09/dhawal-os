@@ -18,6 +18,12 @@ export type GameEvent =
   | 'OPEN_ABOUT'
   | 'OPEN_CONTACT'
   | 'OPEN_CAT'
+  /**
+   * World-only: an `[E]` on an interactable whose answer is a short in-world
+   * response instead of a panel. Handled by GameScene; not in `OPEN_EVENTS`,
+   * so React never opens or pauses anything for it.
+   */
+  | 'WORLD_RESPONSE'
   | 'PAUSE_WORLD'
   | 'CLOSE_OVERLAY'
   | 'RETURN_TO_WORLD'

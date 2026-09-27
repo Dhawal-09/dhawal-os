@@ -385,6 +385,28 @@ const smallPlantPosition = educationPositionForFloorPoint(
   SMALL_PLANT_SCALE,
 )
 
+/** Natural pixel dimensions of the table-with-books PNG (assets/world/Education/education_table_with_books.png), read directly from the source file — a tight, fully opaque crop. */
+const TABLE_WITH_BOOKS_NATURAL_SIZE = { width: 325, height: 122 }
+const TABLE_WITH_BOOKS_CONTENT_BBOX = { minX: 0, minY: 0, maxX: 525, maxY: 122 }
+/** Target rendered width (world px) — ~250×58, a long low table along the bottom wall. */
+const TABLE_WITH_BOOKS_TARGET_WIDTH = 250
+const TABLE_WITH_BOOKS_SCALE = scaleForWidth(
+  TABLE_WITH_BOOKS_NATURAL_SIZE,
+  TABLE_WITH_BOOKS_TARGET_WIDTH,
+)
+
+/**
+ * Long table with books, a plant and papers — against the bottom wall
+ * (y=1200), in the open floor between the "education" marker (ends x≈348)
+ * and the wall post by the gym (starts x≈740).
+ */
+const tableWithBooksPosition = educationPositionForFloorPoint(
+  { x: 622, y: 1211 }, // WORLD POSITION — SAFE TO TUNE
+  TABLE_WITH_BOOKS_NATURAL_SIZE,
+  TABLE_WITH_BOOKS_CONTENT_BBOX,
+  TABLE_WITH_BOOKS_SCALE,
+)
+
 /**
  * Floor book stack — directly below the bookshelf's own bottom edge
  * (y≈990), in the same left-wall column, well above the small plant
@@ -516,6 +538,20 @@ export const educationObjects: WorldObject[] = [
     layer: 'object',
     transform: { width: FILES_TARGET_WIDTH },
     // No `collision` — a small floor storage box, never a player obstacle.
+  },
+  {
+    id: 'education-table-with-books',
+    asset: 'education.tableWithBooks',
+    label: 'TABLE WITH BOOKS',
+    position: tableWithBooksPosition,
+    layer: 'object',
+    transform: { width: TABLE_WITH_BOOKS_TARGET_WIDTH },
+    collision: contentAlignedCollider(
+      tableWithBooksPosition,
+      TABLE_WITH_BOOKS_NATURAL_SIZE,
+      TABLE_WITH_BOOKS_CONTENT_BBOX,
+      TABLE_WITH_BOOKS_SCALE,
+    ),
   },
   {
     id: 'education-pinboard',

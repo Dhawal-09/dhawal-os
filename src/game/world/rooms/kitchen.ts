@@ -87,7 +87,7 @@ const KITCHEN_ASSET_CONTENT_BBOX = {
  */
 const KITCHEN_TARGET_WIDTH = {
   mainCounter: 538,
-  sideCounter: 330,
+  sideCounter: 100,
   fridge: 530,
   cooktop: 192,
   coffeeMachine: 245.76,
@@ -216,70 +216,244 @@ function kitchenObject(
     // `solid` (default false) adds a collider matching the asset's own measured
     // visible footprint; every other kitchen piece stays visual-only.
     ...(solid && {
-      collision: contentAlignedCollider(position, naturalSize, contentBBox, scale),
+      collision: contentAlignedCollider(
+        position,
+        naturalSize,
+        contentBBox,
+        scale,
+      ),
     }),
   }
 }
 
-export const kitchenObjects: WorldObject[] = [
-  kitchenObject(
-    'kitchen-fridge',
-    'kitchen.fridge',
-    'REFRIGERATOR',
-    // WORLD POSITION — SAFE TO TUNE — the fridge's visible base, leftmost, right after the main work desk.
-    // (360.67 reproduces the exact spot the old `y: -28` produced: that value
-    // was tuned by eye while this asset's natural width was mis-recorded as
-    // 400 instead of 2400, which inflated the padding offset; the width is
-    // now correct so the collider below lines up with the art.)
-    { x: 1453, y: 360.67 },
-    KITCHEN_ASSET_NATURAL_SIZE.fridge,
-    KITCHEN_ASSET_CONTENT_BBOX.fridge,
-    KITCHEN_SCALE.fridge,
-    KITCHEN_TARGET_WIDTH.fridge,
+/**
+ * Kitchen accessories (assets/world/Kitchen/Acccesories/*.png): natural
+ * canvas size, measured opaque bbox, and target rendered width. The small
+ * items share the counter props' pixel scale (~0.22 world px per native px,
+ * same as Utensil/holder.png); the second dining table (table + 4 chairs)
+ * renders its content ~120 wide, matching the existing dining set.
+ */
+const KITCHEN_ACCESSORIES = {
+  accDiningTable: {
+    natural: { width: 369, height: 359 },
+    bbox: { minX: 44, minY: 41, maxX: 346, maxY: 339 },
+    width: 146.6,
+  },
+  accBottle: {
+    natural: { width: 11, height: 272 },
+    bbox: { minX: 14, minY: 59, maxX: 106, maxY: 236 },
+    width: 38.8,
+  },
+  accMug: {
+    natural: { width: 156, height: 149 },
+    bbox: { minX: 31, minY: 28, maxX: 138, maxY: 134 },
+    width: 34.3,
+  },
+  accDal: {
+    natural: { width: 156, height: 152 },
+    bbox: { minX: 18, minY: 25, maxX: 138, maxY: 141 },
+    width: 34.3,
+  },
+  accFruits: {
+    natural: { width: 173, height: 147 },
+    bbox: { minX: 14, minY: 11, maxX: 158, maxY: 133 },
+    width: 38.1,
+  },
+  accJar: {
+    natural: { width: 108, height: 157 },
+    bbox: { minX: 8, minY: 26, maxX: 95, maxY: 137 },
+    width: 23.8,
+  },
+  accMobile: {
+    natural: { width: 161, height: 170 },
+    bbox: { minX: 25, minY: 21, maxX: 121, maxY: 150 },
+    width: 35.4,
+  },
+  accPepper: {
+    natural: { width: 160, height: 124 },
+    bbox: { minX: 15, minY: 13, maxX: 146, maxY: 118 },
+    width: 35.2,
+  },
+  accMeal: {
+    natural: { width: 270, height: 152 },
+    bbox: { minX: 17, minY: 11, maxX: 244, maxY: 146 },
+    width: 59.4,
+  },
+  accPlates: {
+    natural: { width: 189, height: 137 },
+    bbox: { minX: 24, minY: 9, maxX: 151, maxY: 117 },
+    width: 41.6,
+  },
+  accRamen: {
+    natural: { width: 205, height: 171 },
+    bbox: { minX: 10, minY: 2, maxX: 175, maxY: 160 },
+    width: 45.1,
+  },
+  accWater: {
+    natural: { width: 119, height: 128 },
+    bbox: { minX: 20, minY: 13, maxX: 94, maxY: 121 },
+    width: 26.2,
+  },
+  accSnacks: {
+    natural: { width: 150, height: 119 },
+    bbox: { minX: 17, minY: 14, maxX: 123, maxY: 107 },
+    width: 53,
+  },
+} as const
+
+/** A kitchen accessory at its visible resting point (bottom-center of the art). Visual-only unless `solid`. */
+function kitchenAccessory(
+  id: string,
+  key: keyof typeof KITCHEN_ACCESSORIES,
+  label: string,
+  visible: { x: number; y: number },
+  solid = false,
+): WorldObject {
+  const { natural, bbox, width } = KITCHEN_ACCESSORIES[key]
+  return kitchenObject(
+    id,
+    `kitchen.${key}`,
+    label,
+    visible,
+    natural,
+    bbox,
+    scaleForWidth(natural, width),
+    width,
     0,
-    true, // solid — collider matches the visible footprint
-  ),
-  kitchenObject(
-    'kitchen-main-counter',
-    'kitchen.mainCounter',
-    'KITCHEN COUNTER',
-    { x: 1675, y: 300 }, // WORLD POSITION — SAFE TO TUNE
-    KITCHEN_ASSET_NATURAL_SIZE.mainCounter,
-    KITCHEN_ASSET_CONTENT_BBOX.mainCounter,
-    KITCHEN_SCALE.mainCounter,
-    KITCHEN_TARGET_WIDTH.mainCounter,
-  ),
-  kitchenObject(
-    'kitchen-side-counter',
-    'kitchen.sideCounter',
-    'SIDE COUNTER',
-    { x: 1700, y: 278 }, // WORLD POSITION — SAFE TO TUNE — connects/aligns with the main counter's right edge
-    KITCHEN_ASSET_NATURAL_SIZE.sideCounter,
-    KITCHEN_ASSET_CONTENT_BBOX.sideCounter,
-    KITCHEN_SCALE.sideCounter,
-    KITCHEN_TARGET_WIDTH.sideCounter,
-    90, // rotated 90° — see kitchenObject()'s note on anchor-point flipping
-  ),
-  kitchenObject(
-    'kitchen-wall-shelf',
-    'kitchen.wallShelf',
-    'WALL SHELF',
-    { x: 1750, y: 139 }, // WORLD POSITION — SAFE TO TUNE — above the fridge/counter seam, per reference
-    KITCHEN_ASSET_NATURAL_SIZE.wallShelf,
-    KITCHEN_ASSET_CONTENT_BBOX.wallShelf,
-    KITCHEN_SCALE.wallShelf,
-    KITCHEN_TARGET_WIDTH.wallShelf,
-  ),
-  kitchenObject(
-    'kitchen-hanging-pans',
-    'kitchen.hangingPans',
-    'HANGING PANS',
-    { x: 1590, y: 158 }, // WORLD POSITION — SAFE TO TUNE — above the cooktop, per reference
-    KITCHEN_ASSET_NATURAL_SIZE.hangingPans,
-    KITCHEN_ASSET_CONTENT_BBOX.hangingPans,
-    KITCHEN_SCALE.hangingPans,
-    KITCHEN_TARGET_WIDTH.hangingPans,
-  ),
+    solid,
+  )
+}
+
+/**
+ * Contextual interactions (INTERACTION_SPEC.md "Contextual messages"). Most
+ * kitchen pieces are visual-only and several sit along one counter, so
+ * each spot sets an `interactionPoint` on the floor where the player stands
+ * to use it, with a small radius so neighbouring spots don't overlap:
+ *
+ * - interactive (`[E]` + short in-world response): fridge, cooktop, coffee
+ *   machine, storage cabinet, dining table.
+ * - flavor (text only, fades on its own): hanging pans, wall-shelf jars,
+ *   counter. (The kitchen's plant line lives on the potted plant at the
+ *   kitchen doorway, `entrance-plant-4` — the hanging plant here is right
+ *   above the cooktop, where the cooktop's `[E]` would always win.)
+ * - silent: counter props, chairs, hanging plant, café menu, light.
+ */
+const KITCHEN_SPOT_RADIUS = 45
+/** Standing line just in front of the counter run. */
+const COUNTER_FRONT_Y = 330
+
+export const kitchenObjects: WorldObject[] = [
+  {
+    ...kitchenObject(
+      'kitchen-fridge',
+      'kitchen.fridge',
+      'REFRIGERATOR',
+      // WORLD POSITION — SAFE TO TUNE — the fridge's visible base, leftmost, right after the main work desk.
+      // (360.67 reproduces the exact spot the old `y: -28` produced: that value
+      // was tuned by eye while this asset's natural width was mis-recorded as
+      // 400 instead of 2400, which inflated the padding offset; the width is
+      // now correct so the collider below lines up with the art.)
+      { x: 1453, y: 360.67 },
+      KITCHEN_ASSET_NATURAL_SIZE.fridge,
+      KITCHEN_ASSET_CONTENT_BBOX.fridge,
+      KITCHEN_SCALE.fridge,
+      KITCHEN_TARGET_WIDTH.fridge,
+      0,
+      true, // solid — collider matches the visible footprint
+    ),
+    // `position` is the padded canvas anchor, well below the fridge's base
+    // (y≈361); stand right in front of it.
+    interactionPoint: { x: 1453, y: 380 },
+    interaction: {
+      radius: 50,
+      action: 'WORLD_RESPONSE',
+      response: [
+        'STATUS: FOOD AVAILABLE.',
+        'DEVELOPER FUNCTIONALITY: QUESTIONABLE.',
+      ],
+    },
+    message: { type: 'interactive', text: 'Check the fridge?' },
+  },
+  {
+    ...kitchenObject(
+      'kitchen-main-counter',
+      'kitchen.mainCounter',
+      'KITCHEN COUNTER',
+      { x: 1675, y: 300 }, // WORLD POSITION — SAFE TO TUNE
+      KITCHEN_ASSET_NATURAL_SIZE.mainCounter,
+      KITCHEN_ASSET_CONTENT_BBOX.mainCounter,
+      KITCHEN_SCALE.mainCounter,
+      KITCHEN_TARGET_WIDTH.mainCounter,
+    ),
+    interactionPoint: { x: 1680, y: 420 },
+    message: {
+      type: 'flavor',
+      text: 'This counter has seen more late nights than daylight.',
+      radius: 40,
+    },
+  },
+  {
+    ...kitchenObject(
+      'kitchen-side-counter',
+      'kitchen.sideCounter',
+      'SIDE COUNTER',
+      { x: 1820, y: 478 }, // WORLD POSITION — SAFE TO TUNE — connects/aligns with the main counter's right edge
+      KITCHEN_ASSET_NATURAL_SIZE.sideCounter,
+      KITCHEN_ASSET_CONTENT_BBOX.sideCounter,
+      KITCHEN_SCALE.sideCounter,
+      KITCHEN_TARGET_WIDTH.sideCounter,
+      // rotated 90° — see kitchenObject()'s note on anchor-point flipping
+    ),
+    // Solid: matches the side counter's full visible footprint as rendered
+    // (Vertical-Coridor.png at width 100 → ~100×255, bottom-center at
+    // (1820, ~532.7)), measured in-game.
+    collision: { x: 1770, y: 277.4, width: 100, height: 255.3 },
+    // The tall cabinet on the right wall; stand just left of it.
+    interactionPoint: { x: 1760, y: 450 },
+    interaction: {
+      radius: KITCHEN_SPOT_RADIUS,
+      action: 'WORLD_RESPONSE',
+      response: ['STORAGE ACCESSED.', 'NOTHING SUSPICIOUS FOUND.'],
+    },
+    message: { type: 'interactive', text: 'Wanna stash something in here?' },
+  },
+  {
+    ...kitchenObject(
+      'kitchen-wall-shelf',
+      'kitchen.wallShelf',
+      'WALL SHELF',
+      { x: 1750, y: 139 }, // WORLD POSITION — SAFE TO TUNE — above the fridge/counter seam, per reference
+      KITCHEN_ASSET_NATURAL_SIZE.wallShelf,
+      KITCHEN_ASSET_CONTENT_BBOX.wallShelf,
+      KITCHEN_SCALE.wallShelf,
+      KITCHEN_TARGET_WIDTH.wallShelf,
+    ),
+    // Just left of the (solid) side counter, below the coffee machine's spot.
+    interactionPoint: { x: 1745, y: 385 },
+    message: {
+      type: 'flavor',
+      text: 'A carefully engineered collection of things nobody remembers buying.',
+      radius: 35,
+    },
+  },
+  {
+    ...kitchenObject(
+      'kitchen-hanging-pans',
+      'kitchen.hangingPans',
+      'HANGING PANS',
+      { x: 1590, y: 158 }, // WORLD POSITION — SAFE TO TUNE — above the cooktop, per reference
+      KITCHEN_ASSET_NATURAL_SIZE.hangingPans,
+      KITCHEN_ASSET_CONTENT_BBOX.hangingPans,
+      KITCHEN_SCALE.hangingPans,
+      KITCHEN_TARGET_WIDTH.hangingPans,
+    ),
+    interactionPoint: { x: 1565, y: COUNTER_FRONT_Y },
+    message: {
+      type: 'flavor',
+      text: 'Someone actually uses these?',
+      radius: KITCHEN_SPOT_RADIUS,
+    },
+  },
   kitchenObject(
     'kitchen-light',
     'kitchen.light',
@@ -290,16 +464,25 @@ export const kitchenObjects: WorldObject[] = [
     KITCHEN_SCALE.light,
     KITCHEN_TARGET_WIDTH.light,
   ),
-  kitchenObject(
-    'kitchen-cooktop',
-    'kitchen.cooktop',
-    'COOKTOP',
-    { x: 1650, y: 230 }, // WORLD POSITION — SAFE TO TUNE — sits on kitchen-main-counter
-    KITCHEN_ASSET_NATURAL_SIZE.cooktop,
-    KITCHEN_ASSET_CONTENT_BBOX.cooktop,
-    KITCHEN_SCALE.cooktop,
-    KITCHEN_TARGET_WIDTH.cooktop,
-  ),
+  {
+    ...kitchenObject(
+      'kitchen-cooktop',
+      'kitchen.cooktop',
+      'COOKTOP',
+      { x: 1650, y: 230 }, // WORLD POSITION — SAFE TO TUNE — sits on kitchen-main-counter
+      KITCHEN_ASSET_NATURAL_SIZE.cooktop,
+      KITCHEN_ASSET_CONTENT_BBOX.cooktop,
+      KITCHEN_SCALE.cooktop,
+      KITCHEN_TARGET_WIDTH.cooktop,
+    ),
+    interactionPoint: { x: 1648, y: COUNTER_FRONT_Y },
+    interaction: {
+      radius: KITCHEN_SPOT_RADIUS,
+      action: 'WORLD_RESPONSE',
+      response: ['NOTHING.', 'JUST LIKE YOUR CODE AT 2 AM.'],
+    },
+    message: { type: 'interactive', text: "What's cooking?" },
+  },
   {
     ...kitchenObject(
       'kitchen-coffee-machine',
@@ -311,7 +494,13 @@ export const kitchenObjects: WorldObject[] = [
       KITCHEN_SCALE.coffeeMachine,
       KITCHEN_TARGET_WIDTH.coffeeMachine,
     ),
-    message: { type: 'flavor', text: 'Coffee first. Code later.', radius: 110 },
+    interactionPoint: { x: 1725, y: COUNTER_FRONT_Y },
+    interaction: {
+      radius: KITCHEN_SPOT_RADIUS,
+      action: 'WORLD_RESPONSE',
+      response: ['COFFEE DEPLOYED.', '+10 DEBUGGING ENERGY.'],
+    },
+    message: { type: 'interactive', text: 'Brew developer fuel?' },
   },
   kitchenObject(
     'kitchen-counter-prop-holder',
@@ -421,16 +610,87 @@ export const kitchenObjects: WorldObject[] = [
     0,
     true, // solid — collider matches the visible footprint
   ),
-  kitchenObject(
-    'kitchen-dining-table',
-    'kitchen.diningTable',
+  {
+    ...kitchenObject(
+      'kitchen-dining-table',
+      'kitchen.diningTable',
+      'DINING TABLE',
+      { x: 1670, y: 680 }, // WORLD POSITION — SAFE TO TUNE — drawn after all four chairs, so it sits on top of them
+      KITCHEN_ASSET_NATURAL_SIZE.diningTable,
+      KITCHEN_ASSET_CONTENT_BBOX.diningTable,
+      KITCHEN_SCALE.diningTable,
+      KITCHEN_TARGET_WIDTH.diningTable,
+      0,
+      true, // solid — collider matches the visible footprint
+    ),
+    // The dining set is solid; reachable from any side of the chairs.
+    interactionPoint: { x: 1670, y: 580 },
+    interaction: {
+      radius: 150,
+      action: 'WORLD_RESPONSE',
+      response: [
+        'BREAK DETECTED.',
+        'DEVELOPER SHOULD PROBABLY',
+        'GET BACK TO WORK.',
+      ],
+    },
+    message: { type: 'interactive', text: 'Take a break?' },
+  },
+  // Accessories — listed last so they draw on top of the tables/counter
+  // they sit on (World.ts draws array order, not a Y-sort).
+  kitchenAccessory(
+    'kitchen-acc-dining-table',
+    'accDiningTable',
     'DINING TABLE',
-    { x: 1670, y: 680 }, // WORLD POSITION — SAFE TO TUNE — drawn after all four chairs, so it sits on top of them
-    KITCHEN_ASSET_NATURAL_SIZE.diningTable,
-    KITCHEN_ASSET_CONTENT_BBOX.diningTable,
-    KITCHEN_SCALE.diningTable,
-    KITCHEN_TARGET_WIDTH.diningTable,
-    0,
-    true, // solid — collider matches the visible footprint
-  ),
+    { x: 1468, y: 575 },
+    true,
+  ), // WORLD POSITION — SAFE TO TUNE — second table, open floor below the fridge
+  // On the main counter.
+  kitchenAccessory('kitchen-acc-fruits', 'accFruits', 'FRUIT BOWL', {
+    x: 1532,
+    y: 230,
+  }), // WORLD POSITION — SAFE TO TUNE — counter's left end
+  kitchenAccessory('kitchen-acc-jar', 'accJar', 'JAM JAR', { x: 1600, y: 226 }), // WORLD POSITION — SAFE TO TUNE — between the utensil holder and the cooktop
+  // On the existing dining table.
+  kitchenAccessory('kitchen-acc-water', 'accWater', 'WATER GLASS', {
+    x: 1632,
+    y: 575,
+  }), // WORLD POSITION — SAFE TO TUNE
+  kitchenAccessory('kitchen-acc-ramen', 'accRamen', 'RAMEN', {
+    x: 1705,
+    y: 590,
+  }), // WORLD POSITION — SAFE TO TUNE
+  kitchenAccessory('kitchen-acc-meal', 'accMeal', 'BREAKFAST PLATE', {
+    x: 1662,
+    y: 614,
+  }), // WORLD POSITION — SAFE TO TUNE
+  kitchenAccessory('kitchen-acc-pepper', 'accPepper', 'SALT & PEPPER', {
+    x: 1706,
+    y: 618,
+  }), // WORLD POSITION — SAFE TO TUNE
+  // On the new second table.
+  kitchenAccessory('kitchen-acc-bottle', 'accBottle', 'WATER BOTTLE', {
+    x: 872,
+    y: 170,
+  }), // WORLD POSITION — SAFE TO TUNE
+  kitchenAccessory('kitchen-acc-mug', 'accMug', 'COFFEE MUG', {
+    x: 1450,
+    y: 510,
+  }), // WORLD POSITION — SAFE TO TUNE
+  kitchenAccessory('kitchen-acc-mobile', 'accMobile', 'PHONE', {
+    x: 1488,
+    y: 512,
+  }), // WORLD POSITION — SAFE TO TUNE
+  kitchenAccessory('kitchen-acc-dal', 'accDal', 'DAL BOWL', {
+    x: 1450,
+    y: 545,
+  }), // WORLD POSITION — SAFE TO TUNE
+  kitchenAccessory('kitchen-acc-plates', 'accPlates', 'PLATE STACK', {
+    x: 1505,
+    y: 545,
+  }), // WORLD POSITION — SAFE TO TUNE
+  kitchenAccessory('kitchen-acc-snacks', 'accSnacks', 'SNACK BOWL', {
+    x: 1117,
+    y: 285,
+  }), // WORLD POSITION — SAFE TO TUNE — between the dal and the plate stack
 ]

@@ -1,5 +1,9 @@
 import type { WorldObject } from '../WorldObject'
-import { contentAlignedCollider, scaleForWidth } from './worldObjectHelpers'
+import {
+  BOTTOM_WALL_INNER_Y,
+  contentAlignedCollider,
+  scaleForWidth,
+} from './worldObjectHelpers'
 
 /**
  * Decorative architectural wall panels (assets/world/Walls/*), placed in
@@ -81,6 +85,27 @@ const WALL_TWO_POSITION = {
       WALL_TWO_SCALE,
 }
 
+/**
+ * "glasswall.png" — a lit window panel (pre-cropped, fully opaque) filling
+ * the low knee-wall gap in the bottom wall, between the stone pillar that
+ * ends the left wall run (x≈1432) and the entrance door's left pillar
+ * (x≈1547), both baked into the room background. Aspect ratio is locked:
+ * only `transform.width` is set, and the height follows the texture.
+ */
+const GLASS_WALL_NATURAL_SIZE = { width: 439, height: 528 }
+/**
+ * Spans from the room's bottom-wall line (y=1200) down to the paving line —
+ * a 138-unit height makes the locked-ratio width (~115) exactly fill the
+ * pillar-to-pillar gap (x≈1432–1547).
+ */
+const GLASS_WALL_TOP = BOTTOM_WALL_INNER_Y
+const GLASS_WALL_BOTTOM = 1338 // WORLD POSITION — SAFE TO TUNE
+const GLASS_WALL_TARGET_WIDTH =
+  ((GLASS_WALL_BOTTOM - GLASS_WALL_TOP) * GLASS_WALL_NATURAL_SIZE.width) /
+  GLASS_WALL_NATURAL_SIZE.height
+/** WORLD POSITION — SAFE TO TUNE — centered in the gap; bottom-center anchor. */
+const GLASS_WALL_POSITION = { x: 1492, y: GLASS_WALL_BOTTOM }
+
 export const wallObjects: WorldObject[] = [
   {
     id: 'wall-one',
@@ -109,5 +134,18 @@ export const wallObjects: WorldObject[] = [
       WALL_TWO_CONTENT_BBOX,
       WALL_TWO_SCALE,
     ),
+  },
+  {
+    id: 'glass-wall',
+    asset: 'walls.glassWall',
+    label: 'GLASS WALL',
+    position: GLASS_WALL_POSITION,
+    layer: 'object',
+    transform: { width: GLASS_WALL_TARGET_WIDTH },
+    // No own `collision`: its whole footprint (y 1200–1330) lies inside the
+    // solid bottom room-boundary wall (ROOM_BOUNDARY_COLLIDERS, y≥1200), so
+    // it's already a wall to the player — a second collider would only
+    // duplicate that (worldObjects.test.ts rejects colliders overlapping the
+    // boundary walls). No interaction or message: pure architecture.
   },
 ]

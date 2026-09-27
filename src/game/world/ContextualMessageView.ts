@@ -42,6 +42,8 @@ export interface ContextualMessageContent {
 export function messageForTarget(
   target: InteractableCandidate | AmbientCandidate,
   playerPosition?: { x: number; y: number },
+  /** Replaces the configured type/text — a flavor variant, or an `[E]` response. */
+  override?: Partial<Pick<ContextualMessageContent, 'type' | 'text'>>,
 ): ContextualMessageContent {
   const message = target.message
   const elevation = message?.elevation ?? DEFAULT_MESSAGE_ELEVATION
@@ -50,6 +52,7 @@ export function messageForTarget(
   return {
     type: message?.type ?? 'interactive',
     text: message?.text ?? DEFAULT_INTERACTIVE_TEXT,
+    ...override,
     anchor: { x: target.position.x, y },
   }
 }
@@ -83,6 +86,13 @@ const COLOR_TEXT = 0xeaf4ff // --text
 const COLOR_TEXT_MUTED = 0x91a9c8 // --text-muted
 
 const FONT_SIZE = 12
+/**
+ * Longer flavor lines and multi-line `[E]` responses wrap at this width —
+ * 42 glyphs, so every one-line prompt (contextualMessages.test.ts) is
+ * unaffected.
+ */
+const WRAP_WIDTH = 42 * FONT_SIZE
+const LINE_HEIGHT = FONT_SIZE + 6
 const PAD_X = 8
 const PAD_Y = 7
 const GAP = 8
@@ -247,6 +257,9 @@ export class ContextualMessageView extends Container {
       fontFamily: PIXEL_FONT_FAMILY,
       fontSize: FONT_SIZE,
       fill: COLOR_TEXT,
+      wordWrap: true,
+      wordWrapWidth: WRAP_WIDTH,
+      lineHeight: LINE_HEIGHT,
     },
   })
   private icon: Sprite | null = null

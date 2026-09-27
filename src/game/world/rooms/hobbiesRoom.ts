@@ -1,4 +1,4 @@
-import type { AssetTransform, Collider, WorldObject } from '../WorldObject'
+﻿import type { AssetTransform, Collider, WorldObject } from '../WorldObject'
 import {
   BOTTOM_WALL_INNER_Y,
   contentAlignedCollider,

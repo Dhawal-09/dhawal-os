@@ -20,8 +20,8 @@ export interface Collider {
   height: number
 }
 
-/** Canonical events a proximity interaction can trigger (see INTERACTION_SPEC.md). */
-export type InteractionAction =
+/** Interactions that open a React portfolio panel (see INTERACTION_SPEC.md). */
+export type PanelAction =
   | 'OPEN_PROJECTS'
   | 'OPEN_EXPERIENCE'
   | 'OPEN_SKILLS'
@@ -31,6 +31,22 @@ export type InteractionAction =
   | 'OPEN_ABOUT'
   | 'OPEN_CONTACT'
   | 'OPEN_CAT'
+
+/**
+ * Canonical events a proximity interaction can trigger. `WORLD_RESPONSE`
+ * opens nothing: the world answers `[E]` with the interaction's `response`
+ * in the contextual prompt (GameScene), and React ignores it.
+ */
+export type InteractionAction = PanelAction | 'WORLD_RESPONSE'
+
+/**
+ * What `[E]` does on an interactable: open a panel, or show a short
+ * in-world `response` (one entry per line, e.g. `['COFFEE DEPLOYED.',
+ * '+10 DEBUGGING ENERGY.']`) in place of the prompt for a moment.
+ */
+export type WorldInteraction =
+  | { radius: number; action: PanelAction }
+  | { radius: number; action: 'WORLD_RESPONSE'; response: readonly string[] }
 
 /**
  * The three kinds of contextual message (INTERACTION_SPEC.md "Contextual
@@ -62,10 +78,18 @@ export interface InteractiveMessage extends ContextualMessageBase {
 /**
  * Info/flavor objects have no `interaction`, so they carry their own
  * proximity radius. They're only picked up when no interactable is in range.
+ *
+ * `info` stays up while the player is in range. `flavor` appears once on
+ * entering range, fades on its own, and can't reappear until a short
+ * cooldown has passed and the player comes back (GameScene).
  */
 export interface AmbientMessage extends ContextualMessageBase {
   type: 'info' | 'flavor'
   radius: number
+  /** Flavor only: alternative lines, cycled in order on later visits (`text` first). */
+  variants?: readonly string[]
+  /** Flavor only: shown on the first visit of the session, then never again. */
+  once?: boolean
 }
 
 export type ContextualMessage = InteractiveMessage | AmbientMessage
@@ -107,12 +131,16 @@ export interface WorldObject {
    */
   transform?: AssetTransform
   collision?: Collider
-  interaction?: {
-    radius: number
-    action: InteractionAction
-  }
+  interaction?: WorldInteraction
   /** Optional contextual prompt text — see `ContextualMessage`. */
   message?: ContextualMessage
+  /**
+   * The world point proximity (interaction/message radius) and the prompt
+   * are measured from. Defaults to `position` — set it when the art's
+   * `position` isn't where the player stands to use it (a rotated or
+   * wall-mounted piece, or several spots packed along one counter).
+   */
+  interactionPoint?: { x: number; y: number }
 }
 
 /**
