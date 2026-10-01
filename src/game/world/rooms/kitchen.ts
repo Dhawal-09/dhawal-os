@@ -1,5 +1,9 @@
 import type { WorldObject } from '../WorldObject'
-import { contentAlignedCollider, scaleForWidth } from './worldObjectHelpers'
+import {
+  contentAlignedCollider,
+  INTERACTION_RADIUS,
+  scaleForWidth,
+} from './worldObjectHelpers'
 
 /**
  * KITCHEN — the tiled-floor nook right of the main work desk
@@ -342,6 +346,9 @@ const KITCHEN_SPOT_RADIUS = 45
 /** Standing line just in front of the counter run. */
 const COUNTER_FRONT_Y = 330
 
+/** WORLD POSITION — SAFE TO TUNE — where the phone visibly sits (on the living-room TV console). */
+const PHONE_SPOT = { x: 340, y: 555 }
+
 export const kitchenObjects: WorldObject[] = [
   {
     ...kitchenObject(
@@ -506,7 +513,7 @@ export const kitchenObjects: WorldObject[] = [
     'kitchen-counter-prop-holder',
     'kitchen.propHolder',
     'UTENSIL HOLDER',
-    { x: 1560, y: 210 }, // WORLD POSITION — SAFE TO TUNE — sits on kitchen-main-counter, left of the cooktop, per reference
+    { x: 1580, y: 190 }, // WORLD POSITION — SAFE TO TUNE — sits on kitchen-main-counter, left of the cooktop, per reference
     KITCHEN_ASSET_NATURAL_SIZE.propHolder,
     KITCHEN_ASSET_CONTENT_BBOX.propHolder,
     KITCHEN_SCALE.propHolder,
@@ -516,7 +523,7 @@ export const kitchenObjects: WorldObject[] = [
     'kitchen-counter-prop-salt',
     'kitchen.propSalt',
     'SALT SHAKER',
-    { x: 1580, y: 210 }, // WORLD POSITION — SAFE TO TUNE — grouped with the utensil holder
+    { x: 1600, y: 190 }, // WORLD POSITION — SAFE TO TUNE — grouped with the utensil holder
     KITCHEN_ASSET_NATURAL_SIZE.propSalt,
     KITCHEN_ASSET_CONTENT_BBOX.propSalt,
     KITCHEN_SCALE.propSalt,
@@ -638,17 +645,18 @@ export const kitchenObjects: WorldObject[] = [
   },
   // Accessories — listed last so they draw on top of the tables/counter
   // they sit on (World.ts draws array order, not a Y-sort).
-  kitchenAccessory(
-    'kitchen-acc-dining-table',
-    'accDiningTable',
-    'DINING TABLE',
-    { x: 1468, y: 515 },
-    true,
-  ), // WORLD POSITION — SAFE TO TUNE — second table, open floor below the fridge
+  // Second dining table — disabled for now (not needed).
+  // kitchenAccessory(
+  //   'kitchen-acc-dining-table',
+  //   'accDiningTable',
+  //   'DINING TABLE',
+  //   { x: 1468, y: 515 },
+  //   true,
+  // ), // WORLD POSITION — SAFE TO TUNE — second table, open floor below the fridge
   // On the main counter.
   kitchenAccessory('kitchen-acc-fruits', 'accFruits', 'FRUIT BOWL', {
-    x: 1532,
-    y: 230,
+    x: 532,
+    y: 555,
   }), // WORLD POSITION — SAFE TO TUNE — counter's left end
   kitchenAccessory('kitchen-acc-jar', 'accJar', 'JAM JAR', { x: 1600, y: 226 }), // WORLD POSITION — SAFE TO TUNE — between the utensil holder and the cooktop
   // On the existing dining table.
@@ -665,32 +673,45 @@ export const kitchenObjects: WorldObject[] = [
     y: 614,
   }), // WORLD POSITION — SAFE TO TUNE
   kitchenAccessory('kitchen-acc-pepper', 'accPepper', 'SALT & PEPPER', {
-    x: 1706,
-    y: 618,
-  }), // WORLD POSITION — SAFE TO TUNE
-  // On the new second table.
-  kitchenAccessory('kitchen-acc-bottle', 'accBottle', 'WATER BOTTLE', {
-    x: 872,
-    y: 80,
+    x: 1666,
+    y: 583,
   }), // WORLD POSITION — SAFE TO TUNE
   kitchenAccessory('kitchen-acc-mug', 'accMug', 'COFFEE MUG', {
-    x: 1450,
-    y: 470,
+    x: 1100,
+    y: 280,
   }), // WORLD POSITION — SAFE TO TUNE
-  kitchenAccessory('kitchen-acc-mobile', 'accMobile', 'PHONE', {
-    x: 1488,
-    y: 472,
-  }), // WORLD POSITION — SAFE TO TUNE
+  // The phone on the living-room TV console — the world's way into Contact:
+  // walking up to it shows "[E] Contact details", and E opens the Contact
+  // panel. The trigger follows the phone, so moving it needs only PHONE_SPOT.
+  {
+    ...kitchenAccessory('kitchen-acc-mobile', 'accMobile', 'PHONE', PHONE_SPOT),
+    interactionPoint: PHONE_SPOT,
+    interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_CONTACT' },
+    message: { type: 'interactive', text: 'Contact details' },
+  },
   kitchenAccessory('kitchen-acc-dal', 'accDal', 'DAL BOWL', {
-    x: 1450,
-    y: 445,
+    x: 1680,
+    y: 560,
   }), // WORLD POSITION — SAFE TO TUNE
   kitchenAccessory('kitchen-acc-plates', 'accPlates', 'PLATE STACK', {
-    x: 1505,
-    y: 445,
+    x: 1565,
+    y: 195,
   }), // WORLD POSITION — SAFE TO TUNE
   kitchenAccessory('kitchen-acc-snacks', 'accSnacks', 'SNACK BOWL', {
-    x: 1117,
-    y: 285,
+    x: 897,
+    y: 286,
   }), // WORLD POSITION — SAFE TO TUNE — between the dal and the plate stack
+]
+
+/**
+ * Kitchen props that sit outside the kitchen itself and must draw on top of
+ * other rooms' objects — World.ts draws array order, so worldObjects.ts
+ * spreads this list *after* the rooms it overlaps (Hobbies, Gaming Corner).
+ */
+export const kitchenOverlayObjects: WorldObject[] = [
+  // On the new second table.
+  kitchenAccessory('kitchen-acc-bottle', 'accBottle', 'WATER BOTTLE', {
+    x: 1310,
+    y: 930,
+  }), // WORLD POSITION — SAFE TO TUNE
 ]

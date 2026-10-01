@@ -123,6 +123,38 @@
   padding-right: 88px;
 }
 
+/* A project picture beside its name. The column is a fixed width so every
+   name in the list starts at the same place, whatever the picture shape. */
+.projects-card.has-icon {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+}
+
+.projects-card-icon {
+  --panel-icon-size: 64px;
+  display: flex;
+  flex: 0 0 88px;
+  align-items: center;
+  justify-content: center;
+}
+
+.projects-card-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Project pictures are illustrations and screenshots scaled down a long
+   way, not sprite-sized pixel art: smooth scaling keeps them readable. */
+.projects-card-icon .panel-icon img,
+.project-detail-image .panel-icon img {
+  image-rendering: auto;
+}
+
 .projects-card-meta {
   color: var(--cyan, #27d7ff);
 }
@@ -164,7 +196,15 @@
     0 0 0 2px rgba(39, 215, 255, 0.2);
 }
 
-.project-detail-image img {
+/* The project picture, shown whole and centred in the frame. */
+.project-detail-image.has-icon {
+  --panel-icon-size: 128px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.project-detail-image > img {
   display: block;
   width: 100%;
   height: 100%;
@@ -299,13 +339,140 @@
   }
 }
 
-@media (max-width: 380px) {
-  .projects-card {
-    padding-right: 16px;
+/* ---- Project list on phones / portrait (<= 768px) ----
+   A dedicated layout, not the desktop row squeezed narrower: each card is a
+   vertical stack — name, picture, description, role, period, VIEW — and the
+   panel keeps its header in place while only the list scrolls. Desktop
+   (> 768px) is untouched. The shell-level rules are scoped with :has() to
+   the project list, so no other panel changes. */
+@media (max-width: 768px) {
+  .interaction-overlay-panel:has(.projects-cards) {
+    display: flex;
+    flex-direction: column;
+    width: 92vw;
+    max-width: none;
+    max-height: 85dvh;
+    padding: 16px 16px 18px;
+    overflow: hidden;
   }
 
-  .projects-card-view {
+  /* Back and Close share the top row; the title gets its own line below. */
+  .interaction-overlay-panel:has(.projects-cards) .panel-header {
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    row-gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .interaction-overlay-panel:has(.projects-cards) .panel-header h2 {
+    order: 3;
+    flex-basis: 100%;
+    font-size: clamp(0.85rem, 4vw, 1rem);
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+  }
+
+  /* Only the list scrolls. The small padding keeps the cards' hard pixel
+     shadow and the thin scrollbar from being clipped or overlapped. */
+  .interaction-overlay-panel:has(.projects-cards) .panel-body {
+    min-height: 0;
+    padding: 0 6px 4px 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--pixel-border, #1e5fa8) transparent;
+  }
+
+  .projects-cards {
+    gap: 12px;
+  }
+
+  .projects-card,
+  .projects-card.has-icon {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  /* The text wrapper dissolves so name / picture / description / meta /
+     VIEW can be ordered as one column. */
+  .projects-card-text {
+    display: contents;
+  }
+
+  .projects-card-name {
+    order: 1;
+    font-size: 1.125rem;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+
+  .projects-card-icon {
+    --panel-icon-size: 64px;
+    order: 2;
+    flex: none;
+  }
+
+  /* A project with no picture yet gets no empty gap. */
+  .projects-card-icon:empty {
+    display: none;
+  }
+
+  .projects-card-subtitle {
+    order: 3;
+    font-size: 0.9rem;
+  }
+
+  .projects-card-meta {
+    order: 4;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: clamp(0.7rem, 3.4vw, 0.8125rem);
+    overflow-wrap: anywhere;
+  }
+
+  .projects-card-meta-separator {
+    display: none;
+  }
+
+  /* Role above period: the role reads as a label. */
+  .projects-card-meta-part:first-child:not(:only-child) {
+    text-transform: uppercase;
+  }
+
+  /* VIEW as one solid, thumb-sized button at the bottom-right. (The whole
+     card is the real button; this is its visible call to action.) */
+  .projects-card-view,
+  .projects-card:hover .projects-card-view,
+  .projects-card:focus-visible .projects-card-view {
+    order: 5;
     position: static;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: flex-end;
+    min-height: 44px;
+    margin-top: 2px;
+    padding: 0 18px;
+    border: 1px solid var(--pixel-border, #1e5fa8);
+    background: var(--blue, #147bff);
+    color: var(--text, #eaf4ff);
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+}
+
+/* The smallest phones: trim spacing, not readability. */
+@media (max-width: 340px) {
+  .interaction-overlay-panel:has(.projects-cards) {
+    padding: 14px 12px 14px;
+  }
+
+  .projects-card,
+  .projects-card.has-icon {
+    padding: 12px;
   }
 }
 

@@ -18,14 +18,18 @@ export function newCollider(
 }
 
 /** Set to `false` to hide the yellow outlines (collision is unaffected). */
-export const SHOW_NEW_COLLIDER_OUTLINES = true
+export const SHOW_NEW_COLLIDER_OUTLINES = false
 
 export const newColliders: readonly Collider[] = [
   newCollider(1480, 760, 330, 60), // Entrance Walls
   newCollider(1480, 820, 60, 140),// #1 —  (x, y, width, height)
   
   //kitchen walls
-  newCollider(1330, 470, 30, 210)
+  newCollider(1330, 470, 30, 210),
+  
+  newCollider(1560, 1110, 270, 140), //door
+  newCollider(125, 440, 70, 140), //lviing room shelf
+  newCollider(1330, 940, 30, 160), //hobbie wall
 ]
 
 /** What World.ts outlines in dev. */

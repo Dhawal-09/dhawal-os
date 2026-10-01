@@ -13,6 +13,9 @@ import {
   createWorldBoundsPlaceholder,
 } from './worldPlaceholders'
 
+/** Set to `true` to show the magenta world border + "DEVELOPMENT PLACEHOLDER" label in dev. */
+const SHOW_DEV_WORLD_BOUNDS_ANNOTATION = false
+
 /**
  * The canonical `1920x1440` room, structured into the four draw-order layers
  * from WORLD_SPEC.md. Rendering (this file) and collision (CollisionSystem)
@@ -61,7 +64,9 @@ export class World extends Container {
 
     this.backgroundLayer.addChild(createWorldBoundsPlaceholder())
     if (import.meta.env.DEV) {
-      this.backgroundLayer.addChild(createDevWorldBoundsAnnotation())
+      if (SHOW_DEV_WORLD_BOUNDS_ANNOTATION) {
+        this.backgroundLayer.addChild(createDevWorldBoundsAnnotation())
+      }
       this.backgroundLayer.addChild(createDebugGrid())
     }
 

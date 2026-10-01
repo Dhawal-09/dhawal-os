@@ -80,8 +80,6 @@ export const hobbyFlavorObjects: readonly HobbyFlavorObject[] = [
   {
     id: 'hobby-running-medals',
     message: 'A few miles, a few races, a few medals. 🏃',
-    secondaryMessage:
-      'Running is one of the ways I stay active outside coding.',
     spots: [
       // Wall plaque: trophy on top, medals hanging below.
       {
@@ -95,7 +93,6 @@ export const hobbyFlavorObjects: readonly HobbyFlavorObject[] = [
   {
     id: 'hobby-gym-equipment',
     message: 'Gym time. Build. Recover. Repeat. 💪',
-    secondaryMessage: 'Code needs a strong machine. So does the developer.',
     spots: [
       // Beside the dumbbell rack's open (right) end. The gym station keeps
       // its own one-liner (hobbiesRoom.ts), so it has no spot here.
@@ -122,8 +119,7 @@ export const hobbyFlavorObjects: readonly HobbyFlavorObject[] = [
   },
   {
     id: 'hobby-drawing',
-    message: 'Not everything has to be code. 🎨',
-    secondaryMessage: 'I like sketching, drawing and experimenting with ideas.',
+    message: 'I like sketching, drawing and experimenting with ideas 🎨',
     spots: [
       // The framed artwork on the gym wall — the room's one drawing piece.
       {

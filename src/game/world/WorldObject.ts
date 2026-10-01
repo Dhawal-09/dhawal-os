@@ -174,6 +174,9 @@ export function resolveAssetSize(
   return { width: natural.width, height: natural.height }
 }
 
+/** Set to `true` to show the tinted box + label for objects with no mapped asset (collision/interaction are unaffected). */
+export const SHOW_OBJECT_PLACEHOLDERS = false
+
 /** Uniform dev-only placeholder footprint. Real assets size themselves from their own texture. */
 const PLACEHOLDER_SIZE = 96
 
@@ -314,6 +317,8 @@ export function createWorldObjectView(object: WorldObject): Container {
   const assetUrl = getFurnitureAssetUrl(object.asset)
   if (assetUrl) {
     void upgradeToSprite(view, assetUrl, object.transform)
+  } else if (!SHOW_OBJECT_PLACEHOLDERS) {
+    view.visible = false
   }
 
   return view
