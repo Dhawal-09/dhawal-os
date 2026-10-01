@@ -571,11 +571,6 @@ export const educationObjects: WorldObject[] = [
     position: readingCatPosition,
     layer: 'object',
     transform: { width: READING_CAT_TARGET_WIDTH },
-    // Content-aligned collider over the cat/rug's own measured footprint —
-    // same approach as every other solid object in this room. Requested
-    // explicitly (this asset was originally decorative-only); the "[E]
-    // INTERACT" prompt below is entirely generic (Player.ts) and needs no
-    // extra UI work of its own.
     collision: contentAlignedCollider(
       readingCatPosition,
       READING_CAT_NATURAL_SIZE,
@@ -620,7 +615,7 @@ export const educationObjects: WorldObject[] = [
     id: 'education',
     asset: 'content.education',
     label: 'EDUCATION',
-    position: { x: 300, y: 1180 }, // WORLD POSITION — SAFE TO TUNE
+    position: { x: 600, y: 1000 }, // WORLD POSITION — SAFE TO TUNE
     layer: 'object',
     collision: centeredColliderClippedToBottom(
       { x: 300, y: 1180 },

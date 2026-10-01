@@ -30,8 +30,22 @@ export const DEFAULT_INTERACTIVE_TEXT = 'INTERACT'
 export interface ContextualMessageContent {
   type: ContextualMessageType
   text: string
+  /** A quieter supporting line under `text` (info/flavor only). */
+  secondaryText?: string
+  /** Wrap narrower than the default 42 glyphs. */
+  wrapGlyphs?: number
   /** World-space point the prompt's pointer sits on. */
   anchor: { x: number; y: number }
+}
+
+/**
+ * What the camera currently shows of the world, for `fitToView`: the world
+ * scale (world units → CSS px) and the visible world x-range.
+ */
+export interface MessageViewport {
+  scale: number
+  left: number
+  right: number
 }
 
 /**
@@ -47,14 +61,23 @@ export function messageForTarget(
 ): ContextualMessageContent {
   const message = target.message
   const elevation = message?.elevation ?? DEFAULT_MESSAGE_ELEVATION
-  let y = target.position.y - elevation
+  // An ambient spot may aim its pointer somewhere other than straight above
+  // its trigger point (a wall piece approached from the floor).
+  const pointer = 'pointer' in target ? target.pointer : undefined
+  const x = pointer?.x ?? target.position.x
+  let y = pointer?.y ?? target.position.y - elevation
   if (playerPosition) y = Math.min(y, playerPosition.y - PLAYER_HEAD_CLEARANCE)
-  return {
+  const content: ContextualMessageContent = {
     type: message?.type ?? 'interactive',
     text: message?.text ?? DEFAULT_INTERACTIVE_TEXT,
     ...override,
-    anchor: { x: target.position.x, y },
+    anchor: { x, y },
   }
+  if (message && message.type !== 'interactive' && !override?.text) {
+    if (message.secondaryText) content.secondaryText = message.secondaryText
+    if (message.wrapGlyphs) content.wrapGlyphs = message.wrapGlyphs
+  }
+  return content
 }
 
 /** `[TAP]` on touch-first devices (the canvas tap is the existing mobile interact path), `[E]` otherwise. */
@@ -93,6 +116,15 @@ const FONT_SIZE = 12
  */
 const WRAP_WIDTH = 42 * FONT_SIZE
 const LINE_HEIGHT = FONT_SIZE + 6
+/** Space between a message and its secondary line. */
+const SECONDARY_GAP = 6
+/**
+ * The prompt's text never renders smaller than this on screen (CSS px). At
+ * the desktop gameplay zoom the world scale is already ≥ 1, so nothing
+ * changes there; in the whole-house view and on phones — where the world is
+ * drawn well below 1:1 — the prompt is scaled up just enough to stay legible.
+ */
+const MIN_SCREEN_FONT_PX = 9
 const PAD_X = 8
 const PAD_Y = 7
 const GAP = 8
@@ -262,11 +294,28 @@ export class ContextualMessageView extends Container {
       lineHeight: LINE_HEIGHT,
     },
   })
+  private readonly secondary = new Text({
+    text: '',
+    style: {
+      fontFamily: PIXEL_FONT_FAMILY,
+      fontSize: FONT_SIZE,
+      fill: COLOR_TEXT_MUTED,
+      wordWrap: true,
+      wordWrapWidth: WRAP_WIDTH,
+      lineHeight: LINE_HEIGHT,
+    },
+  })
   private icon: Sprite | null = null
   private content: ContextualMessageContent | null = null
   private readonly worldBounds: { width: number; height: number } | null
   /** Current box height including the pointer, for the top-edge clamp. */
   private boxHeight = 0
+  /** Current box width (unscaled), for the horizontal clamp. */
+  private boxWidth = 0
+  /** How far the box is currently slid sideways off its pointer (unscaled). */
+  private boxShift = 0
+  /** The visible world x-range from the last `fitToView`, if any. */
+  private viewRange: { left: number; right: number } | null = null
 
   /** `worldBounds`: the world size — the box is kept inside it (the pointer still marks the target). */
   constructor(worldBounds: { width: number; height: number } | null = null) {
@@ -275,7 +324,8 @@ export class ContextualMessageView extends Container {
     this.eventMode = 'none'
     this.visible = false
     this.alpha = 0
-    this.addChild(this.frame, this.hint, this.body)
+    this.secondary.visible = false
+    this.addChild(this.frame, this.hint, this.body, this.secondary)
 
     void loadMessageIconTexture().then((texture) => {
       if (!texture || this.destroyed) return
@@ -301,7 +351,10 @@ export class ContextualMessageView extends Container {
     gsap.killTweensOf(this)
     this.visible = true
     this.x = content.anchor.x
-    const y = Math.max(content.anchor.y, this.boxHeight + EDGE_MARGIN)
+    const y = Math.max(
+      content.anchor.y,
+      this.boxHeight * this.scale.y + EDGE_MARGIN,
+    )
     if (prefersReducedMotion()) {
       this.alpha = 1
       this.y = y
@@ -335,6 +388,61 @@ export class ContextualMessageView extends Container {
     })
   }
 
+  /**
+   * Keeps the prompt legible and on screen for the camera's current view.
+   * Called every frame by `GameScene`, but only does work when the answer
+   * changes: the world scale dropped low enough to need a larger prompt
+   * (whole-house view, phones), or the box would cross the edge of the
+   * visible world and has to slide back in (the pointer stays on its target).
+   */
+  fitToView(viewport: MessageViewport | null): void {
+    if (!viewport || !(viewport.scale > 0)) return
+    this.viewRange = viewport
+    if (!this.content) return
+
+    const scale = Math.max(1, MIN_SCREEN_FONT_PX / (FONT_SIZE * viewport.scale))
+    const scaleChanged = Math.abs(scale - this.scale.x) > 0.001
+    if (scaleChanged) this.scale.set(scale)
+
+    if (scaleChanged || this.computeShift(this.boxWidth) !== this.boxShift) {
+      this.layout()
+    }
+  }
+
+  /**
+   * How far (unscaled units) the box must slide off its pointer to stay
+   * inside the world, and inside the visible part of it when known. Never
+   * so far that the pointer would leave the box.
+   */
+  private computeShift(width: number): number {
+    const content = this.content
+    if (!content) return 0
+    let min = -Infinity
+    let max = Infinity
+    if (this.worldBounds) {
+      min = 0
+      max = this.worldBounds.width
+    }
+    if (this.viewRange) {
+      min = Math.max(min, this.viewRange.left)
+      max = Math.min(max, this.viewRange.right)
+    }
+    if (min === -Infinity || max === Infinity) return 0
+
+    const scale = this.scale.x
+    const half = (width / 2 + GLOW) * scale + EDGE_MARGIN
+    const x = content.anchor.x
+    // A box wider than the available span is centred on it.
+    const clamped =
+      max - min < half * 2
+        ? (min + max) / 2
+        : Math.min(Math.max(x, min + half), max - half)
+    // 4 = half the pointer's width.
+    const limit = Math.max(0, width / 2 - NOTCH - 4)
+    const shift = Math.round((clamped - x) / scale)
+    return Math.min(Math.max(shift, -limit), limit)
+  }
+
   private layout(): void {
     const content = this.content
     if (!content) return
@@ -344,23 +452,38 @@ export class ContextualMessageView extends Container {
     if (interactive) this.hint.text = interactHintLabel()
     if (this.icon) this.icon.visible = !interactive
 
+    const wrapWidth = content.wrapGlyphs
+      ? content.wrapGlyphs * FONT_SIZE
+      : WRAP_WIDTH
+    this.body.style.wordWrapWidth = wrapWidth
     this.body.text = content.text
     this.body.style.fill =
       content.type === 'flavor' ? COLOR_TEXT_MUTED : COLOR_TEXT
 
+    const secondaryText = interactive ? undefined : content.secondaryText
+    this.secondary.visible = Boolean(secondaryText)
+    if (secondaryText) {
+      this.secondary.style.wordWrapWidth = wrapWidth
+      this.secondary.text = secondaryText
+    }
+    const secondaryHeight = secondaryText
+      ? SECONDARY_GAP + this.secondary.height
+      : 0
+    const textWidth = secondaryText
+      ? Math.max(this.body.width, this.secondary.width)
+      : this.body.width
+    const textHeight = this.body.height + secondaryHeight
+
     const lead = interactive ? this.hint : this.icon
     const leadWidth = lead ? lead.width + GAP : 0
-    const innerHeight = Math.max(this.body.height, lead ? lead.height : 0)
-    const width = PAD_X * 2 + leadWidth + this.body.width
+    const innerHeight = Math.max(textHeight, lead ? lead.height : 0)
+    const width = PAD_X * 2 + leadWidth + textWidth
     const height = PAD_Y * 2 + innerHeight
     this.boxHeight = height + CARET_HEIGHT + GLOW
-    // Near a world edge, slide the box (not the pointer) back inside.
-    let shift = 0
-    if (this.worldBounds) {
-      const half = width / 2 + GLOW + EDGE_MARGIN
-      const x = content.anchor.x
-      shift = Math.min(Math.max(x, half), this.worldBounds.width - half) - x
-    }
+    this.boxWidth = width
+    // Near a world/view edge, slide the box (not the pointer) back inside.
+    const shift = this.computeShift(width)
+    this.boxShift = shift
     const left = -width / 2 + shift
     const top = -(height + CARET_HEIGHT)
 
@@ -393,10 +516,19 @@ export class ContextualMessageView extends Container {
     const centerY = top + height / 2
     let x = left + PAD_X
     if (lead) {
-      lead.position.set(x, centerY - lead.height / 2)
+      // Beside a one-line message the lead is centred; beside a taller block
+      // it sits level with the first line.
+      const leadY = secondaryText
+        ? top + PAD_Y + (FONT_SIZE - lead.height) / 2
+        : centerY - lead.height / 2
+      lead.position.set(x, leadY)
       x += leadWidth
     }
-    this.body.position.set(x, centerY - this.body.height / 2)
+    const textTop = centerY - textHeight / 2
+    this.body.position.set(x, textTop)
+    if (secondaryText) {
+      this.secondary.position.set(x, textTop + this.body.height + SECONDARY_GAP)
+    }
   }
 
   override destroy(options?: Parameters<Container['destroy']>[0]): void {

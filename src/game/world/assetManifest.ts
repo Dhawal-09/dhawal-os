@@ -52,6 +52,10 @@ import careerTimelineUrl from '../../../assets/world/ExpiernceRoom/CareerTimelin
 import livingBigPlantUrl from '../../../assets/world/special/Big plant.png'
 import hangingPlantUrl from '../../../assets/world/special/Hangingplant.png'
 import idCardUrl from '../../../assets/world/special/ID_card.png'
+import gamingMatUrl from '../../../assets/world/MiddleRoom/Mat2.png'
+import gamingTableUrl from '../../../assets/world/MiddleRoom/Table (2)-Photoroom.png'
+import gamingBeanbagUrl from '../../../assets/world/MiddleRoom/bag2-Photoroom.png'
+import gamingStorageShelfUrl from '../../../assets/world/MiddleRoom/console-Photoroom.png'
 import hobbiesDumbbellRackUrl from '../../../assets/world/HobbiesRoom/Dumbel rack.png'
 import hobbiesGymStationUrl from '../../../assets/world/HobbiesRoom/workout-Photoroom.png'
 import hobbiesGymFloorUrl from '../../../assets/world/HobbiesRoom/GymFloor.png'
@@ -59,11 +63,9 @@ import hobbiesTransitionTrimUrl from '../../../assets/world/HobbiesRoom/Transiti
 import hobbiesJerseyUrl from '../../../assets/world/HobbiesRoom/Jersey.png'
 import hobbiesScarfUrl from '../../../assets/world/HobbiesRoom/Scarf.png'
 import hobbiesArtworkUrl from '../../../assets/world/HobbiesRoom/Artwork.png'
-import hobbiesFootballRackUrl from '../../../assets/world/HobbiesRoom/Rack.png'
 import hobbiesStorageUrl from '../../../assets/world/HobbiesRoom/Storage2.png'
 import hobbiesStandUrl from '../../../assets/world/HobbiesRoom/Stand.png'
 import hobbiesWallTrophyUrl from '../../../assets/world/HobbiesRoom/stand-Photoroom.png'
-import hobbiesMirrorUrl from '../../../assets/world/HobbiesRoom/mirror-Photoroom.png'
 import entranceChairUrl from '../../../assets/world/Entrance/Entrance_lounge.png'
 import entranceTableUrl from '../../../assets/world/Entrance/table1-Photoroom.png'
 import entranceHookUrl from '../../../assets/world/Entrance/Hook.png'
@@ -179,11 +181,14 @@ export const ASSET_MANIFEST: Record<string, string> = {
   'hobbies.jersey': hobbiesJerseyUrl,
   'hobbies.scarf': hobbiesScarfUrl,
   'hobbies.artwork': hobbiesArtworkUrl,
-  'hobbies.footballRack': hobbiesFootballRackUrl,
   'hobbies.storage': hobbiesStorageUrl,
   'hobbies.stand': hobbiesStandUrl, // Stand.png — floor rack with bands, mat and gym bag
   'hobbies.wallTrophy': hobbiesWallTrophyUrl, // stand-Photoroom.png — trophy + football + medals plaque
-  'hobbies.mirror': hobbiesMirrorUrl,
+  // Middle-room Gaming Corner assembly pass (see gamingCorner.ts).
+  'gaming.mat': gamingMatUrl,
+  'gaming.table': gamingTableUrl, // vertical table — monitor, controller, plant and gadget baked in
+  'gaming.beanbag': gamingBeanbagUrl,
+  'gaming.storageShelf': gamingStorageShelfUrl, // console-Photoroom.png
   // About Me/Entrance sitting-nook asset-integration pass (see entrance.ts).
   // The lounge chair is a single approved asset instantiated twice as two
   // separate WorldObjects — never a second manifest entry/duplicate file.

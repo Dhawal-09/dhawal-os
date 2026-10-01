@@ -3,6 +3,7 @@ import {
   DESK_FOOTPRINT,
   INTERACTION_RADIUS,
   centeredCollider,
+  contentAlignedCollider,
   deskCollider,
   scaleForWidth,
 } from './worldObjectHelpers'
@@ -33,8 +34,19 @@ const GAMING_CHAIR_SCALE = scaleForWidth(
   GAMING_CHAIR_TARGET_WIDTH,
 )
 
-/** The chair's *solid* footprint is just its base/seat near the floor, not its tall backrest rising above it — same reasoning as `DESK_FOOTPRINT`. */
-const GAMING_CHAIR_FOOTPRINT = { widthFraction: 0.55, heightFraction: 0.2 }
+/** Opaque-content bbox (alpha > 128 scan) of GamingChair.png inside its padded canvas. */
+const GAMING_CHAIR_CONTENT_BBOX = { minX: 261, minY: 82, maxX: 762, maxY: 977 }
+
+/** Height (world px) of the chair's *solid* footprint — just its base/seat near the floor, not its tall backrest rising above it (same reasoning as `DESK_FOOTPRINT`). */
+const GAMING_CHAIR_FOOTPRINT_HEIGHT = 30
+
+/** The base/seat footprint cut to the chair's visible edges: left/right/bottom match the art exactly, top is `GAMING_CHAIR_FOOTPRINT_HEIGHT` above the bottom. */
+const GAMING_CHAIR_FOOTPRINT_BBOX = {
+  ...GAMING_CHAIR_CONTENT_BBOX,
+  minY:
+    GAMING_CHAIR_CONTENT_BBOX.maxY -
+    GAMING_CHAIR_FOOTPRINT_HEIGHT / GAMING_CHAIR_SCALE,
+}
 
 /** WORLD POSITION — SAFE TO TUNE — in the open floor in front of (south of) main-work-desk, centered on the same x, clear of the "projects" marker's own placeholder box (x:952-1048, y:352-448) so it isn't hidden behind it in dev. */
 const GAMING_CHAIR_POSITION = { x: 1000, y: 420 }
@@ -48,7 +60,7 @@ export const projectsObjects: WorldObject[] = [
     layer: 'object',
     message: {
       type: 'info',
-      text: 'This is where the backend magic happens.',
+      text: 'This is where the backend magic happens. WANNA CHECK!!!',
       radius: 160,
     },
     transform: { width: MAIN_WORK_DESK_TARGET_WIDTH },
@@ -67,11 +79,11 @@ export const projectsObjects: WorldObject[] = [
     position: GAMING_CHAIR_POSITION,
     layer: 'object',
     transform: { width: GAMING_CHAIR_TARGET_WIDTH },
-    collision: deskCollider(
+    collision: contentAlignedCollider(
       GAMING_CHAIR_POSITION,
       GAMING_CHAIR_NATURAL_SIZE,
+      GAMING_CHAIR_FOOTPRINT_BBOX,
       GAMING_CHAIR_SCALE,
-      GAMING_CHAIR_FOOTPRINT,
     ),
     // No `interaction` — purely environmental furniture, nothing to open.
   },
@@ -79,9 +91,9 @@ export const projectsObjects: WorldObject[] = [
     id: 'projects',
     asset: 'content.projects',
     label: 'PROJECTS',
-    position: { x: 1000, y: 300 }, // WORLD POSITION — SAFE TO TUNE
+    position: { x: 1000, y: 280 }, // WORLD POSITION — SAFE TO TUNE
     layer: 'object',
-    collision: centeredCollider({ x: 1000, y: 400 }),
+    collision: centeredCollider({ x: 1000, y: 200 }),
     interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_PROJECTS' },
     message: { type: 'interactive', text: 'Wanna see what he built?' },
   },

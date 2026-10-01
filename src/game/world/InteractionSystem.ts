@@ -26,6 +26,12 @@ export interface AmbientCandidate {
   position: { x: number; y: number }
   radius: number
   message: AmbientMessage
+  /**
+   * Where the prompt's pointer aims, when that isn't straight above
+   * `position` — e.g. a wall-mounted object whose message triggers from the
+   * floor in front of it.
+   */
+  pointer?: { x: number; y: number }
 }
 
 interface ProximityCandidate {
@@ -34,13 +40,25 @@ interface ProximityCandidate {
 }
 
 /**
+ * Hysteresis (world units) for ambient spots: the spot already showing its
+ * message stays in range this much past its radius, and a neighbour only
+ * takes over once it is nearer by more than this — so standing on the
+ * boundary between two overlapping spots never flickers between them.
+ */
+export const AMBIENT_STICKINESS = 12
+
+/**
  * The nearest in-range candidate, or null. Deterministic: ties (equal
  * distance) resolve to whichever candidate appears first in the
  * configuration order. The single proximity algorithm for both lists.
+ * `sticky` (the candidate currently active, if any) is favoured by
+ * `stickiness` units on both its radius and its distance.
  */
 function nearestInRange<T extends ProximityCandidate>(
   candidates: readonly T[],
   playerPosition: { x: number; y: number },
+  sticky: T | null = null,
+  stickiness = 0,
 ): T | null {
   let nearest: T | null = null
   let nearestDistance = Infinity
@@ -48,7 +66,8 @@ function nearestInRange<T extends ProximityCandidate>(
   for (const candidate of candidates) {
     const dx = candidate.position.x - playerPosition.x
     const dy = candidate.position.y - playerPosition.y
-    const distance = Math.hypot(dx, dy)
+    const bonus = candidate === sticky ? stickiness : 0
+    const distance = Math.hypot(dx, dy) - bonus
 
     if (distance > candidate.radius) continue
     if (distance < nearestDistance) {
@@ -89,8 +108,14 @@ export class InteractionSystem {
    * become ambient candidates. An `interactive` message on an object without
    * an `interaction`, or an info/flavor message on one that has it, is
    * ignored (`worldObjects.test.ts` rejects both in data).
+   *
+   * `extraAmbient`: ambient spots that aren't a WorldObject's own `message`
+   * (the hobby storytelling spots — `hobbyFlavor.ts`).
    */
-  static fromWorldObjects(objects: readonly WorldObject[]): InteractionSystem {
+  static fromWorldObjects(
+    objects: readonly WorldObject[],
+    extraAmbient: readonly AmbientCandidate[] = [],
+  ): InteractionSystem {
     const candidates: InteractableCandidate[] = []
     const ambientCandidates: AmbientCandidate[] = []
     for (const object of objects) {
@@ -116,7 +141,10 @@ export class InteractionSystem {
         })
       }
     }
-    return new InteractionSystem(candidates, ambientCandidates)
+    return new InteractionSystem(candidates, [
+      ...ambientCandidates,
+      ...extraAmbient,
+    ])
   }
 
   /** The nearest in-range interactable — what `[E]` triggers. */
@@ -130,12 +158,18 @@ export class InteractionSystem {
   /**
    * The nearest in-range info/flavor spot. Callers must only consult this
    * when `findNearestInRange` found nothing — an interactable in range
-   * always owns the prompt.
+   * always owns the prompt. Pass the spot currently showing as `current` to
+   * keep it from flickering against a neighbour (`AMBIENT_STICKINESS`).
    */
-  findNearestAmbientInRange(playerPosition: {
-    x: number
-    y: number
-  }): AmbientCandidate | null {
-    return nearestInRange(this.ambientCandidates, playerPosition)
+  findNearestAmbientInRange(
+    playerPosition: { x: number; y: number },
+    current: AmbientCandidate | null = null,
+  ): AmbientCandidate | null {
+    return nearestInRange(
+      this.ambientCandidates,
+      playerPosition,
+      current,
+      AMBIENT_STICKINESS,
+    )
   }
 }

@@ -1,0 +1,146 @@
+/* Skills — a collection of pixel-art technology icons. Same palette and
+   pixel-font labels as the shared overlay shell (InteractionOverlay.css).
+   The icons are approved artwork: no frames, backgrounds, shadows, filters
+   or recolouring are ever applied to them. */
+
+.skills-panel {
+  --skills-icon-size: 64px;
+  gap: 18px;
+}
+
+.skills-subtitle {
+  margin: -10px 0 0;
+  text-transform: uppercase;
+}
+
+/* Categories flow left to right and wrap, so short ones share a row. */
+.skills-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px 28px;
+}
+
+.skills-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.skills-group .panel-group-title {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+
+.skills-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.skills-icons li {
+  display: flex;
+  min-width: 0;
+}
+
+/* A bare button: it only exists so the icon's name can be revealed by
+   hover, keyboard focus or tap. It draws nothing around the artwork. */
+/* Every icon shares one height; the width follows the PNG's own aspect
+   ratio (set inline from its native size), so the slot is reserved before
+   the image arrives and nothing shifts when it does. */
+.skills-icon {
+  position: relative;
+  display: block;
+  height: var(--skills-icon-size);
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: default;
+}
+
+.skills-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  user-select: none;
+}
+
+.skills-icon-name {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  z-index: 1;
+  width: max-content;
+  max-width: 96px;
+  margin-top: -10px;
+  padding: 4px 5px;
+  border: 1px solid var(--pixel-border, #1e5fa8);
+  background: var(--bg-deep, #050b1a);
+  color: var(--text, #eaf4ff);
+  font-family: var(--font-pixel);
+  font-size: 0.5rem;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  text-align: center;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.skills-icon:focus-visible .skills-icon-name,
+.skills-icon.is-active .skills-icon-name {
+  display: block;
+}
+
+@media (hover: hover) {
+  .skills-icon:hover .skills-icon-name {
+    display: block;
+  }
+}
+
+@media (max-width: 480px) {
+  .skills-panel {
+    --skills-icon-size: 56px;
+  }
+
+  .skills-groups {
+    column-gap: 20px;
+  }
+}
+
+@keyframes skills-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes skills-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+/* Restrained entrance: titles fade, icons rise a few pixels in sequence.
+   Under reduced motion none of this applies — the final layout is shown
+   immediately. */
+@media (prefers-reduced-motion: no-preference) {
+  .skills-subtitle,
+  .skills-group .panel-group-title {
+    animation: skills-fade-in 160ms ease-out backwards;
+  }
+
+  .skills-icons li {
+    animation: skills-rise-in 180ms ease-out backwards;
+    animation-delay: calc(60ms + var(--skills-order, 0) * 16ms);
+  }
+}

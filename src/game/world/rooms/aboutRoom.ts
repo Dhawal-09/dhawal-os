@@ -42,9 +42,9 @@ export const aboutObjects: WorldObject[] = [
     id: 'certificates',
     asset: 'content.certificates',
     label: 'CERTIFICATES',
-    position: { x: 960, y: 1100 }, // WORLD POSITION — SAFE TO TUNE
+    position: { x: 300, y: 910 }, // WORLD POSITION — SAFE TO TUNE
     layer: 'object',
-    collision: centeredCollider({ x: 960, y: 1100 }),
+    collision: centeredCollider({ x: 300, y: 910 }),
     interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_CERTIFICATES' },
     message: { type: 'interactive', text: 'Check out his certificates?' },
   },

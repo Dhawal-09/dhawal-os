@@ -1,18 +1,11 @@
 import type { WorldObject } from '../WorldObject'
-import {
-  INTERACTION_RADIUS,
-  centeredCollider,
-  contentAlignedCollider,
-} from './worldObjectHelpers'
+import { contentAlignedCollider } from './worldObjectHelpers'
 
 /**
- * MIDDLE-LEFT: the "experience"/lounge content marker, plus the Experience
- * room's furniture. Every furniture item below is visual-only (no
- * collision — visual placement pass only, same precedent as kitchen.ts).
- * The "experience" marker is deliberately the *last* entry so it always
- * draws on top of the furniture beneath it (World.ts draws array order,
- * not a Y-sort) — its label/hotspot must never be hidden behind the rug or
- * furniture placed near it.
+ * MIDDLE-LEFT: the Experience room's furniture. Every furniture item below
+ * is visual-only (no collision — visual placement pass only, same precedent
+ * as kitchen.ts). The "experience" content marker itself moved to the
+ * Gaming Corner (gamingCorner.ts).
  */
 
 /**
@@ -117,8 +110,7 @@ const SPEAKER_POSITION = {
   x: SPEAKER_VISIBLE_POSITION.x,
   y:
     SPEAKER_VISIBLE_POSITION.y +
-    (SPEAKER_NATURAL_SIZE.height - SPEAKER_CONTENT_BBOX.maxY) *
-      SPEAKER_SCALE,
+    (SPEAKER_NATURAL_SIZE.height - SPEAKER_CONTENT_BBOX.maxY) * SPEAKER_SCALE,
 }
 
 /**
@@ -264,20 +256,6 @@ export const livingRoomObjects: WorldObject[] = [
     layer: 'object',
     transform: { width: 200 },
   },
-  
-  {
-    id: 'experience',
-    asset: 'content.experience',
-    label: 'EXPERIENCE',
-    position: { x: 380, y: 720 }, // WORLD POSITION — SAFE TO TUNE
-    layer: 'object',
-    // CareerTimeline.png's artwork is centered in its 640x1088 canvas, so a
-    // center anchor keeps the stand centered on its collider. 76px wide
-    // renders the visible stand at ~68x110 — shelf-scale, clear of the TV
-    // console above (y≤620).
-    transform: { width: 76, anchor: { x: 0.5, y: 0.5 } },
-    collision: centeredCollider({ x: 380, y: 720 }),
-    interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_EXPERIENCE' },
-    message: { type: 'interactive', text: 'Wanna see where he worked?' },
-  },
+  // The "experience" marker (Career Timeline stand) now lives in the Gaming
+  // Corner — see gamingCorner.ts.
 ]

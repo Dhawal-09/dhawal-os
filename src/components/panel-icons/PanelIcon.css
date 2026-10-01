@@ -1,0 +1,14 @@
+.panel-icon {
+  display: block;
+  flex-shrink: 0;
+  height: var(--panel-icon-size, 56px);
+}
+
+.panel-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  user-select: none;
+}

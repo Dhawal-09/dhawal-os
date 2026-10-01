@@ -13,8 +13,8 @@ import {
  * bag is explicitly out of scope for this pass. The three big floor pieces
  * — dumbbell rack, gym station and stand — are solid (see
  * `spriteFootprintCollider` below); everything else here is visual-only.
- * No interaction (there is no "hobbies" content marker/action in the
- * interaction system yet).
+ * No interaction, by design: the hobbies are told by the objects
+ * themselves, captioned by proximity messages (`hobbyFlavor.ts`).
  */
 
 /**
@@ -199,29 +199,7 @@ const trimFit = fitContentToRect(TRIM_NATURAL_SIZE, TRIM_CONTENT_BBOX, {
 })
 
 /**
- * Natural pixel dimensions of the approved football-rack PNG
- * (assets/world/HobbiesRoom/Rack.png) — a tall, narrow rack on a wide,
- * mostly-transparent canvas (the visible rack is only ~16% of the canvas
- * width), so a plain width-only `transform` renders it as a barely-visible
- * sliver; `fitContentToRect` is used here too, same as the floor/trim,
- * purely to size it sensibly — not for architectural alignment.
- */
-const FOOTBALL_RACK_NATURAL_SIZE = { width: 1200, height: 896 }
-const FOOTBALL_RACK_CONTENT_BBOX = { minX: 503, minY: 252, maxX: 696, maxY: 680 }
-
-const footballRackFit = fitContentToRect(
-  FOOTBALL_RACK_NATURAL_SIZE,
-  FOOTBALL_RACK_CONTENT_BBOX,
-  {
-    left: 1247.5,
-    right: 1292.5, // 45 world px wide, visually similar scale to the dumbbell rack
-    top: 1075,
-    bottom: 1175,
-  },
-)
-
-/**
- * Wall trophy plaque, mirror and floor stand — each measured from its own
+ * Wall trophy plaque and floor stand — each measured from its own
  * PNG's alpha channel and placed by *visible* size/position via
  * `placeByVisibleContent`, so the numbers below are what you actually see.
  */
@@ -229,13 +207,7 @@ const WALL_TROPHY_PLACEMENT = placeByVisibleContent(
   { width: 1024, height: 559 }, // stand-Photoroom.png
   { minX: 357, maxX: 666, maxY: 451 },
   90, // visible width — SAFE TO TUNE
-  { x: 850, y: 985 }, // WORLD POSITION — SAFE TO TUNE — brick wall, left of the artwork
-)
-const MIRROR_PLACEMENT = placeByVisibleContent(
-  { width: 1024, height: 559 }, // mirror-Photoroom.png
-  { minX: 383, maxX: 631, maxY: 486 },
-  55, // visible width — SAFE TO TUNE
-  { x: 935, y: 995 }, // WORLD POSITION — SAFE TO TUNE — brick wall, between the trophy and the artwork
+  { x: 860, y: 985 }, // WORLD POSITION — SAFE TO TUNE — brick wall, left of the artwork
 )
 const STAND_PLACEMENT = placeByVisibleContent(
   { width: 1581, height: 1025 }, // Stand.png
@@ -308,7 +280,7 @@ export const hobbiesObjects: WorldObject[] = [
     id: 'hobbies-artwork',
     asset: 'hobbies.artwork',
     label: 'ARTWORK',
-    position: { x: 1010, y: 990 }, // WORLD POSITION — SAFE TO TUNE
+    position: { x: 970, y: 990 }, // WORLD POSITION — SAFE TO TUNE
     layer: 'object',
     transform: { width: 170 },
   },
@@ -316,7 +288,7 @@ export const hobbiesObjects: WorldObject[] = [
     id: 'hobbies-jersey',
     asset: 'hobbies.jersey',
     label: 'JERSEY DISPLAY',
-    position: { x: 1100, y: 990 }, // WORLD POSITION — SAFE TO TUNE
+    position: { x: 1070, y: 990 }, // WORLD POSITION — SAFE TO TUNE
     layer: 'object',
     transform: { width: 130 },
   },
@@ -324,7 +296,7 @@ export const hobbiesObjects: WorldObject[] = [
     id: 'hobbies-scarf',
     asset: 'hobbies.scarf',
     label: 'SCARF DISPLAY',
-    position: { x: 1230, y: 1020 }, // WORLD POSITION — SAFE TO TUNE
+    position: { x: 1210, y: 1020 }, // WORLD POSITION — SAFE TO TUNE
     layer: 'object',
     transform: { width: 280 },
   },
@@ -336,15 +308,6 @@ export const hobbiesObjects: WorldObject[] = [
     position: WALL_TROPHY_PLACEMENT.position,
     layer: 'object',
     transform: WALL_TROPHY_PLACEMENT.transform,
-    // No `collision` — wall-mounted decor.
-  },
-  {
-    id: 'hobbies-mirror',
-    asset: 'hobbies.mirror',
-    label: 'MIRROR',
-    position: MIRROR_PLACEMENT.position,
-    layer: 'object',
-    transform: MIRROR_PLACEMENT.transform,
     // No `collision` — wall-mounted decor.
   },
 
@@ -413,23 +376,5 @@ export const hobbiesObjects: WorldObject[] = [
       GYM_STATION_NATURAL_SIZE,
       GYM_STATION_CONTENT_BBOX,
     ),
-  },
-
-  // FOOTBALL AREA — the ball rack, right portion of the floor. (Only one
-  // such asset exists — see the phase report: it fulfills both the
-  // "football display rack" and "football storage rack + footballs" roles
-  // from the brief, since there's no second distinct asset for either.)
-  {
-    id: 'hobbies-football-rack',
-    asset: 'hobbies.footballRack',
-    label: 'FOOTBALL RACK',
-    position: footballRackFit.position,
-    layer: 'object',
-    message: {
-      type: 'flavor',
-      text: 'Some problems need a different tackle.',
-      radius: 130,
-    },
-    transform: footballRackFit.transform,
   },
 ]
