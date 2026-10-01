@@ -1,5 +1,26 @@
 import { experience } from './experience'
-import type { Project } from './types'
+import type { IconAsset, Project } from './types'
+
+/**
+ * A file in `assets/world/Icons/Projects/` with its native pixel size.
+ * `visible`: [x, y, width, height] of the artwork inside a PNG that carries
+ * transparent padding, so it is sized by what is actually drawn.
+ */
+function icon(
+  file: string,
+  width: number,
+  height: number,
+  visible?: [number, number, number, number],
+): IconAsset {
+  if (!visible) return { file, width, height }
+  const [x, y, visibleWidth, visibleHeight] = visible
+  return {
+    file,
+    width,
+    height,
+    visible: { x, y, width: visibleWidth, height: visibleHeight },
+  }
+}
 
 /**
  * Role + period for an experience project, read from `experience.ts` so
@@ -28,6 +49,7 @@ export const projects: Project[] = [
     category: 'experience',
     name: 'Unifi',
     subtitle: 'Financial, Asset & Modem Management System',
+    icon: icon('unifi-Photoroom.png', 1024, 405, [337, 23, 402, 364]),
     ...roleFrom('software-engineer'),
     description:
       'RESTful APIs for asset, modem and financial management, with role-based access control, request validation, Intercard API integration, and cron-based revenue synchronization.',
@@ -54,6 +76,7 @@ export const projects: Project[] = [
     category: 'experience',
     name: 'NexCRM',
     subtitle: 'Lead Nurturing & Management Platform',
+    icon: icon('Leads-Photoroom.png', 431, 443, [19, 31, 389, 392]),
     ...roleFrom('apprentice'),
     description:
       'Full-stack multi-tenant CRM with RBAC, JWT authentication, lead scoring, automated email sequences, and rule-based lead assignment.',
@@ -94,6 +117,7 @@ export const projects: Project[] = [
     category: 'personal',
     name: 'FocusGuard',
     subtitle: 'Real-Time Computer-Vision Focus & Distraction Monitor',
+    icon: icon('focus.png', 2324, 1701),
     description:
       'Real-time webcam-based focus and distraction monitor: phone distraction, drowsiness/eye-closure, head-orientation diversion, and user-away detection, built on a deterministic priority state machine.',
     technologies: [

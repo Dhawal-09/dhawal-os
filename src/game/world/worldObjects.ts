@@ -10,7 +10,7 @@ import {
 import { entranceColliders, entranceObjects } from './rooms/entrance'
 import { gamingCornerObjects } from './rooms/gamingCorner'
 import { hobbiesColliders, hobbiesObjects } from './rooms/hobbiesRoom'
-import { kitchenObjects } from './rooms/kitchen'
+import { kitchenObjects, kitchenOverlayObjects } from './rooms/kitchen'
 import { livingRoomObjects } from './rooms/livingRoom'
 import { projectsObjects } from './rooms/projectsRoom'
 import { newColliders, visibleNewColliders } from './rooms/newColliders'
@@ -75,6 +75,9 @@ export const worldObjects: WorldObject[] = [
   ...kitchenObjects,
   ...hobbiesObjects,
   ...gamingCornerObjects,
+  // After hobbies/gaming: the water bottle sits in the gym area and must
+  // draw on top of that room's sprites.
+  ...kitchenOverlayObjects,
   ...wallObjects,
 ]
 

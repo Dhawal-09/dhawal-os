@@ -25,7 +25,11 @@ export const newColliders: readonly Collider[] = [
   newCollider(1480, 820, 60, 140),// #1 —  (x, y, width, height)
   
   //kitchen walls
-  newCollider(1330, 470, 30, 210)
+  newCollider(1330, 470, 30, 210),
+  
+  newCollider(1560, 1110, 270, 140), //door
+  newCollider(125, 440, 70, 140), //lviing room shelf
+  newCollider(1330, 940, 30, 160), //hobbie wall
 ]
 
 /** What World.ts outlines in dev. */

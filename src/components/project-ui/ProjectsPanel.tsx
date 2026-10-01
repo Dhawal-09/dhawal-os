@@ -2,7 +2,13 @@ import { useEffect, useState } from 'react'
 import type { PanelContentProps } from '../../app/panelHeader'
 import { projects } from '../../data/projects'
 import type { Project } from '../../data/types'
+import { useIconUrls, type IconUrls } from '../panel-icons/iconUrls'
+import { PanelIcon } from '../panel-icons/PanelIcon'
 import './ProjectsPanel.css'
+
+/** The icon URL map lives in its own on-demand chunk — see `useIconUrls`. */
+const loadIconUrls = () =>
+  import('./projectIconUrls').then((module) => module.projectIconUrls)
 
 export type ProjectsView = 'home' | 'experience' | 'personal' | 'project-detail'
 
@@ -58,6 +64,9 @@ export function ProjectsPanel({ setHeader }: PanelContentProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
     null,
   )
+  // The map is small; each picture is only fetched once a list or detail
+  // view actually mounts an <img> for it.
+  const iconUrls = useIconUrls(loadIconUrls)
 
   const selectedProject =
     view === 'project-detail'
@@ -125,30 +134,64 @@ export function ProjectsPanel({ setHeader }: PanelContentProps) {
   }
 
   if (selectedProject) {
-    return <ProjectDetail project={selectedProject} />
+    return <ProjectDetail project={selectedProject} iconUrls={iconUrls} />
   }
+
+  const listed = projectsIn(listCategory)
+  // If any project in this list has a picture, every card keeps the picture
+  // column so the names line up.
+  const showIcons = listed.some((project) => project.icon)
 
   return (
     <ul className="projects-cards" aria-label={CATEGORY_LABEL[listCategory]}>
-      {projectsIn(listCategory).map((project) => {
-        const meta =
+      {listed.map((project) => {
+        // Kept as separate parts (role, period) so the mobile card can stack
+        // them; on desktop they read as one "role / period" line.
+        const metaParts =
           project.category === 'personal'
-            ? techSummary(project.technologies)
-            : pixelText(
-                [project.role, project.period]
-                  .filter(Boolean)
-                  .join(PIXEL_SEPARATOR),
-              )
+            ? [techSummary(project.technologies)]
+            : [project.role, project.period]
+                .filter((part): part is string => Boolean(part))
+                .map(pixelText)
         return (
           <li key={project.id}>
             <button
               type="button"
-              className="projects-card"
+              className={showIcons ? 'projects-card has-icon' : 'projects-card'}
               onClick={() => openProject(project)}
             >
-              <span className="projects-card-name">{project.name}</span>
-              <span className="projects-card-subtitle">{project.subtitle}</span>
-              {meta && <span className="projects-card-meta">{meta}</span>}
+              {showIcons && (
+                <span className="projects-card-icon">
+                  {project.icon && (
+                    // Decorative: the name beside it identifies the project.
+                    <PanelIcon
+                      icon={project.icon}
+                      src={iconUrls?.[project.icon.file]}
+                      alt=""
+                    />
+                  )}
+                </span>
+              )}
+              <span className="projects-card-text">
+                <span className="projects-card-name">{project.name}</span>
+                <span className="projects-card-subtitle">
+                  {project.subtitle}
+                </span>
+                {metaParts.length > 0 && (
+                  <span className="projects-card-meta">
+                    {metaParts.map((part, index) => (
+                      <span key={part} className="projects-card-meta-part">
+                        {index > 0 && (
+                          <span className="projects-card-meta-separator">
+                            {PIXEL_SEPARATOR}
+                          </span>
+                        )}
+                        {part}
+                      </span>
+                    ))}
+                  </span>
+                )}
+              </span>
               <span className="projects-card-view" aria-hidden="true">
                 View &gt;
               </span>
@@ -160,9 +203,16 @@ export function ProjectsPanel({ setHeader }: PanelContentProps) {
   )
 }
 
-function ProjectDetail({ project }: { project: Project }) {
+interface ProjectDetailProps {
+  project: Project
+  /** `null` until the icon URL map has loaded; the layout does not wait. */
+  iconUrls: IconUrls | null
+}
+
+function ProjectDetail({ project, iconUrls }: ProjectDetailProps) {
   const [imageFailed, setImageFailed] = useState(false)
   const showImage = project.image !== undefined && !imageFailed
+  const icon = showImage ? undefined : project.icon
 
   const facts: [label: string, value: string | undefined][] = [
     ['Role', project.role],
@@ -173,8 +223,18 @@ function ProjectDetail({ project }: { project: Project }) {
   return (
     <article className="project-detail">
       <div className="project-detail-top">
-        <div className="project-detail-image">
-          {showImage ? (
+        <div
+          className={
+            icon ? 'project-detail-image has-icon' : 'project-detail-image'
+          }
+        >
+          {icon ? (
+            <PanelIcon
+              icon={icon}
+              src={iconUrls?.[icon.file]}
+              alt={`${project.name} illustration`}
+            />
+          ) : showImage ? (
             <img
               src={project.image}
               alt=""

@@ -18,7 +18,7 @@ export const WALK_ANIMATION_FPS = 8
  * furniture is ever moved, retune it here.
  */
 export const PLAYER_SPAWN_POSITION: { readonly x: number; readonly y: number } =
-  { x: 1610, y: 1140 }
+  { x: 1610, y: 1070 }
 
 /**
  * Rendered height of the character in world px, measured head-to-feet on

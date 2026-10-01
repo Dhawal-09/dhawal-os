@@ -4,6 +4,13 @@
   height: var(--panel-icon-size, 56px);
 }
 
+/* An icon sized by its visible artwork: the slot clips the PNG's
+   transparent padding (see PanelIcon.tsx). */
+.panel-icon.is-cropped {
+  position: relative;
+  overflow: hidden;
+}
+
 .panel-icon img {
   display: block;
   width: 100%;

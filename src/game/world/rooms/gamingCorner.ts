@@ -45,12 +45,13 @@ const TABLE_CONTENT_BBOX: ContentBBox = {
   maxX: 615,
   maxY: 1259,
 }
-const BEANBAG_NATURAL_SIZE = { width: 1024, height: 559 } // bag-Photoroom.png
+/** The PNG's real pixel size — not a size control. Resize the beanbag with the visible width in BEANBAG_PLACEMENT. */
+const BEANBAG_NATURAL_SIZE = { width: 1024, height: 405 } // bag2-Photoroom.png
 const BEANBAG_CONTENT_BBOX: ContentBBox = {
-  minX: 291,
-  minY: 86,
-  maxX: 733,
-  maxY: 495,
+  minX: 390,
+  minY: 78,
+  maxX: 640,
+  maxY: 315,
 }
 const SHELF_NATURAL_SIZE = { width: 1024, height: 559 } // console-Photoroom.png
 const SHELF_CONTENT_BBOX: ContentBBox = {
@@ -76,8 +77,8 @@ const TABLE_PLACEMENT = placeByVisibleContent(
 const BEANBAG_PLACEMENT = placeByVisibleContent(
   BEANBAG_NATURAL_SIZE,
   BEANBAG_CONTENT_BBOX,
-  105, // visible width — SAFE TO TUNE (close to the bedroom beanbag's scale)
-  { x: 965, y: 780 }, // WORLD POSITION — SAFE TO TUNE — left side of the mat, facing the monitor
+  88, // visible width — SAFE TO TUNE (the height follows; the collider matches automatically)
+  { x: 955, y: 764 }, // WORLD POSITION — SAFE TO TUNE — visible bottom-center; left side of the mat, facing the monitor
 )
 const SHELF_PLACEMENT = placeByVisibleContent(
   SHELF_NATURAL_SIZE,

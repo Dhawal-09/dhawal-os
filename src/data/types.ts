@@ -24,6 +24,12 @@ export interface Project {
   company?: string
   period?: string
   image?: string
+  /**
+   * The project's picture in `assets/world/Icons/Projects/` — shown beside
+   * its name in the project list and at the top of its detail view. Left
+   * undefined while no image has been supplied.
+   */
+  icon?: IconAsset
   description: string
   technologies: string[]
   contributions: string[]
@@ -56,6 +62,13 @@ export interface IconAsset {
   file: string
   width: number
   height: number
+  /**
+   * Where the artwork actually sits inside the PNG (native px), when the
+   * file carries transparent padding around it. Icons that set this are
+   * sized by what is visible rather than by their canvas, so a set drawn
+   * with different amounts of padding still reads at one consistent size.
+   */
+  visible?: { x: number; y: number; width: number; height: number }
 }
 
 export type SkillIcon = IconAsset

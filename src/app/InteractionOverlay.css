@@ -73,8 +73,12 @@
   letter-spacing: 0.04em;
 }
 
-.panel-close:hover {
-  background: var(--blue, #147bff);
+/* Pointer devices only: on touch, :hover sticks to whatever sits under the
+   last tap (e.g. Back turning blue after opening a list). */
+@media (hover: hover) {
+  .panel-close:hover {
+    background: var(--blue, #147bff);
+  }
 }
 
 /* Back (panels with internal navigation, e.g. Projects): same control as
