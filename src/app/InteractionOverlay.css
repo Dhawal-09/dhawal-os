@@ -99,6 +99,20 @@
   }
 }
 
+@media (max-width: 360px) {
+  /* The narrowest phones: keep the title and Close on one row without
+     pushing Close past the panel edge. */
+  .panel-header h2 {
+    min-width: 0;
+    font-size: 0.85rem;
+    overflow-wrap: anywhere;
+  }
+
+  .panel-close {
+    padding: 8px 12px;
+  }
+}
+
 .panel-close:focus-visible,
 .interaction-overlay-panel a:focus-visible,
 .interaction-overlay-panel button:focus-visible,
@@ -166,6 +180,30 @@
   line-height: 1.6;
   letter-spacing: 0.02em;
   color: var(--text-muted, #91a9c8);
+}
+
+/* The small line under a panel's title ("ACADEMIC JOURNEY"). Pair with
+   .panel-meta. */
+.panel-subtitle {
+  margin: -8px 0 0;
+  text-transform: uppercase;
+}
+
+/* Restrained entrance for a panel's rows: each rises a few pixels in turn
+   (`--panel-order` = its index). Under reduced motion nothing animates and
+   the final layout shows immediately. */
+@keyframes panel-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .panel-stagger-item {
+    animation: panel-item-in 180ms ease-out backwards;
+    animation-delay: calc(60ms + var(--panel-order, 0) * 45ms);
+  }
 }
 
 .panel-empty {

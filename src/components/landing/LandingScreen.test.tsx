@@ -1,7 +1,8 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { about } from '../../data/about'
+import { contactLinks } from '../../data/contact'
 import { LandingScreen } from './LandingScreen'
 
 afterEach(() => {
@@ -53,11 +54,17 @@ describe('LandingScreen', () => {
     expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'))
   })
 
-  it('omits the social links section when no verified links exist in project data', () => {
+  it('shows exactly the verified profile links from project data as social links — none fabricated', () => {
     render(<LandingScreen onStartJourney={vi.fn()} />)
 
-    expect(
-      screen.queryByRole('navigation', { name: /social links/i }),
-    ).not.toBeInTheDocument()
+    const nav = screen.queryByRole('navigation', { name: /social links/i })
+    if (contactLinks.length === 0) {
+      expect(nav).not.toBeInTheDocument()
+      return
+    }
+    const links = within(nav!).getAllByRole('link')
+    expect(links.map((link) => link.getAttribute('href'))).toEqual(
+      contactLinks.map((link) => link.url),
+    )
   })
 })

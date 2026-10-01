@@ -312,7 +312,7 @@ describe('GameScene contextual messages', () => {
       text: messageOf('living-tv'),
     })
 
-    standAt(scene, 380, 700) // on the rug, by the Experience marker
+    standAt(scene, 980, 450) // just above the Experience marker (Gaming Corner)
     expect(scene.contextualMessage.current).toMatchObject({
       type: 'interactive',
       text: messageOf('experience'),

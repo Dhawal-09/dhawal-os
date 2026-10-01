@@ -8,6 +8,7 @@ import {
   educationVisibleColliders,
 } from './rooms/educationRoom'
 import { entranceColliders, entranceObjects } from './rooms/entrance'
+import { gamingCornerObjects } from './rooms/gamingCorner'
 import { hobbiesColliders, hobbiesObjects } from './rooms/hobbiesRoom'
 import { kitchenObjects } from './rooms/kitchen'
 import { livingRoomObjects } from './rooms/livingRoom'
@@ -73,6 +74,7 @@ export const worldObjects: WorldObject[] = [
   ...aboutObjects,
   ...kitchenObjects,
   ...hobbiesObjects,
+  ...gamingCornerObjects,
   ...wallObjects,
 ]
 

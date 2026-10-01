@@ -18,9 +18,9 @@ export interface AboutRow {
 }
 
 function highestDegree(): string {
-  const mca = education.find((e) => e.id === 'mca')
-  if (!mca) throw new Error('About Me expects the "mca" education entry')
-  return mca.degree
+  const degree = education.find((e) => e.id === 'mca')?.degree
+  if (!degree) throw new Error('About Me expects the "mca" education entry')
+  return degree
 }
 
 /**

@@ -13,7 +13,7 @@ import { WORLD_HEIGHT, WORLD_WIDTH } from '../worldConstants'
 export const PLACEHOLDER_COLLIDER_SIZE = 96
 
 /** Placeholder proximity radius (INTERACTION_SPEC.md example uses a comparable value) — independently tunable per object later. */
-export const INTERACTION_RADIUS = 70
+export const INTERACTION_RADIUS = 90
 
 export function centeredCollider(
   position: { x: number; y: number },

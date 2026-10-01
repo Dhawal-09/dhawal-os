@@ -1,0 +1,13 @@
+import { toIconUrls } from '../panel-icons/iconUrls'
+
+/**
+ * Every icon in `assets/world/Icons/EducationIcons/`, by exact filename.
+ * Loaded on demand by `EducationPanel` — never imported statically.
+ */
+export const educationIconUrls = toIconUrls(
+  import.meta.glob<string>('../../../assets/world/Icons/EducationIcons/*.png', {
+    eager: true,
+    query: '?url',
+    import: 'default',
+  }),
+)

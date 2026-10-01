@@ -212,15 +212,15 @@ export const entranceObjects: WorldObject[] = [
   // and shared asset matter right now, not their exact placement.
   entranceObject('entrance-plant', 'plant', 'POTTED PLANT', {
     x: 1850,
-    y: 990,
+    y: 1000,
   }), // WORLD POSITION — SAFE TO TUNE
   entranceObject('entrance-plant-2', 'plant', 'POTTED PLANT', {
     x: 500,
     y: 1020,
   }), // WORLD POSITION — SAFE TO TUNE
-  entranceObject('entrance-plant-3', 'plant', 'POTTED PLANT', {
-    x: 1300,
-    y: 950,
+  entranceObject('entrance-plant-3', 'plant', 'POTTED PLANT', { // Entraice
+    x: 1505,
+    y: 1000,
   }), // WORLD POSITION — SAFE TO TUNE
   {
     ...entranceObject('entrance-plant-4', 'plant', 'POTTED PLANT', {

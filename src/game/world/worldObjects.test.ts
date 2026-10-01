@@ -97,9 +97,10 @@ describe('worldObjects', () => {
     // redundant overlap with the bottom room-boundary wall — their top/
     // left/right edges are untouched, but the box is no longer vertically
     // symmetric around `position.y`. Covered separately below.
+    // 'experience' is excluded: its collider matches the Career Timeline
+    // art's own bounds (gamingCorner.ts), which sit ~4px above center.
     const contentAreaIds = new Set([
       'projects',
-      'experience',
       'skills',
       'certificates',
     ])
@@ -660,19 +661,24 @@ describe('PHASE 10B layout (1920x1440 expansion)', () => {
     }
   })
 
-  it('leaves the room center open — nothing blocking within a generous radius of the spawn point', () => {
-    const spawn = { x: WORLD_WIDTH / 2, y: WORLD_HEIGHT / 2 }
-    const CENTER_CLEARANCE_RADIUS = 150
+  it('keeps the middle room walkways open around the Gaming Corner — nothing blocking the top route or the right-side route', () => {
+    // The Gaming Corner (gamingCorner.ts) fills the bottom-left pocket of the
+    // middle room; these two strips are the routes that must stay clear:
+    // across the top (Projects <-> living-room gap) and up the right side
+    // (entrance gap -> Projects).
+    const WALKWAYS = [
+      { x: 800, y: 460, width: 530, height: 80 },
+      { x: 1220, y: 460, width: 100, height: 340 },
+    ]
 
     for (const object of worldObjects) {
-      if (!object.collision || object.id === 'aboutMe') continue
-      const cx = object.collision.x + object.collision.width / 2
-      const cy = object.collision.y + object.collision.height / 2
-      const distance = Math.hypot(cx - spawn.x, cy - spawn.y)
-      expect(
-        distance,
-        `${object.id}'s collider center is too close to the open spawn area`,
-      ).toBeGreaterThan(CENTER_CLEARANCE_RADIUS)
+      if (!object.collision) continue
+      for (const walkway of WALKWAYS) {
+        expect(
+          rectsOverlap(object.collision, walkway),
+          `${object.id}'s collider blocks a middle-room walkway`,
+        ).toBe(false)
+      }
     }
   })
 })
@@ -767,9 +773,11 @@ describe('PHASE 10B.1 CLEANUP — no redundant overlap with the room boundary, r
   })
 
   it('CERTIFICATES is still reachable (unaffected — its collider never touched the wall)', () => {
+    // Starts just below the Gaming Corner (gamingCorner.ts), which now
+    // occupies the old (960, 720) starting point.
     const final = walkUntilBlocked(
       combined,
-      { x: 960, y: 720 },
+      { x: 960, y: 820 },
       { dx: 0, dy: 1 },
       10,
       100,
@@ -812,15 +820,13 @@ describe('PHASE 10B.1 CLEANUP — no redundant overlap with the room boundary, r
       start: { x: number; y: number }
       direction: { dx: number; dy: number }
     }> = [
-      // Approaches from the south (below), not the original north/downward
-      // path — the Living room's TV (x365-515,y456-540) and TV console
-      // (x314-566,y531-620), both now solid (livingRoom.ts), fully block
-      // the old straight-down column at x380; nothing sits between the
-      // marker and y900 on this column.
+      // Approaches from the open floor above the Career Timeline stand
+      // (gamingCorner.ts) — between the Projects chair (y<=413) and the
+      // stand's asset-sized collider (top y~471).
       {
         id: 'experience',
-        start: { x: 380, y: 900 },
-        direction: { dx: 0, dy: -1 },
+        start: { x: 980, y: 430 },
+        direction: { dx: 0, dy: 1 },
       },
       { id: 'skills', start: { x: 1540, y: 400 }, direction: { dx: 0, dy: 1 } },
       {

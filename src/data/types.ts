@@ -47,18 +47,65 @@ export interface ExperienceEntry {
   responsibilities: string[]
 }
 
+/**
+ * A pixel-art icon under `assets/world/Icons/`. `file` is the exact filename
+ * on disk; `width`/`height` are the PNG's native pixel size, so a panel can
+ * reserve the icon's box before the image loads.
+ */
+export interface IconAsset {
+  file: string
+  width: number
+  height: number
+}
+
+export type SkillIcon = IconAsset
+
+export interface Skill {
+  id: string
+  name: string
+  /** Left undefined while no icon asset exists — the panel then omits the skill. */
+  icon?: SkillIcon
+}
+
 export interface SkillGroup {
   id: string
   title: string
-  skills: string[]
+  skills: Skill[]
 }
 
+export type EducationLevel = 'school' | 'junior-college' | 'bachelor' | 'master'
+
+/**
+ * One stage of the Education timeline. Only the stage itself and its icon
+ * are required: any detail that has not been supplied is left undefined and
+ * simply not rendered — never filled in.
+ */
 export interface EducationEntry {
   id: string
-  degree: string
-  institution: string
-  period: string
-  detail?: string
+  level: EducationLevel
+  /** The stage heading, e.g. "Master's Degree". */
+  title: string
+  /** Icon in `assets/world/Icons/EducationIcons/`. */
+  icon: IconAsset
+  degree?: string
+  institution?: string
+  university?: string
+  period?: string
+  grade?: string
+}
+
+export type ContactAction = 'email' | 'phone' | 'external' | 'resume'
+
+/** One row of the Contact panel: what is shown, and where activating it goes. */
+export interface ContactItem {
+  id: string
+  label: string
+  /** The human-readable value shown beside the icon. */
+  value: string
+  href: string
+  action: ContactAction
+  /** Icon in `assets/world/Icons/Contacts/`. */
+  icon: IconAsset
 }
 
 export interface CertificateEntry {

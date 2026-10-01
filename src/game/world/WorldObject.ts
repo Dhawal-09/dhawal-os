@@ -90,6 +90,10 @@ export interface AmbientMessage extends ContextualMessageBase {
   variants?: readonly string[]
   /** Flavor only: shown on the first visit of the session, then never again. */
   once?: boolean
+  /** A quieter supporting line under `text`, in the muted colour. */
+  secondaryText?: string
+  /** Wrap narrower than the prompt's default (in glyphs) — for a compact multi-line box. */
+  wrapGlyphs?: number
 }
 
 export type ContextualMessage = InteractiveMessage | AmbientMessage

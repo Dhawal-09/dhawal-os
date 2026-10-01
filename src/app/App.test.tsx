@@ -11,6 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { audioManager } from '../game/audio/AudioManager'
 import { authManager } from '../game/auth/AuthManager'
 import { gameEventBridge } from '../game/events/GameEventBridge'
+import { contactLinks } from '../data/contact'
 import { RESUME_PDF_PATH } from '../data/resume'
 import App from './App'
 
@@ -247,12 +248,18 @@ describe('App lifecycle', () => {
     )
   })
 
-  it('omits social links on landing when no verified URLs exist in project data (never fabricated)', () => {
+  it('shows only the verified profile URLs from project data as social links on landing (never fabricated)', () => {
     render(<App />)
 
-    expect(
-      screen.queryByRole('navigation', { name: /social links/i }),
-    ).not.toBeInTheDocument()
+    const nav = screen.queryByRole('navigation', { name: /social links/i })
+    if (contactLinks.length === 0) {
+      expect(nav).not.toBeInTheDocument()
+      return
+    }
+    const links = within(nav!).getAllByRole('link')
+    expect(links.map((link) => link.getAttribute('href'))).toEqual(
+      contactLinks.map((link) => link.url),
+    )
   })
 
   it('reduced-motion preference does not break the lifecycle transitions', async () => {

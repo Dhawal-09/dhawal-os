@@ -1,0 +1,97 @@
+/* Contact — a compact communication console: one actionable line per
+   channel, separated by dashed rules rather than boxed into cards. Same
+   palette and pixel-font labels as the shared overlay shell. The channel
+   icons are approved artwork: never framed, tinted or filtered. */
+
+.contact {
+  --panel-icon-size: 52px;
+  /* Wide enough for the widest icon at that height, so text lines up. */
+  --contact-icon-column: 66px;
+}
+
+/* Console prompt in front of the subtitle. */
+.contact .panel-subtitle::before {
+  content: '> ';
+  color: var(--cyan, #27d7ff);
+}
+
+.contact-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.contact-list li + li {
+  border-top: 1px dashed var(--pixel-border, #1e5fa8);
+}
+
+.contact-item {
+  display: grid;
+  grid-template-columns: var(--contact-icon-column) minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 14px;
+  min-height: 44px;
+  padding: 8px 10px 8px 4px;
+  color: var(--text, #eaf4ff);
+  text-decoration: none;
+}
+
+.contact-item:hover,
+.contact-item:focus-visible {
+  background: var(--bg-navy, #08152f);
+}
+
+.contact-item-icon {
+  display: flex;
+  justify-content: center;
+}
+
+.contact-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.contact-item-label {
+  color: var(--cyan, #27d7ff);
+  font-family: var(--font-pixel);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.contact-item-value {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.contact-item-go {
+  color: var(--text-muted, #91a9c8);
+  font-family: var(--font-pixel);
+  font-size: 0.75rem;
+}
+
+.contact-item:hover .contact-item-go,
+.contact-item:focus-visible .contact-item-go {
+  color: var(--cyan-bright, #57e8ff);
+}
+
+@media (max-width: 480px) {
+  .contact {
+    --panel-icon-size: 46px;
+    --contact-icon-column: 58px;
+  }
+
+  .contact-item {
+    column-gap: 10px;
+    padding-right: 4px;
+  }
+
+  .contact-item-value {
+    font-size: 0.875rem;
+  }
+}

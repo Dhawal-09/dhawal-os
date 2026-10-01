@@ -1,0 +1,121 @@
+/* Education — the academic journey as a vertical timeline. Same palette,
+   pixel-font labels and spine/node language as the Experience career
+   timeline. The stage icons are approved artwork: never framed, tinted or
+   filtered. */
+
+.education {
+  --panel-icon-size: 64px;
+  /* Wide enough for the widest icon at that height, so text lines up. */
+  --education-icon-column: 80px;
+  --education-gap: 20px;
+}
+
+.education-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--education-gap);
+}
+
+.education-stop {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--education-icon-column) minmax(0, 1fr);
+  column-gap: 14px;
+  padding-left: 28px;
+}
+
+/* Octagonal "pixel circle" node, level with the centre of the stage icon. */
+.education-node {
+  position: absolute;
+  top: calc(var(--panel-icon-size) / 2 - 6px);
+  left: 1px;
+  width: 12px;
+  height: 12px;
+  background: var(--cyan, #27d7ff);
+  clip-path: polygon(
+    25% 0,
+    75% 0,
+    100% 25%,
+    100% 75%,
+    75% 100%,
+    25% 100%,
+    0 75%,
+    0 25%
+  );
+}
+
+/* Spine segment from this stage's node down to the next stage's node. */
+.education-stop:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--panel-icon-size) / 2 + 6px);
+  bottom: calc(-1 * (var(--education-gap) + var(--panel-icon-size) / 2 - 6px));
+  left: 6px;
+  width: 2px;
+  background: #2f4968;
+}
+
+.education-icon {
+  display: flex;
+  justify-content: center;
+}
+
+.education-stop-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  /* A stage with no details yet sits level with its icon. */
+  align-self: center;
+}
+
+.education-stop-body .panel-group-title {
+  text-transform: uppercase;
+}
+
+.education-stop-body p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.education-degree {
+  font-family: var(--font-pixel);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  letter-spacing: 0.03em;
+}
+
+.education-institution,
+.education-university {
+  line-height: 1.4;
+}
+
+.education-university {
+  color: var(--text-muted, #91a9c8);
+}
+
+.education-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 16px;
+}
+
+.education-grade {
+  color: var(--text, #eaf4ff);
+}
+
+@media (max-width: 480px) {
+  .education {
+    --panel-icon-size: 52px;
+    --education-icon-column: 64px;
+    --education-gap: 18px;
+  }
+
+  .education-stop {
+    column-gap: 10px;
+    padding-left: 22px;
+  }
+}

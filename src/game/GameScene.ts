@@ -14,7 +14,9 @@ import { CollisionSystem } from './world/CollisionSystem'
 import {
   ContextualMessageView,
   messageForTarget,
+  type MessageViewport,
 } from './world/ContextualMessageView'
+import { hobbyAmbientCandidates } from './world/hobbyFlavor'
 import {
   InteractionSystem,
   type AmbientCandidate,
@@ -127,6 +129,14 @@ export class GameScene extends Container {
    * same prompt after a panel closes stays silent.
    */
   private announcedTarget: InteractableCandidate | null = null
+  /** Canvas width in CSS px, from the last `resize` (0 until then). */
+  private viewportWidth = 0
+  /** Reused every frame by `fitMessageToView` — no per-frame allocation. */
+  private readonly messageViewport: MessageViewport = {
+    scale: 1,
+    left: 0,
+    right: 0,
+  }
 
   /** The Pixi ticker stops while the tab is hidden, so `update()` can't be relied on to silence footsteps then. */
   private readonly handleVisibilityChange = (): void => {
@@ -152,7 +162,10 @@ export class GameScene extends Container {
       WORLD_HEIGHT,
       EXTRA_COLLIDERS,
     )
-    this.interactionSystem = InteractionSystem.fromWorldObjects(worldObjects)
+    this.interactionSystem = InteractionSystem.fromWorldObjects(
+      worldObjects,
+      hobbyAmbientCandidates(worldObjects),
+    )
 
     this.inputManager = new InputManager()
     // Already in the Assets cache in a real session — GameApp.create awaits
@@ -232,8 +245,25 @@ export class GameScene extends Container {
 
   /** Recomputes the camera's scale and bounds for the given viewport dimensions. Never moves the player. */
   resize(viewportWidth: number, viewportHeight: number): void {
+    this.viewportWidth = viewportWidth
     this.camera.resize(viewportWidth, viewportHeight)
     this.updateCameraDebugText()
+  }
+
+  /**
+   * Hands the prompt the slice of the world the camera is showing, read
+   * straight off the World container's transform (the Camera's only output).
+   * The prompt uses it to stay legible and inside the screen in the
+   * whole-house view and on phones; it never moves the camera or the world.
+   */
+  private fitMessageToView(): void {
+    const scale = this.world.scale.x
+    if (this.viewportWidth <= 0 || !(scale > 0)) return
+    const view = this.messageViewport
+    view.scale = scale
+    view.left = -this.world.position.x / scale
+    view.right = (this.viewportWidth - this.world.position.x) / scale
+    this.contextualMessage.fitToView(view)
   }
 
   /** The minimal mobile "tap to interact" stub — wired from the canvas host's pointerdown (see GameCanvas.tsx). */
@@ -283,9 +313,15 @@ export class GameScene extends Container {
    * pauses all of this (`setPaused`).
    */
   private updateContextualMessage(): void {
+    const current = this.messageTarget
     const target =
       this.player.interactionTarget ??
-      this.interactionSystem.findNearestAmbientInRange(this.player.position)
+      this.interactionSystem.findNearestAmbientInRange(
+        this.player.position,
+        // The ambient spot already showing keeps a small edge over its
+        // neighbours, so overlapping spots never flicker.
+        current && !('action' in current) ? current : null,
+      )
 
     if (target !== this.messageTarget) {
       this.leaveTarget()
@@ -426,6 +462,7 @@ export class GameScene extends Container {
     // player's world position (CAMERA_SPEC.md).
     this.camera.follow(this.player.position.x, this.player.position.y)
     this.camera.update(deltaMS)
+    this.fitMessageToView()
     this.updateCameraDebugText()
   }
 
