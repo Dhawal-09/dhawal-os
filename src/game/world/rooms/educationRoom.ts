@@ -134,14 +134,20 @@ const EDUCATION_WALL_COLLIDER_6: Collider = {    //side wall
  * Colliders drawn as a yellow bordered box in dev, so you can see what you're
  * tuning. Remove an entry (or empty this array) when it's placed.
  */
-export const educationVisibleColliders: readonly Collider[] = [
-  EDUCATION_WALL_COLLIDER,
-  EDUCATION_WALL_COLLIDER_2,
-  EDUCATION_WALL_COLLIDER_3,
-  EDUCATION_WALL_COLLIDER_4,
-  EDUCATION_WALL_COLLIDER_5,
-  EDUCATION_WALL_COLLIDER_6
-]
+/** Set to `false` to hide the yellow outlines (collision is unaffected). */
+const SHOW_EDUCATION_COLLIDER_OUTLINES = false
+
+export const educationVisibleColliders: readonly Collider[] =
+  SHOW_EDUCATION_COLLIDER_OUTLINES
+    ? [
+        EDUCATION_WALL_COLLIDER,
+        EDUCATION_WALL_COLLIDER_2,
+        EDUCATION_WALL_COLLIDER_3,
+        EDUCATION_WALL_COLLIDER_4,
+        EDUCATION_WALL_COLLIDER_5,
+        EDUCATION_WALL_COLLIDER_6,
+      ]
+    : []
 
 export const educationColliders: readonly Collider[] = [
   contentAlignedCollider(

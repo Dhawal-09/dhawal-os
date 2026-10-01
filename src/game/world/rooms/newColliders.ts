@@ -18,7 +18,7 @@ export function newCollider(
 }
 
 /** Set to `false` to hide the yellow outlines (collision is unaffected). */
-export const SHOW_NEW_COLLIDER_OUTLINES = true
+export const SHOW_NEW_COLLIDER_OUTLINES = false
 
 export const newColliders: readonly Collider[] = [
   newCollider(1480, 760, 330, 60), // Entrance Walls
