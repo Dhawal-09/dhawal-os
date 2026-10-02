@@ -4,6 +4,7 @@ import { ErrorScreen } from '../components/error/ErrorScreen'
 import { GameHud } from '../components/game-menu/GameHud'
 import { LandingScreen } from '../components/landing/LandingScreen'
 import { BootScreen } from '../components/loading/BootScreen'
+import { MobileControls } from '../components/mobile-controls/MobileControls'
 import { ViewSelectScreen } from '../components/view-select/ViewSelectScreen'
 import { audioManager } from '../game/audio/AudioManager'
 import { authManager } from '../game/auth/AuthManager'
@@ -179,6 +180,9 @@ function App() {
           />
         )}
       </main>
+      {/* Touch D-pad + interact button — GAME only, so they can never drive
+          the world behind the boot/access/view-select screens. */}
+      {lifecycle === 'game' && <MobileControls />}
       <InteractionOverlay />
       {lifecycle === 'loading' && (
         <BootScreen

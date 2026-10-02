@@ -1,0 +1,160 @@
+/* A click-through layer over the game view: only the pad and the interact
+   button themselves take touches. Below every overlay (boot/access z 5-6,
+   panels z 10) so a panel always covers them. */
+.mobile-controls {
+  --mobile-control-gap: 16px;
+  --mobile-dpad-size: clamp(132px, 36vmin, 168px);
+
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+/* Touch-first devices only — a desktop with a mouse keeps its keyboard
+   controls and never sees these. */
+@media not all and (pointer: coarse) {
+  .mobile-controls {
+    display: none;
+  }
+}
+
+.mobile-dpad,
+.mobile-interact {
+  position: absolute;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--mobile-control-gap));
+  pointer-events: auto;
+  /* Holding or sliding on a control must never scroll, zoom, select text or
+     open the long-press menu — scoped to the controls, not the page. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-dpad {
+  left: calc(env(safe-area-inset-left, 0px) + var(--mobile-control-gap));
+  width: var(--mobile-dpad-size);
+  height: var(--mobile-dpad-size);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  grid-template-areas:
+    '. up .'
+    'left hub right'
+    '. down .';
+}
+
+.mobile-dpad-button,
+.mobile-interact {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--pixel-border, #1e5fa8);
+  border-radius: 2px;
+  background: rgba(6, 20, 45, 0.78);
+  box-shadow: inset 0 0 0 2px rgba(8, 21, 47, 0.9);
+  color: var(--cyan, #27d7ff);
+  font-family: var(--font-pixel);
+  cursor: pointer;
+}
+
+.mobile-dpad-button {
+  touch-action: none;
+}
+
+.mobile-dpad-up {
+  grid-area: up;
+}
+
+.mobile-dpad-down {
+  grid-area: down;
+}
+
+.mobile-dpad-left {
+  grid-area: left;
+}
+
+.mobile-dpad-right {
+  grid-area: right;
+}
+
+.mobile-dpad-hub {
+  grid-area: hub;
+  border: 2px solid var(--pixel-border, #1e5fa8);
+  background: rgba(11, 33, 68, 0.78);
+}
+
+/* Hard-edged triangles drawn with borders — crisp at any size, and no
+   dependence on an arrow glyph the pixel font doesn't carry. */
+.mobile-dpad-arrow {
+  width: 0;
+  height: 0;
+  border: 9px solid transparent;
+}
+
+.mobile-dpad-up .mobile-dpad-arrow {
+  border-top-width: 0;
+  border-bottom: 12px solid currentColor;
+}
+
+.mobile-dpad-down .mobile-dpad-arrow {
+  border-bottom-width: 0;
+  border-top: 12px solid currentColor;
+}
+
+.mobile-dpad-left .mobile-dpad-arrow {
+  border-left-width: 0;
+  border-right: 12px solid currentColor;
+}
+
+.mobile-dpad-right .mobile-dpad-arrow {
+  border-right-width: 0;
+  border-left: 12px solid currentColor;
+}
+
+.mobile-dpad-button.is-held,
+.mobile-interact:active {
+  border-color: var(--cyan-bright, #57e8ff);
+  background: var(--blue, #147bff);
+  color: var(--text, #eaf4ff);
+}
+
+.mobile-dpad-button:focus-visible,
+.mobile-interact:focus-visible {
+  outline: 1px solid var(--cyan-bright, #57e8ff);
+  outline-offset: 2px;
+}
+
+.mobile-interact {
+  right: calc(env(safe-area-inset-right, 0px) + var(--mobile-control-gap));
+  /* Lifted to the pad's middle row, so both thumbs rest at the same height. */
+  bottom: calc(
+    env(safe-area-inset-bottom, 0px) + var(--mobile-control-gap) +
+      var(--mobile-dpad-size) / 6
+  );
+  width: calc(var(--mobile-dpad-size) * 2 / 3);
+  height: calc(var(--mobile-dpad-size) * 2 / 3);
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-interact-key {
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--cyan-bright, #57e8ff);
+}
+
+.mobile-interact-label {
+  font-size: 0.5rem;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  color: var(--text, #eaf4ff);
+}
+
+.mobile-interact:active .mobile-interact-key {
+  color: var(--text, #eaf4ff);
+}

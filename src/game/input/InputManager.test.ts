@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { KeyboardSource } from './KeyboardInput'
 import { InputManager } from './InputManager'
+import { TouchInput } from './TouchInput'
 
 function fakeKeyboard(
   pressedCodes: string[] = [],
@@ -115,5 +116,85 @@ describe('InputManager — interaction', () => {
     expect(input.wasInteractPressed()).toBe(true)
     expect(input.wasInteractPressed()).toBe(true)
     expect(input.wasInteractPressed()).toBe(false)
+  })
+})
+
+describe('InputManager — on-screen (touch) controls', () => {
+  it('a held D-pad direction produces the same vector as its key', () => {
+    const cases = [
+      ['up', 'KeyW'],
+      ['down', 'KeyS'],
+      ['left', 'KeyA'],
+      ['right', 'KeyD'],
+    ] as const
+
+    for (const [direction, code] of cases) {
+      const touch = new TouchInput()
+      touch.setDirection(direction, true)
+
+      expect(
+        new InputManager(fakeKeyboard(), touch).getMovementVector(),
+      ).toEqual(
+        new InputManager(
+          fakeKeyboard([code]),
+          new TouchInput(),
+        ).getMovementVector(),
+      )
+    }
+  })
+
+  it('stops the moment the direction is released', () => {
+    const touch = new TouchInput()
+    const input = new InputManager(fakeKeyboard(), touch)
+    touch.setDirection('up', true)
+    expect(input.getMovementVector()).toEqual({ x: 0, y: -1 })
+
+    touch.setDirection('up', false)
+
+    expect(input.getMovementVector()).toEqual({ x: 0, y: 0 })
+  })
+
+  it('two held directions give the same normalized diagonal as two keys', () => {
+    const touch = new TouchInput()
+    touch.setDirection('up', true)
+    touch.setDirection('right', true)
+    const { x, y } = new InputManager(fakeKeyboard(), touch).getMovementVector()
+
+    expect(Math.hypot(x, y)).toBeCloseTo(1)
+    expect(x).toBeCloseTo(Math.SQRT1_2)
+    expect(y).toBeCloseTo(-Math.SQRT1_2)
+  })
+
+  it('leaves keyboard movement untouched when nothing is held on screen', () => {
+    const input = new InputManager(fakeKeyboard(['KeyA']), new TouchInput())
+
+    expect(input.getMovementVector()).toEqual({ x: -1, y: 0 })
+  })
+
+  it('the on-screen interact button satisfies wasInteractPressed exactly once', () => {
+    const touch = new TouchInput()
+    const input = new InputManager(fakeKeyboard(), touch)
+
+    touch.pressInteract()
+
+    expect(input.wasInteractPressed()).toBe(true)
+    expect(input.wasInteractPressed()).toBe(false)
+  })
+
+  it('reset() and destroy() release held directions and a pending interact press', () => {
+    const touch = new TouchInput()
+    const input = new InputManager(fakeKeyboard(), touch)
+    touch.setDirection('down', true)
+    touch.pressInteract()
+
+    input.reset()
+
+    expect(input.getMovementVector()).toEqual({ x: 0, y: 0 })
+    expect(input.wasInteractPressed()).toBe(false)
+
+    touch.setDirection('left', true)
+    input.destroy()
+
+    expect(touch.isHeld('left')).toBe(false)
   })
 })

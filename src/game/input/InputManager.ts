@@ -1,4 +1,5 @@
 import { KeyboardInput, type KeyboardSource } from './KeyboardInput'
+import { touchInput, type TouchDirection, type TouchSource } from './TouchInput'
 
 export interface MovementVector {
   x: number
@@ -30,6 +31,14 @@ const KEY_DIRECTIONS: Record<string, MovementVector> = {
   ArrowRight: { x: 1, y: 0 },
 }
 
+/** The on-screen D-pad's directions — each one counts exactly like its W/A/S/D key. */
+const TOUCH_DIRECTIONS: Record<TouchDirection, MovementVector> = {
+  up: KEY_DIRECTIONS.KeyW,
+  down: KEY_DIRECTIONS.KeyS,
+  left: KEY_DIRECTIONS.KeyA,
+  right: KEY_DIRECTIONS.KeyD,
+}
+
 function normalize(vector: MovementVector): MovementVector {
   const length = Math.hypot(vector.x, vector.y)
   if (length === 0) return { x: 0, y: 0 }
@@ -41,15 +50,21 @@ function normalize(vector: MovementVector): MovementVector {
  * consumes (see PLAYER_SPEC.md "Input": Keyboard/Touch/Joystick → this →
  * PlayerController). Game systems never read KeyboardEvent directly, and
  * PlayerController never depends on this class's keyboard-specific internals
- * — only on `getMovementVector()`/`destroy()`, so a touch/joystick source
- * can be added later (Phase 09) without changing PlayerController.
+ * — only on `getMovementVector()`/`destroy()`. The on-screen mobile
+ * controls (`TouchSource`) are a second raw source feeding the same vector
+ * and the same interact edge, so PlayerController can't tell them apart.
  */
 export class InputManager implements MovementInput, InteractionInput {
   private readonly keyboard: KeyboardSource
+  private readonly touch: TouchSource
   private pendingTapInteract = false
 
-  constructor(keyboard: KeyboardSource = new KeyboardInput()) {
+  constructor(
+    keyboard: KeyboardSource = new KeyboardInput(),
+    touch: TouchSource = touchInput,
+  ) {
     this.keyboard = keyboard
+    this.touch = touch
   }
 
   /** A unit-length (or zero) vector: x/y each in [-1, 1], diagonals normalized so they aren't faster than cardinal movement. */
@@ -63,15 +78,22 @@ export class InputManager implements MovementInput, InteractionInput {
       y += KEY_DIRECTIONS[code].y
     }
 
+    for (const direction in TOUCH_DIRECTIONS) {
+      if (!this.touch.isHeld(direction as TouchDirection)) continue
+      x += TOUCH_DIRECTIONS[direction as TouchDirection].x
+      y += TOUCH_DIRECTIONS[direction as TouchDirection].y
+    }
+
     return normalize({ x, y })
   }
 
-  /** True once after an `E` press or a canvas tap (mobile stub — full touch UX in Phase 09). Must be called every frame to stay correctly edge-triggered. */
+  /** True once after an `E` press, a canvas tap, or a press of the on-screen interact button. Must be called every frame to stay correctly edge-triggered. */
   wasInteractPressed(): boolean {
     if (this.pendingTapInteract) {
       this.pendingTapInteract = false
       return true
     }
+    if (this.touch.wasInteractPressed()) return true
     return this.keyboard.wasJustPressed('KeyE')
   }
 
@@ -90,9 +112,13 @@ export class InputManager implements MovementInput, InteractionInput {
   reset(): void {
     this.pendingTapInteract = false
     this.keyboard.reset()
+    this.touch.reset()
   }
 
   destroy(): void {
     this.keyboard.destroy()
+    // The touch source outlives this manager (shared with the React
+    // controls) — leave nothing held for the next scene.
+    this.touch.reset()
   }
 }
