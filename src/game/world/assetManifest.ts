@@ -82,7 +82,7 @@ import educationSmallPlantUrl from '../../../assets/world/special/small plant-Ph
 import educationReadingCatUrl from '../../../assets/world/special/cat.png'
 import educationPinboardUrl from '../../../assets/world/Education/pin board-Photoroom.png'
 import educationFilesUrl from '../../../assets/world/Education/Files.png'
-import educationTableWithBooksUrl from '../../../assets/world/Education/education_table_with_books.png'
+import educationTableWithBooksUrl from '../../../assets/world/Education/tabldemo-Photoroom.png'
 import bedroomNightstandUrl from '../../../assets/world/BedRoom/desk-Photoroom.png'
 import wallTwoUrl from '../../../assets/world/Walls/Wall2.png'
 import wallThreeUrl from '../../../assets/world/Walls/Wall3.png'

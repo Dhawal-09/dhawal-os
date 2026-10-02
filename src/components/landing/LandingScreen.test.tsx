@@ -2,7 +2,7 @@ import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { about } from '../../data/about'
-import { contactLinks } from '../../data/contact'
+import { landingContactItems } from '../../data/contact'
 import { LandingScreen } from './LandingScreen'
 
 afterEach(() => {
@@ -15,7 +15,7 @@ describe('LandingScreen', () => {
 
     expect(screen.getByText('DHAWAL.OS')).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { name: /HI, I.M DHAWAL/i }),
+      screen.getByRole('heading', { name: /HI,I.M DHAWAL/i }),
     ).toBeInTheDocument()
     expect(screen.getByText(about.title)).toBeInTheDocument()
     expect(screen.getByText(about.summary)).toBeInTheDocument()
@@ -45,7 +45,7 @@ describe('LandingScreen', () => {
     expect(onStartJourney).toHaveBeenCalledTimes(2)
   })
 
-  it('VIEW RESUME links directly to the static resume asset, independent of the game', () => {
+  it('the resume icon links directly to the static resume asset, independent of the game', () => {
     render(<LandingScreen onStartJourney={vi.fn()} />)
 
     const link = screen.getByRole('link', { name: /view resume/i })
@@ -54,17 +54,31 @@ describe('LandingScreen', () => {
     expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'))
   })
 
-  it('shows exactly the verified profile links from project data as social links — none fabricated', () => {
+  it('shows exactly the email, LinkedIn, GitHub and resume icons from project data — none fabricated', () => {
     render(<LandingScreen onStartJourney={vi.fn()} />)
 
-    const nav = screen.queryByRole('navigation', { name: /social links/i })
-    if (contactLinks.length === 0) {
-      expect(nav).not.toBeInTheDocument()
-      return
-    }
-    const links = within(nav!).getAllByRole('link')
+    expect(landingContactItems.map((item) => item.id)).toEqual([
+      'email',
+      'linkedin',
+      'github',
+      'resume',
+    ])
+    const nav = screen.getByRole('navigation', { name: /contact links/i })
+    const links = within(nav).getAllByRole('link')
     expect(links.map((link) => link.getAttribute('href'))).toEqual(
-      contactLinks.map((link) => link.url),
+      landingContactItems.map((item) => item.href),
     )
+    expect(links.map((link) => link.getAttribute('aria-label'))).toEqual([
+      'Email',
+      'LinkedIn',
+      'GitHub',
+      'View resume',
+    ])
+  })
+
+  it('shows the location under the contact icons', () => {
+    render(<LandingScreen onStartJourney={vi.fn()} />)
+
+    expect(screen.getByText(about.location)).toBeInTheDocument()
   })
 })
