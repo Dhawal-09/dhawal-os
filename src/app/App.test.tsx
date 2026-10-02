@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   render,
   screen,
@@ -591,5 +592,43 @@ describe('App background music', () => {
     await waitForAccessPanel()
     await grantAccess(user)
     expect(playMusic).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('App — on-screen mobile controls', () => {
+  it('exist only in GAME — never on landing, boot, access or view select', async () => {
+    const user = userEvent.setup()
+    const controls = () => screen.queryByRole('button', { name: 'Interact' })
+
+    render(<App />)
+    expect(controls()).toBeNull()
+
+    await startJourney(user)
+    expect(controls()).toBeNull()
+    await waitForAccessPanel()
+    expect(controls()).toBeNull()
+
+    await passAccess(user)
+    expect(controls()).toBeNull()
+
+    await user.click(screen.getByRole('radio', { name: /explore view/i }))
+    await user.click(screen.getByRole('button', { name: /enter dhawal\.os/i }))
+    await waitFor(() => expect(controls()).toBeInTheDocument())
+    expect(screen.getByRole('button', { name: 'Move up' })).toBeInTheDocument()
+  })
+
+  it('are removed while a portfolio panel is open and return when it closes', async () => {
+    const user = userEvent.setup()
+    await enterGame(user)
+
+    act(() => gameEventBridge.emit('OPEN_SKILLS'))
+    expect(screen.queryByRole('button', { name: 'Move up' })).toBeNull()
+
+    await user.keyboard('{Escape}')
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: 'Move up' }),
+      ).toBeInTheDocument(),
+    )
   })
 })

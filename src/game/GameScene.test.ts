@@ -6,6 +6,7 @@ import { GameScene } from './GameScene'
 import { Player } from './player/Player'
 import { World } from './world/World'
 import { CAMERA_CONFIG } from './world/cameraConstants'
+import { touchInput } from './input/TouchInput'
 import { PLAYER_SPAWN_POSITION } from './player/playerConstants'
 
 function press(code: string): void {
@@ -518,5 +519,137 @@ describe('GameScene camera modes', () => {
     expect(scene.cameraState.mode).toBe('overview')
     expect(scene.player.position.x).toBe(before.x)
     expect(scene.player.position.y).toBe(before.y)
+  })
+})
+
+describe('GameScene — on-screen (touch) controls', () => {
+  let scene: GameScene | null = null
+
+  afterEach(() => {
+    scene?.destroy()
+    scene = null
+    touchInput.reset()
+    vi.restoreAllMocks()
+  })
+
+  it('a held D-pad direction walks the player through the game loop, and releasing stops it', () => {
+    scene = new GameScene()
+    const startX = scene.player.position.x
+
+    touchInput.setDirection('right', true)
+    scene.update(16)
+    scene.update(16)
+    scene.update(16)
+
+    expect(scene.player.position.x).toBeGreaterThan(startX)
+    expect(scene.player.direction).toBe('right')
+    expect(scene.player.moving).toBe(true)
+
+    touchInput.setDirection('right', false)
+    const stoppedX = scene.player.position.x
+    scene.update(16)
+
+    expect(scene.player.position.x).toBe(stoppedX)
+    expect(scene.player.moving).toBe(false)
+  })
+
+  it('ends up exactly where the same keyboard input does — same speed, same collision', () => {
+    const walk = (hold: () => void, letGo: () => void) => {
+      const walked = new GameScene()
+      hold()
+      for (let i = 0; i < 40; i++) walked.update(100)
+      letGo()
+      const { x, y } = walked.player.position
+      walked.destroy()
+      return { x, y }
+    }
+
+    const byKeyboard = walk(
+      () => {
+        press('KeyW')
+        press('KeyA')
+      },
+      () => {
+        release('KeyW')
+        release('KeyA')
+      },
+    )
+    const byTouch = walk(
+      () => {
+        touchInput.setDirection('up', true)
+        touchInput.setDirection('left', true)
+      },
+      () => touchInput.reset(),
+    )
+
+    expect(byTouch).toEqual(byKeyboard)
+    expect(byTouch).not.toEqual(PLAYER_SPAWN_POSITION)
+  })
+
+  it('footsteps follow the actual movement, not the touch itself', () => {
+    scene = new GameScene()
+    const setWalking = vi.spyOn(audioManager, 'setWalking')
+
+    touchInput.setDirection('right', true)
+    scene.update(16)
+    expect(setWalking).toHaveBeenLastCalledWith(true)
+
+    touchInput.setDirection('right', false)
+    scene.update(16)
+    expect(setWalking).toHaveBeenLastCalledWith(false)
+  })
+
+  it('the interact button triggers the in-range target exactly like E, and nothing without one', () => {
+    scene = new GameScene()
+    const received: unknown[] = []
+    const unsubscribe = gameEventBridge.subscribe((event) =>
+      received.push(event),
+    )
+
+    // The spawn point is inside the About Me card's radius.
+    scene.update(16)
+    const target = scene.player.interactionTarget
+    expect(target).not.toBeNull()
+    touchInput.pressInteract()
+    scene.update(16)
+    expect(received).toEqual([target?.action])
+
+    gameEventBridge.emit('RETURN_TO_WORLD')
+    received.length = 0
+
+    // Walk out of every interaction radius: the button now does nothing.
+    touchInput.setDirection('down', true)
+    for (let i = 0; i < 40; i++) scene.update(100)
+    touchInput.setDirection('down', false)
+    if (scene.player.interactionTarget === null) {
+      touchInput.pressInteract()
+      scene.update(16)
+      expect(received).toEqual([])
+    }
+    unsubscribe()
+  })
+
+  it('does nothing while a panel has the world paused, and nothing carries over on resume', () => {
+    scene = new GameScene()
+    const { x, y } = scene.player.position
+
+    gameEventBridge.emit('OPEN_PROJECTS')
+    touchInput.setDirection('right', true)
+    touchInput.pressInteract()
+    scene.update(100)
+
+    expect(scene.player.position.x).toBe(x)
+    expect(scene.player.position.y).toBe(y)
+
+    const received: unknown[] = []
+    const unsubscribe = gameEventBridge.subscribe((event) =>
+      received.push(event),
+    )
+    gameEventBridge.emit('RETURN_TO_WORLD')
+    scene.update(100)
+    unsubscribe()
+
+    expect(scene.player.position.x).toBe(x)
+    expect(received).toEqual(['RETURN_TO_WORLD'])
   })
 })
