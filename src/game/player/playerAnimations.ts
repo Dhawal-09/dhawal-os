@@ -11,7 +11,7 @@ import { PLAYER_SPRITE_HEIGHT, WALK_ANIMATION_FPS } from './playerConstants'
 const BASE_URL = import.meta.env.BASE_URL
 export const PLAYER_SHEET_URLS: Record<Direction, string> = {
   up: `${BASE_URL}assets/character/character-up.png`,
-  down: `${BASE_URL}assets/character/character-down-alt.png`,
+  down: `${BASE_URL}assets/character/character-down.png`,
   left: `${BASE_URL}assets/character/character-left.png`,
   right: `${BASE_URL}assets/character/character-right.png`,
 }
