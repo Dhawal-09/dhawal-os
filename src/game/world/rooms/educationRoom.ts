@@ -87,48 +87,54 @@ const EDUCATION_DESK_POSITION = { x: 625, y: 1060 } // WORLD POSITION — SAFE T
  * width, height}` objects to this array for additional wall segments; none
  * of them render anything, so there's no matching asset to keep in sync.
  */
-const EDUCATION_WALL_COLLIDER: Collider = {  //shelf one 
-  x: 110, 
-  y: 800, 
-  width: 240, 
-  height: 170, 
+const EDUCATION_WALL_COLLIDER: Collider = {
+  //shelf one
+  x: 110,
+  y: 800,
+  width: 240,
+  height: 170,
 }
 
 /** Copy #2 of the wall collider above — same shape, same handling; only the numbers differ. */
-const EDUCATION_WALL_COLLIDER_2: Collider = {  // DEsk one
-  x: 480,        
-  y: 800, 
-  width: 285, 
-  height: 150, 
+const EDUCATION_WALL_COLLIDER_2: Collider = {
+  // DEsk one
+  x: 480,
+  y: 800,
+  width: 285,
+  height: 150,
 }
 
 /** Copy #3 of the wall collider above. */
-const EDUCATION_WALL_COLLIDER_3: Collider = {  //small
-  x: 140, 
-  y: 750, 
-  width: 70, 
-  height: 40, 
+const EDUCATION_WALL_COLLIDER_3: Collider = {
+  //small
+  x: 140,
+  y: 750,
+  width: 70,
+  height: 40,
 }
 
 /** Copy #4 of the wall collider above. */
-const EDUCATION_WALL_COLLIDER_4: Collider = {  //bottom
-  x: 740,   
-  y: 1110,  
-  width: 30, 
-  height: 90,   
+const EDUCATION_WALL_COLLIDER_4: Collider = {
+  //bottom
+  x: 740,
+  y: 1110,
+  width: 30,
+  height: 90,
 }
 
-const EDUCATION_WALL_COLLIDER_5: Collider = {    //side wall
-  x: 740,   
-  y: 940,   
-  width: 30,  
-  height: 100,  
+const EDUCATION_WALL_COLLIDER_5: Collider = {
+  //side wall
+  x: 740,
+  y: 940,
+  width: 30,
+  height: 100,
 }
-const EDUCATION_WALL_COLLIDER_6: Collider = {    //side wall
-  x: 230,   
-  y: 1110,   
-  width: 100,  
-  height: 100,  
+const EDUCATION_WALL_COLLIDER_6: Collider = {
+  //side wall
+  x: 230,
+  y: 1110,
+  width: 100,
+  height: 100,
 }
 /**
  * Colliders drawn as a yellow bordered box in dev, so you can see what you're
@@ -161,7 +167,7 @@ export const educationColliders: readonly Collider[] = [
   EDUCATION_WALL_COLLIDER_3,
   EDUCATION_WALL_COLLIDER_4,
   EDUCATION_WALL_COLLIDER_5,
-  EDUCATION_WALL_COLLIDER_6
+  EDUCATION_WALL_COLLIDER_6,
 ]
 
 /**
@@ -328,7 +334,10 @@ const PINBOARD_NATURAL_SIZE = { width: 1024, height: 559 }
 const PINBOARD_CONTENT_BBOX = { minX: 341, minY: 144, maxX: 682, maxY: 392 }
 /** Target rendered width (world px, full padded canvas) — visible content reads at ~50px wide, deliberately smaller than the certificate so it reads as a supporting element, not competing for attention. */
 const PINBOARD_TARGET_WIDTH = 150
-const PINBOARD_SCALE = scaleForWidth(PINBOARD_NATURAL_SIZE, PINBOARD_TARGET_WIDTH)
+const PINBOARD_SCALE = scaleForWidth(
+  PINBOARD_NATURAL_SIZE,
+  PINBOARD_TARGET_WIDTH,
+)
 
 /** Natural pixel dimensions of the approved document/file storage box PNG (assets/world/Education/Files.png), read directly from the source file. */
 const FILES_NATURAL_SIZE = { width: 1024, height: 559 }
@@ -391,11 +400,21 @@ const smallPlantPosition = educationPositionForFloorPoint(
   SMALL_PLANT_SCALE,
 )
 
-/** Natural pixel dimensions of the table-with-books PNG (assets/world/Education/education_table_with_books.png), read directly from the source file — a tight, fully opaque crop. */
-const TABLE_WITH_BOOKS_NATURAL_SIZE = { width: 325, height: 122 }
-const TABLE_WITH_BOOKS_CONTENT_BBOX = { minX: 0, minY: 0, maxX: 525, maxY: 122 }
-/** Target rendered width (world px) — ~250×58, a long low table along the bottom wall. */
-const TABLE_WITH_BOOKS_TARGET_WIDTH = 250
+/**
+ * Natural pixel dimensions of the table-with-books PNG
+ * (assets/world/Education/tabldemo-Photoroom.png), read directly from the
+ * source file — a padded canvas; `CONTENT_BBOX` is where the table itself
+ * sits inside it (alpha > 128 scan), flush with the canvas's bottom edge.
+ */
+const TABLE_WITH_BOOKS_NATURAL_SIZE = { width: 1024, height: 236 }
+const TABLE_WITH_BOOKS_CONTENT_BBOX = {
+  minX: 288,
+  minY: 97,
+  maxX: 746,
+  maxY: 236,
+}
+/** Target rendered width (world px, full padded canvas) — the visible table reads at ~224×68, a long low table along the bottom wall. */
+const TABLE_WITH_BOOKS_TARGET_WIDTH = 500
 const TABLE_WITH_BOOKS_SCALE = scaleForWidth(
   TABLE_WITH_BOOKS_NATURAL_SIZE,
   TABLE_WITH_BOOKS_TARGET_WIDTH,

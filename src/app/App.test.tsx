@@ -12,7 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { audioManager } from '../game/audio/AudioManager'
 import { authManager } from '../game/auth/AuthManager'
 import { gameEventBridge } from '../game/events/GameEventBridge'
-import { contactLinks } from '../data/contact'
+import { landingContactItems } from '../data/contact'
 import { RESUME_PDF_PATH } from '../data/resume'
 import App from './App'
 
@@ -127,7 +127,7 @@ describe('App lifecycle', () => {
 
     expect(screen.getByText('DHAWAL.OS')).toBeInTheDocument()
     expect(
-      screen.getByRole('heading', { name: /HI, I.M DHAWAL/i }),
+      screen.getByRole('heading', { name: /HI,\s*I.M DHAWAL/i }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: /start journey/i }),
@@ -249,17 +249,13 @@ describe('App lifecycle', () => {
     )
   })
 
-  it('shows only the verified profile URLs from project data as social links on landing (never fabricated)', () => {
+  it('shows only the verified contact channels from project data as icon links on landing (never fabricated)', () => {
     render(<App />)
 
-    const nav = screen.queryByRole('navigation', { name: /social links/i })
-    if (contactLinks.length === 0) {
-      expect(nav).not.toBeInTheDocument()
-      return
-    }
-    const links = within(nav!).getAllByRole('link')
+    const nav = screen.getByRole('navigation', { name: /contact links/i })
+    const links = within(nav).getAllByRole('link')
     expect(links.map((link) => link.getAttribute('href'))).toEqual(
-      contactLinks.map((link) => link.url),
+      landingContactItems.map((item) => item.href),
     )
   })
 

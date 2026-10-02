@@ -210,10 +210,10 @@ const WALL_TROPHY_PLACEMENT = placeByVisibleContent(
   { x: 860, y: 985 }, // WORLD POSITION — SAFE TO TUNE — brick wall, left of the artwork
 )
 const STAND_PLACEMENT = placeByVisibleContent(
-  { width: 1581, height: 1025 }, // Stand.png
+  { width: 1581, height: 1225 }, // Stand.png
   { minX: 607, maxX: 1010, maxY: 861 },
   62, // visible width — SAFE TO TUNE
-  { x: 1010, y: 1175 }, // WORLD POSITION — SAFE TO TUNE — gym floor, between the dumbbell rack and the gym station
+  { x: 970, y: 1155 }, // WORLD POSITION — SAFE TO TUNE — gym floor, between the dumbbell rack and the gym station
 )
 
 /**

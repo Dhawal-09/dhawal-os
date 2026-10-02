@@ -9,6 +9,104 @@
   color: var(--text, #eaf4ff);
 }
 
+/* The cover art, as two fixed layers behind the content (`.landing-screen`
+   is its own stacking context, so the negative z-indexes stay inside it):
+   ::before — a blurred, darkened copy that always fills the screen;
+   ::after  — the art itself plus a gradient that darkens the bottom so the
+              intro copy stays readable.
+   By default the art fills the screen (cropped, never stretched) — right for
+   phones and other screens narrower than the 3:2 art. */
+.landing-screen::before,
+.landing-screen::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.landing-screen::before {
+  z-index: -2;
+  background: url('../../../assets/Cover/Cover1-clean.png') center / cover
+    no-repeat;
+  filter: blur(28px) brightness(0.45);
+  /* Scaled up so the blur's soft edge falls outside the screen. */
+  transform: scale(1.12);
+}
+
+.landing-screen::after {
+  z-index: -1;
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(5, 11, 26, 0.15) 0%,
+      rgba(5, 11, 26, 0.15) 45%,
+      rgba(5, 11, 26, 0.75) 100%
+    ),
+    url('../../../assets/Cover/Cover1-clean.png') center / cover no-repeat;
+}
+
+/* Landscape screens: the art is zoomed a little (115% of the screen height,
+   so its rendered width is 100vh * 1.15 * 3 / 2 = 172.5vh) and slid left by
+   `--landing-art-shift`, cropping a strip of the left wall. On screens wider
+   than what's left, the band on the right is the blurred layer — which is
+   where the intro panel sits — and the art's right edge fades into it, so
+   there is no hard seam. */
+@media (min-aspect-ratio: 1/1) {
+  .landing-screen::after {
+    /* SAFE TO TUNE — how far the art slides left (0 = flush with the edge). */
+    --landing-art-shift: 22vh;
+    --landing-art-right: calc(172.5vh - var(--landing-art-shift));
+    background:
+      linear-gradient(
+        to bottom,
+        rgba(5, 11, 26, 0.15) 0%,
+        rgba(5, 11, 26, 0.15) 45%,
+        rgba(5, 11, 26, 0.75) 100%
+      ),
+      url('../../../assets/Cover/Cover1-clean.png')
+        calc(var(--landing-art-shift) * -1) center / auto 115% no-repeat;
+    -webkit-mask-image: linear-gradient(
+      to right,
+      #000 calc(var(--landing-art-right) - 260px),
+      transparent var(--landing-art-right)
+    );
+    mask-image: linear-gradient(
+      to right,
+      #000 calc(var(--landing-art-right) - 260px),
+      transparent var(--landing-art-right)
+    );
+  }
+}
+
+/* Phones (portrait): the dedicated mobile cover (719x797), shown whole at
+   full width across the top — its rendered height is 100vw * 797 / 719 —
+   and faded at the bottom into its own blurred copy behind the intro copy. */
+@media (max-width: 767px) and (max-aspect-ratio: 1/1) {
+  .landing-screen::before {
+    background-image: url('../../../assets/Cover/Mobile.png');
+  }
+
+  .landing-screen::after {
+    background:
+      linear-gradient(
+        to bottom,
+        rgba(5, 11, 26, 0.1) 0%,
+        rgba(5, 11, 26, 0.1) 100%
+      ),
+      url('../../../assets/Cover/Mobile.png') top center / 100% auto no-repeat;
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      #000 calc(110.85vw - 110px),
+      transparent 110.85vw
+    );
+    mask-image: linear-gradient(
+      to bottom,
+      #000 calc(110.85vw - 110px),
+      transparent 110.85vw
+    );
+  }
+}
+
 .landing-header {
   flex-shrink: 0;
   padding: 16px clamp(16px, 4vw, 32px);
@@ -22,30 +120,16 @@
   color: var(--cyan, #27d7ff);
 }
 
-/* Stands in for the approved pixel-art room (ASSET_SPEC.md — not yet
-   supplied). Deliberately unfinished-looking, same intent as the Pixi dev
-   placeholders, so it is never mistaken for final art. */
-.landing-world-placeholder {
+/* Spacer that keeps the cover art visible above the intro copy. */
+.landing-world {
   flex: 1;
   min-height: 220px;
-  margin: 0 clamp(16px, 4vw, 32px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  border: 1px dashed var(--pixel-border, #1e5fa8);
-  border-radius: 4px;
-  background: var(--panel-dark, #06142d);
-  color: var(--text-muted, #91a9c8);
-  font-size: 0.8rem;
-  text-align: center;
-  padding: 16px;
 }
 
 .landing-intro {
   flex-shrink: 0;
   padding: 24px clamp(16px, 4vw, 32px) 32px;
+  background: rgba(5, 11, 26, 0.8);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -81,23 +165,18 @@
   margin-top: 8px;
 }
 
-.landing-cta,
-.landing-secondary {
-  min-height: 44px;
-  padding: 12px 24px;
-  border-radius: 4px;
-  font-family: var(--font-pixel);
-  font-size: 0.82rem;
-  letter-spacing: 0.04em;
-  text-align: center;
-  text-decoration: none;
-  cursor: pointer;
-}
-
 .landing-cta {
+  min-height: 44px;
+  padding: 8px 16px;
   border: 1px solid var(--blue, #147bff);
+  border-radius: 4px;
   background: var(--blue, #147bff);
   color: var(--text, #eaf4ff);
+  font-family: var(--font-pixel);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-align: center;
+  cursor: pointer;
 }
 
 .landing-cta:hover {
@@ -105,62 +184,121 @@
   border-color: var(--cyan, #27d7ff);
 }
 
-.landing-secondary {
-  border: 1px solid var(--pixel-border, #1e5fa8);
-  background: transparent;
-  color: var(--text, #eaf4ff);
-}
-
-.landing-secondary:hover {
-  background: var(--panel, #0b2144);
-}
-
 .landing-cta:focus-visible,
-.landing-secondary:focus-visible,
 .landing-social a:focus-visible {
   outline: 2px solid var(--cyan-bright, #57e8ff);
   outline-offset: 2px;
 }
 
+/* One row of icon-only contact buttons (email, LinkedIn, GitHub, resume). */
 .landing-social {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 8px;
+  gap: 10px;
+  margin-top: 6px;
 }
 
 .landing-social a {
-  min-height: 44px;
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  border: 1px solid var(--pixel-border, #1e5fa8);
+  border-radius: 4px;
+  background: rgba(11, 33, 68, 0.6);
+}
+
+.landing-social a:hover {
+  border-color: var(--cyan, #27d7ff);
+  background: var(--panel, #0b2144);
+}
+
+.landing-social img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.landing-location {
+  margin: 4px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--font-pixel);
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   letter-spacing: 0.03em;
   color: var(--text-muted, #91a9c8);
 }
 
-.landing-social a:hover {
-  color: var(--cyan, #27d7ff);
+.landing-location svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  fill: var(--cyan, #27d7ff);
 }
 
 /* Desktop: an intentional composition, not a stretched-out mobile layout —
-   the intro panel overlays the room area as a card, per the approved
-   reference, instead of sitting in plain document flow underneath it.
+   the intro panel overlays the right side of the room as a card, instead of
+   sitting in plain document flow underneath it.
    `.landing-screen` (position: fixed) is the positioned ancestor here. */
 @media (min-width: 768px) {
-  .landing-world-placeholder {
-    margin: 0 clamp(16px, 4vw, 32px) 24px;
-  }
-
   .landing-intro {
     position: absolute;
-    left: clamp(16px, 4vw, 48px);
+    right: clamp(16px, 4vw, 48px);
     bottom: clamp(16px, 4vw, 48px);
-    max-width: 480px;
-    padding: 24px;
+    max-width: 560px;
+    padding: 32px;
+    gap: 14px;
     border: 1px solid var(--pixel-border, #1e5fa8);
     border-radius: 6px;
-    background: rgba(11, 33, 68, 0.9);
+    /* Translucent, with whatever art is behind the panel blurred. */
+    background: rgba(11, 33, 68, 0.72);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+
+  /* The card's contents scale up with it. */
+  .landing-intro h1 {
+    font-size: 2.1rem;
+  }
+
+  .landing-role {
+    font-size: 1.05rem;
+  }
+
+  .landing-summary {
+    font-size: 1.1rem;
+  }
+
+  .landing-cta {
+    min-height: 50px;
+    padding: 10px 22px;
+    font-size: 0.82rem;
+  }
+
+  .landing-social {
+    gap: 12px;
+  }
+
+  .landing-social a {
+    width: 52px;
+    height: 52px;
+  }
+
+  .landing-social img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .landing-location {
+    font-size: 0.8rem;
+  }
+
+  .landing-location svg {
+    width: 16px;
+    height: 16px;
   }
 }
 

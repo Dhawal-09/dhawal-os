@@ -119,16 +119,13 @@ export function buildContactItems(profile: ContactProfile): ContactItem[] {
 
 export const contactItems: ContactItem[] = buildContactItems(contactProfile)
 
-export interface ContactLink {
-  label: string
-  url: string
-}
-
 /**
- * The profile links (LinkedIn, GitHub, portfolio) on their own, for the
- * landing screen social row — derived from the same profile, never a second
- * list.
+ * The channels shown as icon buttons on the landing screen, in display
+ * order — a subset of the same `contactItems`, never a second list. A
+ * channel the profile doesn't define simply has no icon.
  */
-export const contactLinks: ContactLink[] = contactItems
-  .filter((item) => item.action === 'external')
-  .map((item) => ({ label: item.label, url: item.href }))
+const LANDING_CONTACT_IDS = ['email', 'linkedin', 'github', 'resume']
+
+export const landingContactItems: ContactItem[] = LANDING_CONTACT_IDS.flatMap(
+  (id) => contactItems.filter((item) => item.id === id),
+)

@@ -9,7 +9,9 @@ export const about = {
   name: 'Dhawal Wani',
   title: 'Software Engineer',
   summary:
-    'Software engineer working across full-stack web development — React, Node.js, Express.js, and PostgreSQL. MCA graduate from the Institute of Industrial and Computer Management, Pune.',
+    'Full-Stack Engineer | Crafting Scalable, Robust & Modern Web Applications',
+  /** Shown under the landing screen's contact icons — as supplied by Dhawal. */
+  location: 'Pune, India',
 }
 
 export interface AboutRow {
