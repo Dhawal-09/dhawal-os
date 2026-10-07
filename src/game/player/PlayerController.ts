@@ -49,7 +49,7 @@ export class PlayerController {
   }
 
   update(deltaMS: number): void {
-    const { x, y } = this.systems.input.getMovementVector()
+    const { x, y } = this.systems.input.getMovementVector(deltaMS)
     const moving = x !== 0 || y !== 0
 
     this.player.moving = moving

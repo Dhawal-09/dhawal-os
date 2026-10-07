@@ -610,7 +610,9 @@ describe('App — on-screen mobile controls', () => {
     await user.click(screen.getByRole('radio', { name: /explore view/i }))
     await user.click(screen.getByRole('button', { name: /enter dhawal\.os/i }))
     await waitFor(() => expect(controls()).toBeInTheDocument())
-    expect(screen.getByRole('button', { name: 'Move up' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('group', { name: 'Movement joystick' }),
+    ).toBeInTheDocument()
   })
 
   it('are removed while a portfolio panel is open and return when it closes', async () => {
@@ -618,12 +620,14 @@ describe('App — on-screen mobile controls', () => {
     await enterGame(user)
 
     act(() => gameEventBridge.emit('OPEN_SKILLS'))
-    expect(screen.queryByRole('button', { name: 'Move up' })).toBeNull()
+    expect(
+      screen.queryByRole('group', { name: 'Movement joystick' }),
+    ).toBeNull()
 
     await user.keyboard('{Escape}')
     await waitFor(() =>
       expect(
-        screen.getByRole('button', { name: 'Move up' }),
+        screen.getByRole('group', { name: 'Movement joystick' }),
       ).toBeInTheDocument(),
     )
   })

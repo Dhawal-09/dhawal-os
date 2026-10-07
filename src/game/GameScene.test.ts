@@ -532,11 +532,11 @@ describe('GameScene — on-screen (touch) controls', () => {
     vi.restoreAllMocks()
   })
 
-  it('a held D-pad direction walks the player through the game loop, and releasing stops it', () => {
+  it('a held stick walks the player through the game loop; releasing eases to a stop with no drift', () => {
     scene = new GameScene()
     const startX = scene.player.position.x
 
-    touchInput.setDirection('right', true)
+    touchInput.setMovement(1, 0)
     scene.update(16)
     scene.update(16)
     scene.update(16)
@@ -545,15 +545,56 @@ describe('GameScene — on-screen (touch) controls', () => {
     expect(scene.player.direction).toBe('right')
     expect(scene.player.moving).toBe(true)
 
-    touchInput.setDirection('right', false)
-    const stoppedX = scene.player.position.x
+    touchInput.setMovement(0, 0)
+    // The short ease-out: still moving on the very next frame…
+    const releasedX = scene.player.position.x
     scene.update(16)
+    expect(scene.player.position.x).toBeGreaterThan(releasedX)
+    // …and fully stopped well within half a second.
+    for (let frame = 0; frame < 30; frame++) scene.update(16)
+    const stoppedX = scene.player.position.x
+    expect(scene.player.moving).toBe(false)
 
+    for (let frame = 0; frame < 30; frame++) scene.update(16)
     expect(scene.player.position.x).toBe(stoppedX)
     expect(scene.player.moving).toBe(false)
   })
 
-  it('ends up exactly where the same keyboard input does — same speed, same collision', () => {
+  it('is analog: a half-pushed stick walks at half speed, a full push at full speed', () => {
+    const speedAt = (magnitude: number): number => {
+      const walked = new GameScene()
+      touchInput.setMovement(0, -magnitude)
+      // Let the ease-in settle without travelling far, then time one frame.
+      for (let frame = 0; frame < 40; frame++) walked.update(4)
+      const before = walked.player.position.y
+      walked.update(16)
+      const speed = Math.abs(walked.player.position.y - before)
+      touchInput.reset()
+      walked.destroy()
+      return speed
+    }
+
+    const full = speedAt(1)
+    const half = speedAt(0.5)
+
+    expect(full).toBeGreaterThan(0)
+    expect(half / full).toBeCloseTo(0.5, 1)
+  })
+
+  it('faces the dominant axis of a diagonal push while still moving diagonally', () => {
+    scene = new GameScene()
+    const { x, y } = scene.player.position
+
+    // Mostly up, a little left.
+    touchInput.setMovement(-0.4, -0.9)
+    for (let frame = 0; frame < 10; frame++) scene.update(16)
+
+    expect(scene.player.direction).toBe('up')
+    expect(scene.player.position.x).toBeLessThan(x)
+    expect(scene.player.position.y).toBeLessThan(y)
+  })
+
+  it('a fully pushed stick ends up where the same keyboard input does — same speed, same collision', () => {
     const walk = (hold: () => void, letGo: () => void) => {
       const walked = new GameScene()
       hold()
@@ -575,14 +616,15 @@ describe('GameScene — on-screen (touch) controls', () => {
       },
     )
     const byTouch = walk(
-      () => {
-        touchInput.setDirection('up', true)
-        touchInput.setDirection('left', true)
-      },
+      () => touchInput.setMovement(-1, -1),
       () => touchInput.reset(),
     )
 
-    expect(byTouch).toEqual(byKeyboard)
+    // Same top speed and the same collision resolution; the only difference
+    // is the stick's brief ease-in (speed x time constant, about 15px).
+    expect(
+      Math.hypot(byTouch.x - byKeyboard.x, byTouch.y - byKeyboard.y),
+    ).toBeLessThan(25)
     expect(byTouch).not.toEqual(PLAYER_SPAWN_POSITION)
   })
 
@@ -590,12 +632,12 @@ describe('GameScene — on-screen (touch) controls', () => {
     scene = new GameScene()
     const setWalking = vi.spyOn(audioManager, 'setWalking')
 
-    touchInput.setDirection('right', true)
+    touchInput.setMovement(1, 0)
     scene.update(16)
     expect(setWalking).toHaveBeenLastCalledWith(true)
 
-    touchInput.setDirection('right', false)
-    scene.update(16)
+    touchInput.setMovement(0, 0)
+    for (let frame = 0; frame < 30; frame++) scene.update(16)
     expect(setWalking).toHaveBeenLastCalledWith(false)
   })
 
@@ -618,9 +660,9 @@ describe('GameScene — on-screen (touch) controls', () => {
     received.length = 0
 
     // Walk out of every interaction radius: the button now does nothing.
-    touchInput.setDirection('down', true)
+    touchInput.setMovement(0, 1)
     for (let i = 0; i < 40; i++) scene.update(100)
-    touchInput.setDirection('down', false)
+    touchInput.stopMovement()
     if (scene.player.interactionTarget === null) {
       touchInput.pressInteract()
       scene.update(16)
@@ -634,7 +676,7 @@ describe('GameScene — on-screen (touch) controls', () => {
     const { x, y } = scene.player.position
 
     gameEventBridge.emit('OPEN_PROJECTS')
-    touchInput.setDirection('right', true)
+    touchInput.setMovement(1, 0)
     touchInput.pressInteract()
     scene.update(100)
 
