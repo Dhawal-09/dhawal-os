@@ -180,7 +180,7 @@ function App() {
           />
         )}
       </main>
-      {/* Touch D-pad + interact button — GAME only, so they can never drive
+      {/* Touch joystick + interact button — GAME only, so they can never drive
           the world behind the boot/access/view-select screens. */}
       {lifecycle === 'game' && <MobileControls />}
       <InteractionOverlay />

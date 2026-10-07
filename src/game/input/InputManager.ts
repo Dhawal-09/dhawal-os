@@ -1,5 +1,5 @@
 import { KeyboardInput, type KeyboardSource } from './KeyboardInput'
-import { touchInput, type TouchDirection, type TouchSource } from './TouchInput'
+import { touchInput, type TouchSource } from './TouchInput'
 
 export interface MovementVector {
   x: number
@@ -12,7 +12,8 @@ export interface MovementVector {
  * decoupled from how input is sourced/normalized.
  */
 export interface MovementInput {
-  getMovementVector(): MovementVector
+  /** `deltaMS` — the frame's game time; only used to smooth the analog stick. */
+  getMovementVector(deltaMS?: number): MovementVector
 }
 
 /** Edge-triggered: true once per press/tap, consumed on read — never assumes keyboard-only (a mobile tap counts too). */
@@ -29,14 +30,6 @@ const KEY_DIRECTIONS: Record<string, MovementVector> = {
   ArrowLeft: { x: -1, y: 0 },
   KeyD: { x: 1, y: 0 },
   ArrowRight: { x: 1, y: 0 },
-}
-
-/** The on-screen D-pad's directions — each one counts exactly like its W/A/S/D key. */
-const TOUCH_DIRECTIONS: Record<TouchDirection, MovementVector> = {
-  up: KEY_DIRECTIONS.KeyW,
-  down: KEY_DIRECTIONS.KeyS,
-  left: KEY_DIRECTIONS.KeyA,
-  right: KEY_DIRECTIONS.KeyD,
 }
 
 function normalize(vector: MovementVector): MovementVector {
@@ -67,24 +60,33 @@ export class InputManager implements MovementInput, InteractionInput {
     this.touch = touch
   }
 
-  /** A unit-length (or zero) vector: x/y each in [-1, 1], diagonals normalized so they aren't faster than cardinal movement. */
-  getMovementVector(): MovementVector {
-    let x = 0
-    let y = 0
+  /**
+   * x/y each in [-1, 1], length never above 1. Keys are digital: any held
+   * key gives a unit-length vector, with diagonals normalized so they
+   * aren't faster than cardinal movement. The on-screen joystick is analog:
+   * its length (0..1) is how far the stick is pushed, which PlayerController
+   * turns directly into speed — a light push walks slowly, a full push is
+   * full speed, at any angle.
+   */
+  getMovementVector(deltaMS?: number): MovementVector {
+    let keyX = 0
+    let keyY = 0
 
     for (const code in KEY_DIRECTIONS) {
       if (!this.keyboard.isPressed(code)) continue
-      x += KEY_DIRECTIONS[code].x
-      y += KEY_DIRECTIONS[code].y
+      keyX += KEY_DIRECTIONS[code].x
+      keyY += KEY_DIRECTIONS[code].y
     }
 
-    for (const direction in TOUCH_DIRECTIONS) {
-      if (!this.touch.isHeld(direction as TouchDirection)) continue
-      x += TOUCH_DIRECTIONS[direction as TouchDirection].x
-      y += TOUCH_DIRECTIONS[direction as TouchDirection].y
-    }
+    const keys = normalize({ x: keyX, y: keyY })
+    const stick = this.touch.getMovementVector(deltaMS)
+    if (stick.x === 0 && stick.y === 0) return keys
 
-    return normalize({ x, y })
+    // Both at once (a keyboard attached to a touch device): add them, but
+    // never exceed full speed.
+    const x = keys.x + stick.x
+    const y = keys.y + stick.y
+    return Math.hypot(x, y) > 1 ? normalize({ x, y }) : { x, y }
   }
 
   /** True once after an `E` press, a canvas tap, or a press of the on-screen interact button. Must be called every frame to stay correctly edge-triggered. */

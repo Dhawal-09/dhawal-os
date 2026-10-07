@@ -120,17 +120,17 @@ describe('InputManager — interaction', () => {
 })
 
 describe('InputManager — on-screen (touch) controls', () => {
-  it('a held D-pad direction produces the same vector as its key', () => {
+  it('a fully pushed stick produces the same vector as the matching key', () => {
     const cases = [
-      ['up', 'KeyW'],
-      ['down', 'KeyS'],
-      ['left', 'KeyA'],
-      ['right', 'KeyD'],
+      [0, -1, 'KeyW'],
+      [0, 1, 'KeyS'],
+      [-1, 0, 'KeyA'],
+      [1, 0, 'KeyD'],
     ] as const
 
-    for (const [direction, code] of cases) {
+    for (const [x, y, code] of cases) {
       const touch = new TouchInput()
-      touch.setDirection(direction, true)
+      touch.setMovement(x, y)
 
       expect(
         new InputManager(fakeKeyboard(), touch).getMovementVector(),
@@ -143,32 +143,55 @@ describe('InputManager — on-screen (touch) controls', () => {
     }
   })
 
-  it('stops the moment the direction is released', () => {
+  it('keeps the stick analog — a half push is half strength, at the exact angle held', () => {
     const touch = new TouchInput()
     const input = new InputManager(fakeKeyboard(), touch)
-    touch.setDirection('up', true)
+
+    touch.setMovement(0.3, -0.4)
+
+    expect(input.getMovementVector()).toEqual({ x: 0.3, y: -0.4 })
+  })
+
+  it('is zero again once the stick is released', () => {
+    const touch = new TouchInput()
+    const input = new InputManager(fakeKeyboard(), touch)
+    touch.setMovement(0, -1)
     expect(input.getMovementVector()).toEqual({ x: 0, y: -1 })
 
-    touch.setDirection('up', false)
+    touch.setMovement(0, 0)
 
     expect(input.getMovementVector()).toEqual({ x: 0, y: 0 })
   })
 
-  it('two held directions give the same normalized diagonal as two keys', () => {
+  it('passes the frame delta through, so the stick eases in during the game loop', () => {
     const touch = new TouchInput()
-    touch.setDirection('up', true)
-    touch.setDirection('right', true)
-    const { x, y } = new InputManager(fakeKeyboard(), touch).getMovementVector()
+    const input = new InputManager(fakeKeyboard(), touch)
+    touch.setMovement(1, 0)
 
-    expect(Math.hypot(x, y)).toBeCloseTo(1)
-    expect(x).toBeCloseTo(Math.SQRT1_2)
-    expect(y).toBeCloseTo(-Math.SQRT1_2)
+    const first = input.getMovementVector(16).x
+    const second = input.getMovementVector(16).x
+
+    expect(first).toBeGreaterThan(0)
+    expect(first).toBeLessThan(1)
+    expect(second).toBeGreaterThan(first)
   })
 
-  it('leaves keyboard movement untouched when nothing is held on screen', () => {
+  it('leaves keyboard movement untouched — instant and full strength — when the stick is at rest', () => {
     const input = new InputManager(fakeKeyboard(['KeyA']), new TouchInput())
 
-    expect(input.getMovementVector()).toEqual({ x: -1, y: 0 })
+    expect(input.getMovementVector(16)).toEqual({ x: -1, y: 0 })
+  })
+
+  it('a key and the stick together never exceed full speed', () => {
+    const touch = new TouchInput()
+    touch.setMovement(1, 0)
+    const { x, y } = new InputManager(
+      fakeKeyboard(['KeyD']),
+      touch,
+    ).getMovementVector()
+
+    expect(Math.hypot(x, y)).toBeCloseTo(1)
+    expect(x).toBeCloseTo(1)
   })
 
   it('the on-screen interact button satisfies wasInteractPressed exactly once', () => {
@@ -181,10 +204,10 @@ describe('InputManager — on-screen (touch) controls', () => {
     expect(input.wasInteractPressed()).toBe(false)
   })
 
-  it('reset() and destroy() release held directions and a pending interact press', () => {
+  it('reset() and destroy() release the stick and a pending interact press', () => {
     const touch = new TouchInput()
     const input = new InputManager(fakeKeyboard(), touch)
-    touch.setDirection('down', true)
+    touch.setMovement(0, 1)
     touch.pressInteract()
 
     input.reset()
@@ -192,9 +215,9 @@ describe('InputManager — on-screen (touch) controls', () => {
     expect(input.getMovementVector()).toEqual({ x: 0, y: 0 })
     expect(input.wasInteractPressed()).toBe(false)
 
-    touch.setDirection('left', true)
+    touch.setMovement(-1, 0)
     input.destroy()
 
-    expect(touch.isHeld('left')).toBe(false)
+    expect(touch.getMovementVector()).toEqual({ x: 0, y: 0 })
   })
 })
