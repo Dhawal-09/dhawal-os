@@ -1,0 +1,515 @@
+/* The DHAWAL.OS in-game panel frame (GamePanel.tsx).
+
+   Layers, outside in — each is a hard-edged shape, never a blurred one:
+     .game-panel          the outer border: cyan/blue with magenta segments
+     .game-panel-shell    the dark frame body: header, screen, footer strip
+     .game-panel-screen   the thin inner cyan line around the content
+     .game-panel-surface  the content surface itself
+
+   Every layer is cut by a clip-path polygon built from the same handful of
+   pixel units, so the stepped corners and the notched top/bottom edges
+   stay parallel from one layer to the next. The three sizes change those
+   units and the frame's proportions — never a scale transform. */
+
+.game-panel {
+  /* Local accent: the tokens' --purple is too dark to read as a line. */
+  --gp-magenta: #c44dff;
+  --gp-violet: #7a45e6;
+
+  /* One "pixel" of the frame. Corners are three steps of this. */
+  --gp-px: 4px;
+  --gp-corner: calc(var(--gp-px) * 3);
+  /* Outer border thickness, and the dark gap between it and the screen. */
+  --gp-border: 4px;
+  /* How far the raised sections of the top edge stand above the rest. */
+  --gp-notch: 6px;
+  /* Length of the raised tab over the stripes (left) and over the X (right). */
+  --gp-tab-left: 132px;
+  --gp-tab-right: 76px;
+  /* The lowered centre bar of the bottom edge spans this far in from each side. */
+  --gp-foot-inset: 24%;
+  --gp-body-pad: 20px 22px 22px;
+  --gp-header-height: 48px;
+
+  position: relative;
+  width: 100%;
+  max-width: 760px;
+  max-height: 85dvh;
+  display: flex;
+  padding: var(--gp-border);
+  color: var(--text, #eaf4ff);
+  /* Base border, top to bottom, with hard-stopped magenta segments laid
+     over the top, bottom and side edges — the secondary accent. */
+  background:
+    linear-gradient(
+        90deg,
+        transparent 0 38%,
+        var(--gp-magenta) 38% 60%,
+        transparent 60%
+      )
+      top / 100% 12px no-repeat,
+    linear-gradient(
+        90deg,
+        transparent 0 var(--gp-foot-inset),
+        var(--gp-magenta) var(--gp-foot-inset) 64%,
+        var(--gp-violet) 64% calc(100% - var(--gp-foot-inset)),
+        transparent calc(100% - var(--gp-foot-inset))
+      )
+      bottom / 100% 12px no-repeat,
+    linear-gradient(
+        180deg,
+        transparent 0 34%,
+        var(--gp-magenta) 34% 58%,
+        transparent 58%
+      )
+      left / 12px 100% no-repeat,
+    linear-gradient(
+        180deg,
+        transparent 0 42%,
+        var(--gp-magenta) 42% 70%,
+        transparent 70%
+      )
+      right / 12px 100% no-repeat,
+    linear-gradient(180deg, var(--cyan, #27d7ff), var(--blue, #147bff));
+  clip-path: var(--gp-clip);
+
+  /* The frame's outline: stepped corners all round; a top edge that sits
+     one notch low between the two raised tabs; and a bottom edge whose
+     centre bar sits one notch lower than its ends. */
+  --gp-clip: polygon(
+    /* top-left corner, stepping up and right */ 0 var(--gp-corner),
+    var(--gp-px) var(--gp-corner),
+    var(--gp-px) calc(var(--gp-px) * 2),
+    calc(var(--gp-px) * 2) calc(var(--gp-px) * 2),
+    calc(var(--gp-px) * 2) var(--gp-px),
+    var(--gp-corner) var(--gp-px),
+    var(--gp-corner) 0,
+    /* raised left tab, then two steps down to the lowered run */
+    var(--gp-tab-left) 0,
+    var(--gp-tab-left) calc(var(--gp-notch) / 2),
+    calc(var(--gp-tab-left) + var(--gp-px)) calc(var(--gp-notch) / 2),
+    calc(var(--gp-tab-left) + var(--gp-px)) var(--gp-notch),
+    /* lowered run, then two steps back up to the tab over the X */
+    calc(100% - var(--gp-tab-right) - var(--gp-px)) var(--gp-notch),
+    calc(100% - var(--gp-tab-right) - var(--gp-px)) calc(var(--gp-notch) / 2),
+    calc(100% - var(--gp-tab-right)) calc(var(--gp-notch) / 2),
+    calc(100% - var(--gp-tab-right)) 0,
+    /* top-right corner */ calc(100% - var(--gp-corner)) 0,
+    calc(100% - var(--gp-corner)) var(--gp-px),
+    calc(100% - var(--gp-px) * 2) var(--gp-px),
+    calc(100% - var(--gp-px) * 2) calc(var(--gp-px) * 2),
+    calc(100% - var(--gp-px)) calc(var(--gp-px) * 2),
+    calc(100% - var(--gp-px)) var(--gp-corner),
+    100% var(--gp-corner),
+    /* bottom-right corner (its foot sits one notch above the centre bar) */
+    100% calc(100% - var(--gp-corner) - var(--gp-notch)),
+    calc(100% - var(--gp-px)) calc(100% - var(--gp-corner) - var(--gp-notch)),
+    calc(100% - var(--gp-px)) calc(100% - var(--gp-px) * 2 - var(--gp-notch)),
+    calc(100% - var(--gp-px) * 2)
+      calc(100% - var(--gp-px) * 2 - var(--gp-notch)),
+    calc(100% - var(--gp-px) * 2) calc(100% - var(--gp-px) - var(--gp-notch)),
+    calc(100% - var(--gp-corner)) calc(100% - var(--gp-px) - var(--gp-notch)),
+    calc(100% - var(--gp-corner)) calc(100% - var(--gp-notch)),
+    /* step down into the centre bar, along it, and back up */
+    calc(100% - var(--gp-foot-inset) + var(--gp-px))
+      calc(100% - var(--gp-notch)),
+    calc(100% - var(--gp-foot-inset) + var(--gp-px))
+      calc(100% - var(--gp-notch) / 2),
+    calc(100% - var(--gp-foot-inset)) calc(100% - var(--gp-notch) / 2),
+    calc(100% - var(--gp-foot-inset)) 100%,
+    var(--gp-foot-inset) 100%,
+    var(--gp-foot-inset) calc(100% - var(--gp-notch) / 2),
+    calc(var(--gp-foot-inset) - var(--gp-px)) calc(100% - var(--gp-notch) / 2),
+    calc(var(--gp-foot-inset) - var(--gp-px)) calc(100% - var(--gp-notch)),
+    /* bottom-left corner */ var(--gp-corner) calc(100% - var(--gp-notch)),
+    var(--gp-corner) calc(100% - var(--gp-px) - var(--gp-notch)),
+    calc(var(--gp-px) * 2) calc(100% - var(--gp-px) - var(--gp-notch)),
+    calc(var(--gp-px) * 2) calc(100% - var(--gp-px) * 2 - var(--gp-notch)),
+    var(--gp-px) calc(100% - var(--gp-px) * 2 - var(--gp-notch)),
+    var(--gp-px) calc(100% - var(--gp-corner) - var(--gp-notch)),
+    0 calc(100% - var(--gp-corner) - var(--gp-notch))
+  );
+
+  --gp-step: 3px;
+}
+
+/* Plain stepped corners — the screen, the surface and the buttons. Declared
+   on each element that sets its own --gp-step: a custom property's var()s
+   resolve where it is declared, not where it is used. */
+.game-panel,
+.game-panel-screen,
+.game-panel-surface {
+  --gp-clip-stepped: polygon(
+    0 calc(var(--gp-step) * 2),
+    var(--gp-step) calc(var(--gp-step) * 2),
+    var(--gp-step) var(--gp-step),
+    calc(var(--gp-step) * 2) var(--gp-step),
+    calc(var(--gp-step) * 2) 0,
+    calc(100% - var(--gp-step) * 2) 0,
+    calc(100% - var(--gp-step) * 2) var(--gp-step),
+    calc(100% - var(--gp-step)) var(--gp-step),
+    calc(100% - var(--gp-step)) calc(var(--gp-step) * 2),
+    100% calc(var(--gp-step) * 2),
+    100% calc(100% - var(--gp-step) * 2),
+    calc(100% - var(--gp-step)) calc(100% - var(--gp-step) * 2),
+    calc(100% - var(--gp-step)) calc(100% - var(--gp-step)),
+    calc(100% - var(--gp-step) * 2) calc(100% - var(--gp-step)),
+    calc(100% - var(--gp-step) * 2) 100%,
+    calc(var(--gp-step) * 2) 100%,
+    calc(var(--gp-step) * 2) calc(100% - var(--gp-step)),
+    var(--gp-step) calc(100% - var(--gp-step)),
+    var(--gp-step) calc(100% - var(--gp-step) * 2),
+    0 calc(100% - var(--gp-step) * 2)
+  );
+}
+
+.game-panel:focus {
+  outline: none;
+}
+
+/* ---- Sizes: one frame, three proportions ---- */
+
+.game-panel--small {
+  max-width: 520px;
+  --gp-px: 3px;
+  --gp-tab-left: 96px;
+  --gp-tab-right: 68px;
+  --gp-foot-inset: 30%;
+  --gp-body-pad: 16px 18px 18px;
+}
+
+.game-panel--medium {
+  max-width: 760px;
+}
+
+.game-panel--large {
+  max-width: 1080px;
+  --gp-px: 5px;
+  --gp-notch: 8px;
+  --gp-tab-left: 188px;
+  --gp-tab-right: 84px;
+  --gp-foot-inset: 20%;
+  --gp-body-pad: 24px 28px 26px;
+}
+
+/* ---- The dark frame body ---- */
+
+.game-panel-shell {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  /* The bottom padding clears the raised ends of the bottom edge. */
+  /* A fixed 8px on top (every size's notch fits inside it), so the header —
+     and the X in it — sits at the same offset on all three sizes. */
+  padding: 8px 6px calc(var(--gp-notch) + 2px);
+  background:
+    /* a 1px violet inner trace just inside the border */
+    linear-gradient(var(--gp-violet), var(--gp-violet)) left 2px top 30% / 1px
+      34% no-repeat,
+    linear-gradient(var(--gp-violet), var(--gp-violet)) right 2px top 68% / 1px
+      26% no-repeat,
+    var(--bg-deep, #050b1a);
+  clip-path: var(--gp-clip);
+}
+
+/* ---- Header ---- */
+
+.game-panel-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--gp-header-height);
+  padding: 0 2px 6px 10px;
+}
+
+/* Three slanted bars — hard stops, no anti-aliased gradient ramp. */
+.game-panel-stripes {
+  flex-shrink: 0;
+  width: 38px;
+  height: 10px;
+  transform: skewX(-32deg);
+  background: repeating-linear-gradient(
+    90deg,
+    var(--gp-magenta) 0 9px,
+    transparent 9px 14px
+  );
+}
+
+@keyframes game-panel-stripes-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .game-panel-stripes {
+    animation: game-panel-stripes-pulse 2.8s steps(3, jump-none) infinite;
+  }
+}
+
+.game-panel-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  --panel-icon-size: 22px;
+}
+
+.game-panel-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--font-pixel);
+  font-size: 1rem;
+  line-height: 1.5;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--cyan-bright, #57e8ff);
+  overflow-wrap: anywhere;
+}
+
+/* The X and Back share one button frame: a stepped box whose border is the
+   button's own `color`, so hover/focus recolour border and glyph together. */
+.game-panel-x,
+.game-panel-back {
+  position: relative;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border: 0;
+  padding: 0;
+  background: currentColor;
+  color: var(--cyan, #27d7ff);
+  cursor: pointer;
+  clip-path: var(--gp-clip-stepped);
+  font-family: var(--font-pixel);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+
+.game-panel-x::before,
+.game-panel-back::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: var(--panel-dark, #06142d);
+  clip-path: var(--gp-clip-stepped);
+}
+
+.game-panel-x > *,
+.game-panel-back > * {
+  position: relative;
+}
+
+.game-panel-x-icon {
+  /* 7 cells × 3px — whole pixels per cell, so the X stays hard-edged. */
+  width: 21px;
+  height: 21px;
+  fill: currentColor;
+}
+
+.game-panel-back {
+  gap: 8px;
+  padding: 0 14px;
+}
+
+.game-panel-back-icon {
+  width: 8px;
+  height: 11px;
+  fill: currentColor;
+}
+
+/* Pointer devices only: on touch, :hover sticks to whatever sits under the
+   last tap (e.g. Back staying lit after opening a list). */
+@media (hover: hover) {
+  .game-panel-x:hover,
+  .game-panel-back:hover {
+    color: var(--gp-magenta);
+  }
+}
+
+/* A clipped element can't show an outline, so focus is the same magenta
+   frame plus a lit face. */
+.game-panel-x:focus-visible,
+.game-panel-back:focus-visible {
+  outline: none;
+  color: var(--gp-magenta);
+}
+
+.game-panel-x:focus-visible::before,
+.game-panel-back:focus-visible::before {
+  background: #2a1150;
+}
+
+.game-panel-x:active::before,
+.game-panel-back:active::before {
+  background: #3a1870;
+}
+
+/* ---- Screen: the thin cyan line, then the content surface ---- */
+
+.game-panel-screen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  padding: 1px;
+  background: linear-gradient(
+    180deg,
+    var(--cyan, #27d7ff),
+    var(--pixel-border, #1e5fa8)
+  );
+  clip-path: var(--gp-clip-stepped);
+  --gp-step: var(--gp-px);
+}
+
+.game-panel-surface {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  background: linear-gradient(
+    180deg,
+    var(--panel-dark, #06142d),
+    var(--bg-navy, #08152f)
+  );
+  clip-path: var(--gp-clip-stepped);
+  --gp-step: var(--gp-px);
+}
+
+.game-panel-body {
+  /* Above the corner dither, which must never cover content. */
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+  padding: var(--gp-body-pad);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--pixel-border, #1e5fa8) transparent;
+  text-align: left;
+}
+
+.game-panel-body a:focus-visible,
+.game-panel-body button:focus-visible {
+  outline: 2px solid var(--cyan-bright, #57e8ff);
+  outline-offset: 2px;
+}
+
+/* Checkerboard dither fading out of the bottom-left corner. Decorative and
+   click-through; sits over the surface, under nothing interactive. */
+.game-panel-dither {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: calc(var(--gp-px) * 9);
+  height: calc(var(--gp-px) * 9);
+  pointer-events: none;
+  background: repeating-conic-gradient(
+      var(--gp-violet) 0 25%,
+      transparent 0 50%
+    )
+    0 0 / calc(var(--gp-px) * 2) calc(var(--gp-px) * 2);
+  clip-path: polygon(0 0, 0 100%, 100% 100%);
+  opacity: 0.75;
+}
+
+/* ---- Footer strip: segments left, a dotted run right ---- */
+
+.game-panel-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 12px;
+  padding: 0 calc(var(--gp-corner) + 4px);
+}
+
+.game-panel-segments {
+  width: calc(var(--gp-px) * 14);
+  height: 3px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--pixel-border, #1e5fa8) 0 calc(var(--gp-px) * 3),
+    transparent calc(var(--gp-px) * 3) calc(var(--gp-px) * 4)
+  );
+}
+
+.game-panel-dots {
+  width: calc(var(--gp-px) * 30);
+  max-width: 45%;
+  height: 3px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--cyan, #27d7ff) 0 3px,
+    transparent 3px 9px
+  );
+}
+
+/* ---- Tablet / phone: same frame, fewer ornaments ---- */
+
+@media (max-width: 768px) {
+  .game-panel {
+    --gp-tab-left: 96px;
+    --gp-body-pad: 16px 16px 18px;
+  }
+
+  .game-panel--large {
+    --gp-px: 4px;
+    --gp-notch: 6px;
+    --gp-tab-right: 76px;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-panel {
+    --gp-px: 3px;
+    --gp-tab-left: 64px;
+    --gp-tab-right: 64px;
+    --gp-body-pad: 14px 12px 16px;
+  }
+
+  .game-panel-header {
+    gap: 8px;
+    padding-left: 6px;
+  }
+
+  .game-panel-title {
+    font-size: 0.85rem;
+  }
+
+  .game-panel-stripes {
+    width: 24px;
+  }
+
+  /* Back + X share the top row; the title gets the full width below
+     instead of being squeezed between them. */
+  .game-panel-header.has-back {
+    flex-wrap: wrap;
+    row-gap: 10px;
+    justify-content: space-between;
+  }
+
+  .game-panel-header.has-back .game-panel-stripes {
+    display: none;
+  }
+
+  .game-panel-header.has-back .game-panel-title {
+    order: 3;
+    flex-basis: 100%;
+  }
+
+  .game-panel-segments {
+    display: none;
+  }
+
+  .game-panel-footer {
+    justify-content: flex-end;
+  }
+}

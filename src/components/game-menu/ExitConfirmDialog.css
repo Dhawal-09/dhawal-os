@@ -1,3 +1,5 @@
+/* The frame itself is GamePanel (SMALL) — this file is the backdrop, the
+   dialog's narrower width, and its two action buttons. */
 .exit-confirm-overlay {
   position: fixed;
   inset: 0;
@@ -9,32 +11,17 @@
   background: rgba(5, 11, 26, 0.75);
 }
 
-.exit-confirm-dialog {
-  width: 100%;
-  max-width: 360px;
-  padding: 24px;
-  border: 1px solid var(--pixel-border, #1e5fa8);
-  border-radius: 4px;
-  background: var(--panel, #0b2144);
-  color: var(--text, #eaf4ff);
+/* A one-sentence confirmation: narrower than the SMALL information panels. */
+.exit-confirm-overlay .game-panel {
+  max-width: 440px;
+}
+
+.exit-confirm-content {
   text-align: center;
 }
 
-.exit-confirm-dialog:focus {
-  outline: none;
-}
-
-.exit-confirm-dialog h2 {
-  margin: 0 0 12px;
-  font-family: var(--font-pixel);
-  font-size: 0.95rem;
-  line-height: 1.5;
-  letter-spacing: 0.02em;
-  color: var(--warning, #ffd166);
-}
-
-.exit-confirm-dialog p {
-  margin: 0 0 20px;
+.exit-confirm-content p {
+  margin: 4px 0 20px;
   color: var(--text-muted, #91a9c8);
   line-height: 1.5;
 }
@@ -42,44 +29,72 @@
 .exit-confirm-actions {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
   gap: 12px;
 }
 
+/* Same stepped button frame as the panel's X: the border is the button's
+   own `color`, the face is a dark inset layer behind the label. */
 .exit-confirm-cancel,
 .exit-confirm-confirm {
+  position: relative;
+  isolation: isolate;
   min-height: 44px;
-  min-width: 100px;
+  min-width: 116px;
   padding: 8px 20px;
-  border-radius: 4px;
+  border: 0;
+  background: currentColor;
   cursor: pointer;
+  clip-path: var(--gp-clip-stepped);
   font-family: var(--font-pixel);
   font-size: 0.78rem;
   letter-spacing: 0.04em;
 }
 
-.exit-confirm-cancel {
-  border: 1px solid var(--pixel-border, #1e5fa8);
+.exit-confirm-cancel::before,
+.exit-confirm-confirm::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  z-index: -1;
   background: var(--panel-dark, #06142d);
-  color: var(--text, #eaf4ff);
+  clip-path: var(--gp-clip-stepped);
 }
 
-.exit-confirm-cancel:hover {
-  background: var(--blue, #147bff);
+.exit-confirm-cancel {
+  color: var(--cyan, #27d7ff);
 }
 
+/* Leaving is the consequential choice — it keeps the warning colour. */
 .exit-confirm-confirm {
-  border: 1px solid var(--warning, #ffd166);
-  background: transparent;
   color: var(--warning, #ffd166);
 }
 
-.exit-confirm-confirm:hover {
-  background: var(--warning, #ffd166);
-  color: var(--bg-deep, #050b1a);
+@media (hover: hover) {
+  .exit-confirm-cancel:hover::before {
+    background: #0d3a7a;
+  }
+
+  .exit-confirm-confirm:hover::before {
+    background: #4a3a10;
+  }
 }
 
+/* A clipped element can't show an outline, so focus lights the face and
+   brightens the frame instead. */
 .exit-confirm-cancel:focus-visible,
 .exit-confirm-confirm:focus-visible {
-  outline: 2px solid var(--cyan-bright, #57e8ff);
-  outline-offset: 2px;
+  outline: none;
+}
+
+.exit-confirm-cancel:focus-visible {
+  color: var(--cyan-bright, #57e8ff);
+}
+
+.exit-confirm-cancel:focus-visible::before {
+  background: #0d3a7a;
+}
+
+.exit-confirm-confirm:focus-visible::before {
+  background: #4a3a10;
 }

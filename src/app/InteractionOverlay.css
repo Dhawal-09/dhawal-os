@@ -1,3 +1,5 @@
+/* The panel frame itself (borders, header, X, sizes) is GamePanel.css —
+   this file is the backdrop plus the shared content helpers (.panel-*). */
 .interaction-overlay {
   position: fixed;
   inset: 0;
@@ -9,19 +11,6 @@
   background: rgba(5, 11, 26, 0.75);
 }
 
-.interaction-overlay-panel {
-  width: 100%;
-  max-width: 640px;
-  max-height: 85vh;
-  overflow-y: auto;
-  padding: 20px 24px 24px;
-  border: 1px solid var(--pixel-border, #1e5fa8);
-  border-radius: 4px;
-  background: var(--panel, #0b2144);
-  color: var(--text, #eaf4ff);
-}
-
-.interaction-overlay-panel:focus,
 .interaction-overlay-window:focus {
   outline: none;
 }
@@ -42,91 +31,9 @@
   color: var(--text, #eaf4ff);
 }
 
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.panel-header h2 {
-  margin: 0;
-  font-family: var(--font-pixel);
-  font-size: 1rem;
-  line-height: 1.5;
-  letter-spacing: 0.03em;
-}
-
-.panel-close {
-  min-height: 44px;
-  min-width: 44px;
-  padding: 8px 20px;
-  border: 1px solid var(--pixel-border, #1e5fa8);
-  border-radius: 4px;
-  background: var(--panel-dark, #06142d);
-  color: var(--text, #eaf4ff);
-  cursor: pointer;
-  flex-shrink: 0;
-  font-family: var(--font-pixel);
-  font-size: 0.78rem;
-  letter-spacing: 0.04em;
-}
-
-/* Pointer devices only: on touch, :hover sticks to whatever sits under the
-   last tap (e.g. Back turning blue after opening a list). */
-@media (hover: hover) {
-  .panel-close:hover {
-    background: var(--blue, #147bff);
-  }
-}
-
-/* Back (panels with internal navigation, e.g. Projects): same control as
-   Close, placed before the title. */
-.panel-header.has-back h2 {
-  flex: 1;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-@media (max-width: 480px) {
-  /* Back + Close share the top row; the title gets the full width below
-     instead of being squeezed between them. */
-  .panel-header.has-back {
-    flex-wrap: wrap;
-  }
-
-  .panel-header.has-back h2 {
-    order: 3;
-    flex-basis: 100%;
-    font-size: 0.85rem;
-  }
-}
-
-@media (max-width: 360px) {
-  /* The narrowest phones: keep the title and Close on one row without
-     pushing Close past the panel edge. */
-  .panel-header h2 {
-    min-width: 0;
-    font-size: 0.85rem;
-    overflow-wrap: anywhere;
-  }
-
-  .panel-close {
-    padding: 8px 12px;
-  }
-}
-
-.panel-close:focus-visible,
-.interaction-overlay-panel a:focus-visible,
-.interaction-overlay-panel button:focus-visible,
 .interaction-overlay-window button:focus-visible {
   outline: 2px solid var(--cyan-bright, #57e8ff);
   outline-offset: 2px;
-}
-
-.panel-body {
-  text-align: left;
 }
 
 .panel-section {
@@ -230,10 +137,4 @@
 
 .panel-button:hover {
   background: var(--cyan, #27d7ff);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .interaction-overlay-panel {
-    transition: none;
-  }
 }

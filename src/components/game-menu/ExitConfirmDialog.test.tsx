@@ -82,11 +82,25 @@ describe('ExitConfirmDialog', () => {
     expect(onConfirmExit).not.toHaveBeenCalled()
   })
 
-  it('wraps Tab forward from the last focusable element (EXIT) back to the first (CANCEL)', async () => {
+  it("the frame's X cancels — it never confirms the exit", async () => {
+    const user = userEvent.setup()
+    const onCancel = vi.fn()
+    const onConfirmExit = vi.fn()
+    render(
+      <ExitConfirmDialog onCancel={onCancel} onConfirmExit={onConfirmExit} />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+
+    expect(onCancel).toHaveBeenCalledTimes(1)
+    expect(onConfirmExit).not.toHaveBeenCalled()
+  })
+
+  it('wraps Tab forward from the last focusable element (EXIT) back to the first (the X)', async () => {
     const user = userEvent.setup()
     render(<ExitConfirmDialog onCancel={vi.fn()} onConfirmExit={vi.fn()} />)
 
-    const cancelButton = screen.getByRole('button', { name: /^cancel$/i })
+    const closeButton = screen.getByRole('button', { name: 'Close' })
     const exitButton = screen.getByRole('button', { name: /^exit$/i })
 
     exitButton.focus()
@@ -94,18 +108,18 @@ describe('ExitConfirmDialog', () => {
 
     await user.tab()
 
-    expect(cancelButton).toHaveFocus()
+    expect(closeButton).toHaveFocus()
   })
 
-  it('wraps Shift+Tab backward from the first focusable element (CANCEL) to the last (EXIT)', async () => {
+  it('wraps Shift+Tab backward from the first focusable element (the X) to the last (EXIT)', async () => {
     const user = userEvent.setup()
     render(<ExitConfirmDialog onCancel={vi.fn()} onConfirmExit={vi.fn()} />)
 
-    const cancelButton = screen.getByRole('button', { name: /^cancel$/i })
+    const closeButton = screen.getByRole('button', { name: 'Close' })
     const exitButton = screen.getByRole('button', { name: /^exit$/i })
 
-    cancelButton.focus()
-    expect(cancelButton).toHaveFocus()
+    closeButton.focus()
+    expect(closeButton).toHaveFocus()
 
     await user.tab({ shift: true })
 

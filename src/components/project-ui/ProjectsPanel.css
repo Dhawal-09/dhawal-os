@@ -341,48 +341,10 @@
 
 /* ---- Project list on phones / portrait (<= 768px) ----
    A dedicated layout, not the desktop row squeezed narrower: each card is a
-   vertical stack — name, picture, description, role, period, VIEW — and the
-   panel keeps its header in place while only the list scrolls. Desktop
-   (> 768px) is untouched. The shell-level rules are scoped with :has() to
-   the project list, so no other panel changes. */
+   vertical stack — name, picture, description, role, period, VIEW. The
+   frame (GamePanel) already keeps its header in place while only the
+   content scrolls. Desktop (> 768px) is untouched. */
 @media (max-width: 768px) {
-  .interaction-overlay-panel:has(.projects-cards) {
-    display: flex;
-    flex-direction: column;
-    width: 92vw;
-    max-width: none;
-    max-height: 85dvh;
-    padding: 16px 16px 18px;
-    overflow: hidden;
-  }
-
-  /* Back and Close share the top row; the title gets its own line below. */
-  .interaction-overlay-panel:has(.projects-cards) .panel-header {
-    flex-shrink: 0;
-    flex-wrap: wrap;
-    row-gap: 14px;
-    margin-bottom: 16px;
-  }
-
-  .interaction-overlay-panel:has(.projects-cards) .panel-header h2 {
-    order: 3;
-    flex-basis: 100%;
-    font-size: clamp(0.85rem, 4vw, 1rem);
-    text-transform: uppercase;
-    overflow-wrap: anywhere;
-  }
-
-  /* Only the list scrolls. The small padding keeps the cards' hard pixel
-     shadow and the thin scrollbar from being clipped or overlapped. */
-  .interaction-overlay-panel:has(.projects-cards) .panel-body {
-    min-height: 0;
-    padding: 0 6px 4px 0;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
-    scrollbar-color: var(--pixel-border, #1e5fa8) transparent;
-  }
-
   .projects-cards {
     gap: 12px;
   }
@@ -466,10 +428,6 @@
 
 /* The smallest phones: trim spacing, not readability. */
 @media (max-width: 340px) {
-  .interaction-overlay-panel:has(.projects-cards) {
-    padding: 14px 12px 14px;
-  }
-
   .projects-card,
   .projects-card.has-icon {
     padding: 12px;
