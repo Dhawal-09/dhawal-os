@@ -1,11 +1,12 @@
 import type { WorldObject } from '../WorldObject'
-import {
-  BOTTOM_WALL_INNER_Y,
-  INTERACTION_RADIUS,
-  PLACEHOLDER_COLLIDER_SIZE,
-  centeredCollider,
-  centeredColliderClippedToBottom,
-} from './worldObjectHelpers'
+// Used only by the temporarily hidden objects below — restore with them.
+// import {
+//   BOTTOM_WALL_INNER_Y,
+//   INTERACTION_RADIUS,
+//   PLACEHOLDER_COLLIDER_SIZE,
+//   centeredCollider,
+//   centeredColliderClippedToBottom,
+// } from './worldObjectHelpers'
 
 /**
  * The general personal-info hub: "About Me" (also the player's spawn
@@ -38,30 +39,35 @@ export const aboutObjects: WorldObject[] = [
     interaction: { radius: 130, action: 'OPEN_ABOUT' },
     message: { type: 'interactive', text: 'Wanna see his ID card?' },
   },
-  {
-    id: 'certificates',
-    asset: 'content.certificates',
-    label: 'CERTIFICATES',
-    position: { x: 300, y: 910 }, // WORLD POSITION — SAFE TO TUNE
-    layer: 'object',
-    collision: centeredCollider({ x: 300, y: 910 }),
-    interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_CERTIFICATES' },
-    message: { type: 'interactive', text: 'Check out his certificates?' },
-  },
-  {
-    id: 'resume',
-    asset: 'content.resume',
-    label: 'RESUME',
-    position: { x: 1480, y: 1180 }, // WORLD POSITION — SAFE TO TUNE
-    layer: 'object',
-    // PHASE 10B.1 CLEANUP: same redundant 28px overlap with the bottom wall
-    // as "education" — see educationRoom.ts's comment.
-    collision: centeredColliderClippedToBottom(
-      { x: 1480, y: 1180 },
-      PLACEHOLDER_COLLIDER_SIZE,
-      BOTTOM_WALL_INNER_Y,
-    ),
-    interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_RESUME' },
-    message: { type: 'interactive', text: 'Take a look at his resume?' },
-  },
+  // TEMPORARILY HIDDEN — the Certificates panel has no content yet, and the
+  // Resume marker is out of the house for now. Both objects are removed
+  // whole (prompt, interaction and collider); the panels stay reachable from
+  // the HUD menu. To restore: uncomment the two objects below and the
+  // helper imports at the top of this file.
+  // {
+  //   id: 'certificates',
+  //   asset: 'content.certificates',
+  //   label: 'CERTIFICATES',
+  //   position: { x: 300, y: 910 }, // WORLD POSITION — SAFE TO TUNE
+  //   layer: 'object',
+  //   collision: centeredCollider({ x: 300, y: 910 }),
+  //   interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_CERTIFICATES' },
+  //   message: { type: 'interactive', text: 'Check out his certificates?' },
+  // },
+  // {
+  //   id: 'resume',
+  //   asset: 'content.resume',
+  //   label: 'RESUME',
+  //   position: { x: 1480, y: 1180 }, // WORLD POSITION — SAFE TO TUNE
+  //   layer: 'object',
+  //   // PHASE 10B.1 CLEANUP: same redundant 28px overlap with the bottom wall
+  //   // as "education" — see educationRoom.ts's comment.
+  //   collision: centeredColliderClippedToBottom(
+  //     { x: 1480, y: 1180 },
+  //     PLACEHOLDER_COLLIDER_SIZE,
+  //     BOTTOM_WALL_INNER_Y,
+  //   ),
+  //   interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_RESUME' },
+  //   message: { type: 'interactive', text: 'Take a look at his resume?' },
+  // },
 ]

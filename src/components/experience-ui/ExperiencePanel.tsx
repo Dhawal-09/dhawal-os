@@ -4,8 +4,6 @@ import { projects } from '../../data/projects'
 import type { ExperienceEntry } from '../../data/types'
 import './ExperiencePanel.css'
 
-const DETAIL_ID = 'experience-detail'
-
 /**
  * The pixel font has no glyphs for "–" or "·" (they render as blank gaps),
  * so text shown in it uses ASCII "-" instead (same rule as ProjectsPanel).
@@ -26,18 +24,34 @@ function productOf(entry: ExperienceEntry) {
     : undefined
 }
 
+/** A 5×7 pixel "▶" — CSS turns it to "▼" when its entry is open. */
+function ExpandArrow() {
+  return (
+    <svg
+      className="experience-entry-arrow"
+      viewBox="0 0 5 7"
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M1 0h1v7H1zM2 1h1v5H2zM3 2h1v3H3zM4 3h1v1H4z" />
+    </svg>
+  )
+}
+
 /**
- * Career timeline: a reverse-chronological list of roles (rendered in
- * `src/data/experience.ts` order, newest first) beside the selected role's
- * details. The newest role is selected on open so it is readable with no
- * extra click. Close/Escape/focus stay owned by the shared overlay shell.
+ * Career timeline as a collapsible list: one selectable, game-menu style
+ * row per role (rendered in `src/data/experience.ts` order, newest first),
+ * each expanding inline to that role's details. Every row starts collapsed
+ * — the visitor opens what they want to read; at most one is open at a
+ * time, and clicking an open row collapses it. Everything shown comes from
+ * the existing data modules — nothing is restated here. Close/Escape/focus
+ * stay owned by the shared overlay shell.
  */
 export function ExperiencePanel() {
-  const [selectedId, setSelectedId] = useState(experience[0]?.id)
-  const selected =
-    experience.find((entry) => entry.id === selectedId) ?? experience[0]
+  const [openId, setOpenId] = useState<string | null>(null)
 
-  if (!selected) {
+  if (experience.length === 0) {
     return <p className="panel-empty">No experience listed yet.</p>
   }
 
@@ -45,104 +59,115 @@ export function ExperiencePanel() {
     <div className="experience">
       <h3 className="panel-group-title">Career timeline</h3>
 
-      <div className="experience-layout">
-        <ol className="experience-timeline" aria-label="Career timeline">
-          {experience.map((entry, index) => {
-            const isSelected = entry.id === selected.id
-            const classes = ['experience-stop']
-            if (index === 0) classes.push('is-latest')
-            if (isSelected) classes.push('is-selected')
-            return (
-              <li key={entry.id} className={classes.join(' ')}>
-                <span className="experience-node" aria-hidden="true" />
-                <button
-                  type="button"
-                  className="experience-stop-button"
-                  aria-pressed={isSelected}
-                  aria-controls={DETAIL_ID}
-                  onClick={() => setSelectedId(entry.id)}
-                >
-                  <span className="experience-stop-years">
-                    {yearSpan(entry.period)}
-                  </span>
-                  <span className="experience-stop-role">{entry.role}</span>
-                  {entry.company && (
-                    <span className="experience-stop-company">
-                      {entry.company}
-                    </span>
-                  )}
-                  <span className="experience-stop-view" aria-hidden="true">
-                    {isSelected ? 'Viewing' : 'View details >'}
-                  </span>
-                </button>
-              </li>
-            )
-          })}
-        </ol>
-
-        <ExperienceDetail
-          key={selected.id}
-          entry={selected}
-          isLatest={selected.id === experience[0].id}
-        />
-      </div>
+      <ol className="experience-list" aria-label="Career timeline">
+        {experience.map((entry, index) => (
+          <ExperienceRow
+            key={entry.id}
+            entry={entry}
+            isLatest={index === 0}
+            isOpen={entry.id === openId}
+            onToggle={() =>
+              setOpenId((current) => (current === entry.id ? null : entry.id))
+            }
+          />
+        ))}
+      </ol>
     </div>
   )
 }
 
-function ExperienceDetail({
+function ExperienceRow({
   entry,
   isLatest,
+  isOpen,
+  onToggle,
 }: {
   entry: ExperienceEntry
   isLatest: boolean
+  isOpen: boolean
+  onToggle: () => void
 }) {
   const product = productOf(entry)
+  const headerId = `experience-${entry.id}-header`
+  const detailsId = `experience-${entry.id}-details`
+
+  const classes = ['experience-entry']
+  if (isLatest) classes.push('is-latest')
+  if (isOpen) classes.push('is-open')
 
   return (
-    <article
-      id={DETAIL_ID}
-      className={
-        isLatest ? 'experience-detail is-latest' : 'experience-detail'
-      }
-      aria-live="polite"
-      aria-label={`${entry.role} details`}
-    >
-      <header className="experience-detail-head">
-        <h4 className="experience-detail-role">{entry.role}</h4>
-        {entry.company && (
-          <p className="experience-detail-company">{entry.company}</p>
-        )}
-        <p className="experience-detail-period">{pixelText(entry.period)}</p>
-      </header>
+    <li className={classes.join(' ')}>
+      <div className="experience-entry-face">
+        <h4 className="experience-entry-heading">
+          <button
+            type="button"
+            id={headerId}
+            className="experience-entry-header"
+            aria-expanded={isOpen}
+            aria-controls={detailsId}
+            onClick={onToggle}
+          >
+            <span className="experience-entry-marker" aria-hidden="true" />
+            <span className="experience-entry-role">{entry.role}</span>
+            <span className="experience-entry-years">
+              {yearSpan(entry.period)}
+            </span>
+            <ExpandArrow />
+            {entry.company && (
+              <span className="experience-entry-company">{entry.company}</span>
+            )}
+          </button>
+        </h4>
 
-      {product && (
-        <section className="experience-detail-section">
-          <h5 className="experience-detail-label">Product</h5>
-          <p className="experience-product-name">{product.name}</p>
-          <p className="experience-product-subtitle">{product.subtitle}</p>
-        </section>
-      )}
+        {/* Always rendered so it can animate open and shut; while shut it is
+            inert and hidden from assistive tech, not merely zero-height. */}
+        <div
+          id={detailsId}
+          className="experience-entry-reveal"
+          role="region"
+          aria-labelledby={headerId}
+          aria-hidden={!isOpen}
+          inert={!isOpen}
+        >
+          <div className="experience-entry-clip">
+            <div className="experience-entry-details">
+              <p className="experience-entry-period">
+                {pixelText(entry.period)}
+              </p>
 
-      {entry.technologies && entry.technologies.length > 0 && (
-        <section className="experience-detail-section">
-          <h5 className="experience-detail-label">Technologies</h5>
-          <ul className="experience-tech">
-            {entry.technologies.map((tech) => (
-              <li key={tech}>{tech}</li>
-            ))}
-          </ul>
-        </section>
-      )}
+              {product && (
+                <section className="experience-detail-section">
+                  <h5 className="experience-detail-label">Project</h5>
+                  <p className="experience-product-name">{product.name}</p>
+                  <p className="experience-product-subtitle">
+                    {product.subtitle}
+                  </p>
+                </section>
+              )}
 
-      <section className="experience-detail-section">
-        <h5 className="experience-detail-label">Contributions</h5>
-        <ul className="experience-contributions">
-          {entry.responsibilities.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </section>
-    </article>
+              {entry.technologies && entry.technologies.length > 0 && (
+                <section className="experience-detail-section">
+                  <h5 className="experience-detail-label">Technologies</h5>
+                  <ul className="experience-tech">
+                    {entry.technologies.map((tech) => (
+                      <li key={tech}>{tech}</li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              <section className="experience-detail-section">
+                <h5 className="experience-detail-label">Contributions</h5>
+                <ul className="experience-contributions">
+                  {entry.responsibilities.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </li>
   )
 }

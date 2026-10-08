@@ -58,7 +58,7 @@ const bedObject: WorldObject = {
   label: 'BED',
   position: bedPosition,
   layer: 'object',
-  message: { type: 'flavor', text: 'Even developers need sleep.', radius: 110 },
+  message: { type: 'flavor', text: 'Even developers need sleep.', radius: 310 },
   transform: { width: BED_TARGET_WIDTH },
   collision: contentAlignedCollider(
     bedPosition,

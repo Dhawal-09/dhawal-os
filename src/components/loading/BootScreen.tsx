@@ -1,64 +1,56 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useSyncExternalStore } from 'react'
+import {
+  gamePreloader,
+  type GamePreloader,
+} from '../../game/world/preloadWorldAssets'
 import './BootScreen.css'
 
-const BOOT_STAGES = [
-  'Loading world',
-  'Loading assets',
-  'Initializing renderer',
-  'Initializing input',
-  'Loading environment',
-] as const
-
-/** Fast, fixed cadence for the cosmetic checklist — flavor only, never a fake long delay (DESIGN_SYSTEM.md "keep this short"). */
-const STAGE_INTERVAL_MS = 70
-
 export interface BootScreenProps {
-  /** True once the real PixiJS engine (`GameApp`) has actually finished initializing — the only real gate this screen waits on. */
+  /** True once the Pixi renderer itself is up. */
+  rendererReady: boolean
+  /** True once the real PixiJS engine (`GameApp`: renderer, core assets, scene, input) has actually finished initializing — the only gate this screen waits on. */
   engineReady: boolean
-  /**
-   * Called exactly once, the moment the boot sequence has both (a) finished
-   * ticking through its own short checklist animation and (b) observed
-   * `engineReady`. On a fast device the checklist is usually still the
-   * long pole (~5 x `STAGE_INTERVAL_MS`); on a slow one, this screen simply
-   * keeps waiting on real `engineReady` rather than fabricating "done".
-   */
+  /** Called exactly once, the moment `engineReady` is observed — immediately, if the engine finished behind the previous screens. */
   onBootComplete: () => void
+  /** The preload whose progress is shown. Defaults to the app's one shared preload; tests pass their own. */
+  preloader?: Pick<GamePreloader, 'subscribe' | 'getState'>
 }
 
 /**
- * The DHAWAL.OS boot sequence, shown between START JOURNEY and the guest
- * access panel. The checklist itself is a short, fixed-cadence cosmetic
- * animation (never inflated into a fake multi-second wait) — but
- * `onBootComplete` never fires until the real engine (`engineReady`) is
- * actually ready, so a slower device just keeps this screen up longer
- * instead of lying about readiness.
+ * The DHAWAL.OS initialization screen, shown between ENTER DHAWAL.OS and
+ * the game. Everything on it is real state — nothing ticks on a timer: each
+ * checklist line is checked by the thing it names actually being ready, and
+ * the bar is the background preload's own settled/total count. The preload
+ * has usually been running since the Landing page, so this screen is often
+ * already complete when it appears and hands straight over to the game; on
+ * a slower connection it simply stays up until the engine is ready.
  */
-export function BootScreen({ engineReady, onBootComplete }: BootScreenProps) {
-  const [completedStages, setCompletedStages] = useState(0)
+export function BootScreen({
+  rendererReady,
+  engineReady,
+  onBootComplete,
+  preloader = gamePreloader,
+}: BootScreenProps) {
+  const preload = useSyncExternalStore(preloader.subscribe, preloader.getState)
   const calledCompleteRef = useRef(false)
 
   useEffect(() => {
-    if (completedStages >= BOOT_STAGES.length) return
-    const id = window.setTimeout(
-      () => setCompletedStages((count) => count + 1),
-      STAGE_INTERVAL_MS,
-    )
-    return () => window.clearTimeout(id)
-  }, [completedStages])
-
-  const stagesDone = completedStages >= BOOT_STAGES.length
-  const ready = stagesDone && engineReady
-
-  useEffect(() => {
-    if (!ready || calledCompleteRef.current) return
+    if (!engineReady || calledCompleteRef.current) return
     calledCompleteRef.current = true
     onBootComplete()
-  }, [ready, onBootComplete])
+  }, [engineReady, onBootComplete])
 
-  const progress = Math.round(
-    ((completedStages + (engineReady ? 1 : 0)) / (BOOT_STAGES.length + 1)) *
-      100,
-  )
+  const stages = [
+    { label: 'Renderer', done: rendererReady || engineReady },
+    // The scene owns the InputManager, so input exists exactly when the engine does.
+    { label: 'Input', done: engineReady },
+    { label: 'World manifest', done: preload.started },
+    { label: 'Character', done: preload.characterReady },
+    { label: 'Core environment', done: preload.coreReady },
+  ]
+
+  const progress =
+    preload.total > 0 ? Math.floor((preload.settled / preload.total) * 100) : 0
 
   return (
     <div className="boot-screen" role="status" aria-live="polite">
@@ -66,29 +58,38 @@ export function BootScreen({ engineReady, onBootComplete }: BootScreenProps) {
       <p className="boot-heading">INITIALIZING SYSTEM...</p>
 
       <ul className="boot-stages">
-        {BOOT_STAGES.map((stage, index) => (
-          <li
-            key={stage}
-            className={completedStages > index ? 'boot-stage-done' : ''}
-          >
-            {completedStages > index ? '✓ ' : ''}
-            {stage}
+        {stages.map((stage) => (
+          <li key={stage.label} className={stage.done ? 'boot-stage-done' : ''}>
+            {stage.done ? '✓ ' : ''}
+            {stage.label}
           </li>
         ))}
       </ul>
 
-      <div
-        className="boot-progress"
-        role="progressbar"
-        aria-valuenow={progress}
-        aria-valuemin={0}
-        aria-valuemax={100}
-      >
-        <div className="boot-progress-bar" style={{ width: `${progress}%` }} />
+      <p className="boot-progress-label">BACKGROUND ASSETS</p>
+      <div className="boot-progress-row">
+        <div
+          className="boot-progress"
+          role="progressbar"
+          aria-label="Background assets"
+          aria-valuenow={progress}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <div
+            className="boot-progress-bar"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <span className="boot-progress-value">{progress}%</span>
       </div>
 
       <p className="boot-status">
-        {ready ? 'SYSTEM READY' : stagesDone ? 'FINALIZING...' : `${progress}%`}
+        {engineReady
+          ? 'SYSTEM READY'
+          : preload.coreReady
+            ? 'STARTING WORLD...'
+            : 'LOADING CORE ASSETS...'}
       </p>
     </div>
   )

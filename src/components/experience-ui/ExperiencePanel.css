@@ -1,253 +1,274 @@
-/* Experience career timeline — same palette, pixel-font labels and 1px
-   pixel-border language as the shared overlay shell (InteractionOverlay.css)
-   and the Projects computer. Newest role first: bright cyan node/spine;
-   older roles step down to muted blue-gray. No gradients or large radii. */
+/* Experience career timeline — a collapsible list of selectable, game-menu
+   style rows. Same palette, pixel-font labels and stepped-corner language as
+   the frame it sits in (GamePanel.css). Collapsed rows are subdued; the open
+   one gets the cyan border, a brighter face and a magenta edge. Hard edges
+   only: no blurred shadows, no rounded corners. */
 
 .experience {
+  /* Local accent, matching the frame's (--purple alone is too dark to read as a line). */
+  --experience-magenta: #c44dff;
+  --experience-open-ms: 200ms;
+
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.experience-layout {
-  display: grid;
-  grid-template-columns: 200px minmax(0, 1fr);
-  gap: 20px;
-  align-items: start;
-}
-
-/* ---- Timeline ---- */
-
-.experience-timeline {
+.experience-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
 }
 
-.experience-stop {
-  position: relative;
-  padding-left: 26px;
-}
+/* ---- One row ---- */
 
-/* Spine segment from this stop's node down to the next stop's node. */
-.experience-stop:not(:last-child)::before {
-  content: '';
-  position: absolute;
-  /* node bottom (12+12) → next node top (gap 18 + 12) */
-  top: 24px;
-  bottom: -30px;
-  left: 6px;
-  width: 2px;
-  background: #2f4968;
-}
-
-.experience-stop.is-latest:not(:last-child)::before {
-  background: linear-gradient(
-    to bottom,
-    var(--cyan, #27d7ff) 0 55%,
-    #2f4968 55% 100%
+/* The row's border is this element's background showing through a 1px
+   padding around the face — the only way to keep a border on stepped,
+   clipped corners. */
+.experience-entry {
+  --experience-step: 3px;
+  --experience-clip: polygon(
+    0 calc(var(--experience-step) * 2),
+    var(--experience-step) calc(var(--experience-step) * 2),
+    var(--experience-step) var(--experience-step),
+    calc(var(--experience-step) * 2) var(--experience-step),
+    calc(var(--experience-step) * 2) 0,
+    calc(100% - var(--experience-step) * 2) 0,
+    calc(100% - var(--experience-step) * 2) var(--experience-step),
+    calc(100% - var(--experience-step)) var(--experience-step),
+    calc(100% - var(--experience-step)) calc(var(--experience-step) * 2),
+    100% calc(var(--experience-step) * 2),
+    100% calc(100% - var(--experience-step) * 2),
+    calc(100% - var(--experience-step)) calc(100% - var(--experience-step) * 2),
+    calc(100% - var(--experience-step)) calc(100% - var(--experience-step)),
+    calc(100% - var(--experience-step) * 2) calc(100% - var(--experience-step)),
+    calc(100% - var(--experience-step) * 2) 100%,
+    calc(var(--experience-step) * 2) 100%,
+    calc(var(--experience-step) * 2) calc(100% - var(--experience-step)),
+    var(--experience-step) calc(100% - var(--experience-step)),
+    var(--experience-step) calc(100% - var(--experience-step) * 2),
+    0 calc(100% - var(--experience-step) * 2)
   );
+
+  padding: 1px;
+  background: var(--pixel-border, #1e5fa8);
+  clip-path: var(--experience-clip);
+  transition: background-color var(--experience-open-ms) ease-out;
 }
 
-/* Octagonal "pixel circle" node. */
-.experience-node {
-  position: absolute;
-  top: 12px;
-  left: 1px;
-  width: 12px;
-  height: 12px;
-  background: #4a5f7e;
-  clip-path: polygon(
-    25% 0,
-    75% 0,
-    100% 25%,
-    100% 75%,
-    75% 100%,
-    25% 100%,
-    0 75%,
-    0 25%
-  );
+.experience-entry-face {
+  background: var(--panel-dark, #06142d);
+  clip-path: var(--experience-clip);
+  /* The magenta edge of the open row: a hard 3px bar, grown from nothing. */
+  box-shadow: inset 0 0 0 var(--experience-magenta);
+  transition:
+    background-color var(--experience-open-ms) ease-out,
+    box-shadow var(--experience-open-ms) ease-out;
 }
 
-.experience-stop.is-latest .experience-node {
-  background: var(--cyan-bright, #57e8ff);
+.experience-entry.is-open {
+  background: var(--cyan, #27d7ff);
 }
 
-/* Soft glow + a brief pulse on the latest node — three beats on open, not
-   a continuous animation. Sits behind the node (clip-path would clip a
-   box-shadow on the node itself). */
-.experience-stop.is-latest::after {
-  content: '';
-  position: absolute;
-  top: 8px;
-  left: -3px;
-  width: 20px;
-  height: 20px;
-  background: rgba(39, 215, 255, 0.18);
-  pointer-events: none;
-  animation: experience-node-pulse 0.9s steps(3, end) 3;
+.experience-entry.is-open .experience-entry-face {
+  background: var(--bg-navy, #08152f);
+  box-shadow: inset 3px 0 0 var(--experience-magenta);
 }
 
-@keyframes experience-node-pulse {
-  50% {
-    background: rgba(39, 215, 255, 0.4);
+@media (hover: hover) {
+  .experience-entry:not(.is-open):hover {
+    background: var(--cyan, #27d7ff);
+  }
+
+  .experience-entry:not(.is-open):hover .experience-entry-face {
+    background: #071a38;
   }
 }
 
-.experience-stop-button {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
+/* ---- Row header (the whole row is the button) ---- */
+
+.experience-entry-heading {
+  margin: 0;
+  font: inherit;
+}
+
+.experience-entry-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-areas:
+    'marker role years arrow'
+    '.      company company arrow';
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 4px;
   width: 100%;
-  min-height: 44px;
-  padding: 10px 12px;
-  border: 1px solid var(--pixel-border, #1e5fa8);
-  border-radius: 0;
-  background: var(--panel-dark, #06142d);
-  box-shadow: 3px 3px 0 var(--bg-deep, #050b1a);
+  min-height: 56px;
+  padding: 12px 16px;
+  border: 0;
+  background: none;
   color: var(--text-muted, #91a9c8);
   cursor: pointer;
   font: inherit;
   text-align: left;
 }
 
-.experience-stop-button:hover,
-.experience-stop-button:focus-visible {
-  border-color: var(--cyan, #27d7ff);
-  background: var(--bg-navy, #08152f);
+/* Inside the row: an outline drawn outside a clipped element is cut off. */
+.experience-entry-header:focus-visible {
+  outline: 2px solid var(--cyan-bright, #57e8ff);
+  outline-offset: -5px;
 }
 
-.experience-stop-button:active {
-  box-shadow: 1px 1px 0 var(--bg-deep, #050b1a);
-  transform: translate(2px, 2px);
+/* Level/status indicator: a pixel diamond — hollow for an earlier role, solid
+   for the newest. */
+.experience-entry-marker {
+  grid-area: marker;
+  width: 12px;
+  height: 12px;
+  background: #4a5f7e;
+  clip-path: polygon(
+    evenodd,
+    50% 0,
+    100% 50%,
+    50% 100%,
+    0 50%,
+    50% 0,
+    50% 28%,
+    28% 50%,
+    50% 72%,
+    72% 50%,
+    50% 28%
+  );
 }
 
-.experience-stop.is-selected .experience-stop-button {
-  border-color: var(--cyan, #27d7ff);
-  background: var(--bg-navy, #08152f);
-  box-shadow:
-    inset 3px 0 0 var(--cyan, #27d7ff),
-    3px 3px 0 var(--bg-deep, #050b1a);
+.experience-entry.is-latest .experience-entry-marker {
+  background: var(--cyan-bright, #57e8ff);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
 }
 
-.experience-stop-years,
-.experience-stop-role,
-.experience-stop-view {
+.experience-entry-role,
+.experience-entry-years {
   font-family: var(--font-pixel);
   letter-spacing: 0.03em;
   line-height: 1.5;
 }
 
-.experience-stop-years {
-  font-size: 0.62rem;
-  color: #6f86a6;
-}
-
-.experience-stop-role {
-  font-size: 0.68rem;
+.experience-entry-role {
+  grid-area: role;
+  font-size: 0.78rem;
   text-transform: uppercase;
   overflow-wrap: anywhere;
 }
 
-.experience-stop-company {
-  font-size: 0.85rem;
+.experience-entry-years {
+  grid-area: years;
+  font-size: 0.62rem;
+  white-space: nowrap;
+  color: #6f86a6;
+}
+
+.experience-entry-company {
+  grid-area: company;
+  font-size: 0.9rem;
   line-height: 1.3;
 }
 
-.experience-stop-view {
-  font-size: 0.55rem;
-  text-transform: uppercase;
-  color: #6f86a6;
+/* ▶ collapsed, ▼ expanded — one glyph, turned in a single hard step. */
+.experience-entry-arrow {
+  grid-area: arrow;
+  width: 10px;
+  height: 14px;
+  fill: #6f86a6;
+  transition: transform var(--experience-open-ms) steps(2, jump-end);
 }
 
-/* The newest role reads brighter than older ones even when not selected. */
-.experience-stop.is-latest .experience-stop-years {
+.experience-entry.is-open .experience-entry-arrow {
+  transform: rotate(90deg);
+}
+
+/* The newest role reads brighter than older ones even while collapsed. */
+.experience-entry.is-latest .experience-entry-role,
+.experience-entry.is-open .experience-entry-role {
+  color: var(--text, #eaf4ff);
+}
+
+.experience-entry.is-latest .experience-entry-years {
   color: var(--cyan, #27d7ff);
 }
 
-.experience-stop.is-latest .experience-stop-role {
-  color: var(--text, #eaf4ff);
-}
-
-.experience-stop.is-selected .experience-stop-role {
-  color: var(--text, #eaf4ff);
-}
-
-.experience-stop.is-selected .experience-stop-view,
-.experience-stop-button:hover .experience-stop-view,
-.experience-stop-button:focus-visible .experience-stop-view {
+.experience-entry.is-open .experience-entry-role {
   color: var(--cyan-bright, #57e8ff);
 }
 
-/* ---- Selected role details ---- */
-
-.experience-detail {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-width: 0;
-  padding: 14px 16px;
-  border: 1px solid var(--pixel-border, #1e5fa8);
-  background: var(--panel-dark, #06142d);
-  box-shadow: 3px 3px 0 var(--bg-deep, #050b1a);
-  animation: experience-detail-in 0.16s steps(3, end);
+.experience-entry.is-open .experience-entry-arrow,
+.experience-entry-header:focus-visible .experience-entry-arrow {
+  fill: var(--cyan-bright, #57e8ff);
 }
 
-.experience-detail.is-latest {
-  border-color: #2a8fc0;
-  box-shadow:
-    inset 0 3px 0 rgba(39, 215, 255, 0.35),
-    3px 3px 0 var(--bg-deep, #050b1a);
-}
-
-@keyframes experience-detail-in {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
+@media (hover: hover) {
+  .experience-entry-header:hover .experience-entry-arrow {
+    fill: var(--cyan-bright, #57e8ff);
   }
 }
 
-.experience-detail-head {
+/* ---- Inline details ---- */
+
+/* Height animates through a 0fr -> 1fr grid row, so it follows the
+   content's real height with no measured pixel values. */
+.experience-entry-reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--experience-open-ms) ease-out;
+}
+
+.experience-entry.is-open .experience-entry-reveal {
+  grid-template-rows: 1fr;
+}
+
+/* Hidden only once the row has finished closing; shown as it starts opening. */
+.experience-entry-clip {
+  min-height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    opacity var(--experience-open-ms) ease-out,
+    visibility 0s linear var(--experience-open-ms);
+}
+
+.experience-entry.is-open .experience-entry-clip {
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 0s;
+}
+
+.experience-entry-details {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
+  margin: 0 16px;
+  padding: 14px 0 16px;
+  /* Pixel-dash separator under the row header. */
+  background: repeating-linear-gradient(
+      90deg,
+      var(--pixel-border, #1e5fa8) 0 6px,
+      transparent 6px 10px
+    )
+    top / 100% 2px no-repeat;
 }
 
-.experience-detail-head p,
-.experience-detail-section p {
+.experience-entry-details p {
   margin: 0;
 }
 
-.experience-detail-role {
-  margin: 0;
-  font-family: var(--font-pixel);
-  font-size: 0.95rem;
-  line-height: 1.5;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  overflow-wrap: anywhere;
-}
-
-.experience-detail.is-latest .experience-detail-role {
-  color: var(--cyan-bright, #57e8ff);
-}
-
-.experience-detail-company {
-  font-family: var(--font-pixel);
-  font-size: 0.75rem;
-  line-height: 1.5;
-  letter-spacing: 0.02em;
-}
-
-.experience-detail-period {
+.experience-entry-period {
   font-family: var(--font-pixel);
   font-size: 0.62rem;
   line-height: 1.6;
   letter-spacing: 0.03em;
+  text-transform: uppercase;
   color: var(--text-muted, #91a9c8);
 }
 
@@ -296,7 +317,7 @@
   max-width: 100%;
   padding: 5px 8px;
   border: 1px solid var(--pixel-border, #1e5fa8);
-  background: var(--bg-navy, #08152f);
+  background: var(--panel-dark, #06142d);
   font-family: var(--font-pixel);
   font-size: 0.58rem;
   line-height: 1.5;
@@ -328,28 +349,34 @@
   background: var(--cyan, #27d7ff);
 }
 
-/* Narrow screens: timeline on top, selected role's details below it. */
-@media (max-width: 560px) {
-  .experience-layout {
-    grid-template-columns: minmax(0, 1fr);
+/* Narrow screens: the years drop under the role so the title can wrap
+   freely; the arrow stays pinned at the right. */
+@media (max-width: 480px) {
+  .experience-entry-header {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'marker role arrow'
+      '.      company arrow'
+      '.      years arrow';
+    column-gap: 10px;
+    padding: 12px;
   }
 
-  .experience-timeline {
-    gap: 14px;
+  .experience-entry-role {
+    font-size: 0.72rem;
   }
 
-  .experience-stop:not(:last-child)::before {
-    bottom: -26px;
+  .experience-entry-details {
+    margin: 0 12px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .experience-stop.is-latest::after,
-  .experience-detail {
-    animation: none;
-  }
-
-  .experience-stop-button:active {
-    transform: none;
+  .experience-entry,
+  .experience-entry-face,
+  .experience-entry-arrow,
+  .experience-entry-reveal,
+  .experience-entry-clip {
+    transition: none;
   }
 }

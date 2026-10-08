@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react'
-import { AccessPanel } from '../components/access-ui/AccessPanel'
 import { ErrorScreen } from '../components/error/ErrorScreen'
 import { GameHud } from '../components/game-menu/GameHud'
 import { LandingScreen } from '../components/landing/LandingScreen'
@@ -10,6 +9,7 @@ import { audioManager } from '../game/audio/AudioManager'
 import { authManager } from '../game/auth/AuthManager'
 import { gameEventBridge } from '../game/events/GameEventBridge'
 import { CameraMode } from '../game/world/cameraConstants'
+import { gamePreloader } from '../game/world/preloadWorldAssets'
 import {
   appLifecycleReducer,
   INITIAL_APP_LIFECYCLE_STATE,
@@ -25,25 +25,60 @@ import { InteractionOverlay } from './InteractionOverlay'
 import './App.css'
 
 /**
- * Owns the small explicit application lifecycle (PHASE-08.5, extended by the
- * DHAWAL.OS boot + guest-access flow): LANDING -> (START JOURNEY) -> LOADING
- * -> ACCESS -> VIEW_SELECT -> GAME, with an ERROR branch that can retry and an EXIT branch
- * (GAME -> LANDING) once the visitor confirms they want to leave.
- * `GameCanvas` — the single Pixi bootstrap path — mounts once the visitor
- * leaves LANDING and stays mounted unchanged through LOADING -> ACCESS ->
- * VIEW_SELECT -> GAME, so `GameApp`/`GameScene` are created exactly once per game session;
- * the world is fully loaded and running *behind* the BootScreen/AccessPanel
- * overlays, which is what lets ACCESS complete instantly once the guest
- * clicks ACCESS SYSTEM (PixiJS never even knows authentication exists — see
- * ARCHITECTURE.md).
+ * Runs `callback` once the page itself has finished loading (the Landing
+ * page's own cover art and font included) and the browser is next idle —
+ * i.e. once Landing is fully usable. Returns a cancel function.
+ */
+function runWhenPageIdle(callback: () => void): () => void {
+  let idleHandle: number | null = null
+  let timeoutHandle: number | null = null
+
+  const schedule = (): void => {
+    if (typeof window.requestIdleCallback === 'function') {
+      idleHandle = window.requestIdleCallback(callback, { timeout: 1000 })
+    } else {
+      timeoutHandle = window.setTimeout(callback, 0)
+    }
+  }
+
+  if (document.readyState === 'complete') schedule()
+  else window.addEventListener('load', schedule, { once: true })
+
+  return () => {
+    window.removeEventListener('load', schedule)
+    if (idleHandle !== null) window.cancelIdleCallback(idleHandle)
+    if (timeoutHandle !== null) window.clearTimeout(timeoutHandle)
+  }
+}
+
+/**
+ * Owns the small explicit application lifecycle (PHASE-08.5, restructured so
+ * nothing the visitor does waits on the game until the very last step):
+ * LANDING -> (START JOURNEY) -> VIEW_SELECT -> LOADING -> GAME, with an
+ * ERROR branch that can retry and an EXIT branch (GAME -> LANDING) once the
+ * visitor confirms they want to leave.
+ *
+ * The time spent on LANDING and VIEW_SELECT is used to *download* the game:
+ * once Landing is usable, the game's artwork starts loading in the
+ * background (`gamePreloader`, into Pixi's shared `Assets` cache). Nothing
+ * else happens until the visitor confirms a view — START JOURNEY only shows
+ * VIEW_SELECT, it never starts the engine.
+ *
+ * LOADING (the initialization screen, BootScreen.tsx) owns everything
+ * expensive: `GameCanvas` — the single Pixi bootstrap path — mounts there,
+ * so the renderer, world construction, texture upload and player setup all
+ * run behind that screen rather than freezing another one. It stays mounted
+ * unchanged through LOADING -> GAME, so `GameApp`/`GameScene` are created
+ * exactly once per game session.
+ *
+ * There is no access screen: the guest session (`AuthManager`) is ensured
+ * automatically on the way into GAME (PixiJS never even knows
+ * authentication exists — see ARCHITECTURE.md).
  *
  * A `sessionStorage` flag (`gameSession.ts`) survives a page refresh within
  * the same browser tab/session: if the visitor already reached GAME, a
- * refresh skips LANDING and goes straight into a brand-new LOADING -> GAME
- * bootstrap. `AuthManager`'s own persisted guest session (also
- * `sessionStorage`) additionally skips ACCESS on that same refresh — the
- * guest already has a session, so `GAME_READY` goes straight to GAME
- * instead of re-showing the access panel.
+ * refresh skips LANDING and VIEW_SELECT and goes straight into a brand-new
+ * LOADING -> GAME bootstrap.
  */
 function App() {
   const [lifecycle, dispatch] = useReducer(
@@ -59,9 +94,10 @@ function App() {
   // reuse a prior (failed/exited) GameApp attempt. Bumped only on retry
   // and on confirmed exit, never on any other lifecycle transition.
   const [sessionKey, setSessionKey] = useState(0)
-  // True once GameCanvas's real onReady has fired for the current attempt
-  // — the only real signal BootScreen gates its own completion on
-  // (BootScreen.tsx). Reset on every fresh attempt (retry/exit).
+  // Real signals from GameCanvas for the current attempt, shown by (and, for
+  // `engineReady`, gating) the initialization screen (BootScreen.tsx). Reset
+  // on every fresh attempt (retry/exit).
+  const [rendererReady, setRendererReady] = useState(false)
   const [engineReady, setEngineReady] = useState(false)
   // The single camera-mode selection (VIEW_SELECT screen + HUD VIEW
   // selector). React owns the choice; the Pixi Camera owns the behavior —
@@ -71,9 +107,18 @@ function App() {
   // refresh, which skips VIEW_SELECT).
   const [cameraMode, setCameraMode] = useState<CameraMode | null>(null)
 
-  // Background music belongs to GAME only — never LANDING, LOADING or
-  // ACCESS (the world runs behind those overlays, so GameApp being ready
-  // isn't the signal). Leaving GAME (EXIT -> LANDING) stops and rewinds it;
+  // LANDING_READY -> GAME_PRELOAD_STARTED. Deliberately after the page's
+  // own load, so the game's artwork never competes with what Landing needs
+  // to render.
+  const onLanding = lifecycle === 'landing'
+  useEffect(() => {
+    if (!onLanding) return
+    return runWhenPageIdle(gamePreloader.start)
+  }, [onLanding])
+
+  // Background music belongs to GAME only — never LANDING, VIEW_SELECT or
+  // LOADING (GameApp being ready isn't the signal — the visitor entering
+  // is). Leaving GAME (EXIT -> LANDING) stops and rewinds it;
   // panels don't change the lifecycle, so they never restart it.
   const inGame = lifecycle === 'game'
   useEffect(() => {
@@ -83,29 +128,34 @@ function App() {
   }, [inGame])
 
   const handleStartJourney = useCallback(() => {
+    // In case the visitor beat the page's own load event — the download
+    // must be under way by VIEW_SELECT at the latest. Idempotent.
+    gamePreloader.start()
     dispatch({ type: 'START_JOURNEY' })
   }, [])
 
+  const handleRendererReady = useCallback(() => {
+    setRendererReady(true)
+  }, [])
+
   const handleGameReady = useCallback(() => {
-    // "The engine successfully initialized" — deliberately not on
-    // START_JOURNEY, so a refresh mid-LOADING (before the game has
-    // actually proven it works) still lands back in LOADING to try again,
-    // not a false GAME/ACCESS.
-    markGameSessionActive()
     setEngineReady(true)
   }, [])
 
   const handleBootComplete = useCallback(() => {
-    dispatch({
-      type: 'GAME_READY',
-      alreadyAuthenticated: authManager.isAuthenticated(),
-    })
+    // Guest access needs no screen and no click — just make sure the session
+    // exists (a refresh mid-game already has one).
+    if (!authManager.isAuthenticated()) authManager.createGuestSession()
+    // "The visitor actually entered the game" — deliberately not on START
+    // JOURNEY or ENTER, so a refresh before the game has proven it works
+    // starts over from LANDING.
+    markGameSessionActive()
+    dispatch({ type: 'GAME_READY' })
   }, [])
 
-  const handleAccessGranted = useCallback(() => {
-    dispatch({ type: 'ACCESS_GRANTED' })
-  }, [])
-
+  // On VIEW_SELECT there is no scene yet to hear the event — the choice
+  // reaches the world as GameCanvas's `initialCameraMode` instead. From the
+  // HUD, the event is what switches the live camera.
   const handleCameraModeChange = useCallback((mode: CameraMode) => {
     setCameraMode(mode)
     gameEventBridge.emit(
@@ -130,9 +180,11 @@ function App() {
     dispatch({ type: 'GAME_ERROR' })
   }, [])
 
+  // The visitor's camera choice survives a retry — the fresh GameCanvas
+  // opens in it.
   const handleRetry = useCallback(() => {
+    setRendererReady(false)
     setEngineReady(false)
-    setCameraMode(null)
     setSessionKey((key) => key + 1)
     dispatch({ type: 'RETRY' })
   }, [])
@@ -140,6 +192,7 @@ function App() {
   const handleExitConfirmed = useCallback(() => {
     clearGameSession()
     authManager.logout()
+    setRendererReady(false)
     setEngineReady(false)
     setCameraMode(null)
     setSessionKey((key) => key + 1)
@@ -150,16 +203,12 @@ function App() {
     return <LandingScreen onStartJourney={handleStartJourney} />
   }
 
-  // LOADING, ACCESS, GAME, and ERROR all share the same portfolio shell —
-  // the conventional navigation and panel host work independently of
-  // whether the Pixi world itself is loading, gated behind guest access,
-  // ready, or failed (ACCESSIBILITY.md "a recruiter must be able to bypass
-  // exploration entirely").
-  const mountGameCanvas =
-    lifecycle === 'loading' ||
-    lifecycle === 'access' ||
-    lifecycle === 'view-select' ||
-    lifecycle === 'game'
+  // VIEW_SELECT, LOADING, GAME, and ERROR all share the same portfolio
+  // shell — the conventional navigation and panel host work independently
+  // of whether the Pixi world itself exists yet, is initializing, ready, or
+  // failed (ACCESSIBILITY.md "a recruiter must be able to bypass
+  // exploration entirely"). The engine itself only ever exists from LOADING.
+  const mountGameCanvas = lifecycle === 'loading' || lifecycle === 'game'
 
   return (
     <div className="app-shell">
@@ -175,29 +224,29 @@ function App() {
         {mountGameCanvas && (
           <GameCanvas
             key={sessionKey}
+            initialCameraMode={cameraMode ?? undefined}
+            onRendererReady={handleRendererReady}
             onReady={handleGameReady}
             onError={handleGameError}
           />
         )}
       </main>
       {/* Touch joystick + interact button — GAME only, so they can never drive
-          the world behind the boot/access/view-select screens. */}
+          the world behind the view-select/initialization screens. */}
       {lifecycle === 'game' && <MobileControls />}
       <InteractionOverlay />
-      {lifecycle === 'loading' && (
-        <BootScreen
-          engineReady={engineReady}
-          onBootComplete={handleBootComplete}
-        />
-      )}
-      {lifecycle === 'access' && (
-        <AccessPanel onAccessGranted={handleAccessGranted} />
-      )}
       {lifecycle === 'view-select' && (
         <ViewSelectScreen
           selected={cameraMode}
           onSelect={handleCameraModeChange}
           onConfirm={handleViewSelected}
+        />
+      )}
+      {lifecycle === 'loading' && (
+        <BootScreen
+          rendererReady={rendererReady}
+          engineReady={engineReady}
+          onBootComplete={handleBootComplete}
         />
       )}
       {lifecycle === 'error' && <ErrorScreen onRetry={handleRetry} />}

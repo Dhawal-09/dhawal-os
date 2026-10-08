@@ -40,7 +40,7 @@ function kitchenPositionForFloorPoint(
 const KITCHEN_ASSET_NATURAL_SIZE = {
   mainCounter: { width: 2400, height: 1792 }, // MainTable.png
   sideCounter: { width: 2200, height: 1792 }, // Main table2.png
-  fridge: { width: 2400, height: 1792 }, // Fridge1.png (developer magnets already on the door)
+  fridge: { width: 1451, height: 1084 }, // Fridge2.png (plain doors — the skill magnets are separate objects, see FRIDGE_MAGNETS)
   cooktop: { width: 2400, height: 1792 }, // Stove.png
   coffeeMachine: { width: 1024, height: 765 }, // coffee-Makaer.png
   hangingPans: { width: 1200, height: 896 }, // Hanging Pans.png
@@ -61,7 +61,7 @@ const KITCHEN_ASSET_NATURAL_SIZE = {
 const KITCHEN_ASSET_CONTENT_BBOX = {
   mainCounter: { minX: 867, minY: 520, maxX: 1932, maxY: 1178 },
   sideCounter: { minX: 233, minY: 316, maxX: 966, maxY: 589 },
-  fridge: { minX: 936, minY: 294, maxX: 1463, maxY: 1440 },
+  fridge: { minX: 559, minY: 178, maxX: 881, maxY: 873 },
   cooktop: { minX: 778, minY: 563, maxX: 1621, maxY: 1256 },
   coffeeMachine: { minX: 399, minY: 245, maxX: 624, maxY: 518 },
   hangingPans: { minX: 134, minY: 139, maxX: 1065, maxY: 635 },
@@ -334,13 +334,16 @@ function kitchenAccessory(
  * each spot sets an `interactionPoint` on the floor where the player stands
  * to use it, with a small radius so neighbouring spots don't overlap:
  *
- * - interactive (`[E]` + short in-world response): fridge, cooktop, coffee
+ * - interactive (`[E]` opens the Skills panel): fridge — its door magnets
+ *   are the skills.
+ * - interactive (`[E]` + short in-world response): cooktop, coffee
  *   machine, storage cabinet, dining table.
  * - flavor (text only, fades on its own): hanging pans, wall-shelf jars,
  *   counter. (The kitchen's plant line lives on the potted plant at the
  *   kitchen doorway, `entrance-plant-4` — the hanging plant here is right
  *   above the cooktop, where the cooktop's `[E]` would always win.)
- * - silent: counter props, chairs, hanging plant, café menu, light.
+ * - silent: counter props, chairs, hanging plant, café menu, light, fridge
+ *   magnets.
  */
 const KITCHEN_SPOT_RADIUS = 45
 /** Standing line just in front of the counter run. */
@@ -349,6 +352,62 @@ const COUNTER_FRONT_Y = 330
 /** WORLD POSITION — SAFE TO TUNE — where the phone visibly sits (on the living-room TV console). */
 const PHONE_SPOT = { x: 340, y: 555 }
 
+/**
+ * Skill magnets on the fridge doors (assets/world/Icons/*.png). Each is its
+ * own visual-only WorldObject, centered on `position` (the magnet's middle
+ * on the door) and listed right after the fridge so it draws on top of it.
+ * `width` is the rendered width of the icon's full canvas (world px);
+ * `tilt` is in degrees, just enough to look hand-placed.
+ *
+ * For reference, the doors' visible faces in world space: upper door
+ * x 1404–1489, y 148–208; lower door x 1404–1489, y 221–345 (the handle
+ * runs down the right edge at x≈1493).
+ */
+const FRIDGE_MAGNETS = [
+  // WORLD POSITION — SAFE TO TUNE (each magnet independently)
+  {
+    key: 'Js',
+    label: 'JAVASCRIPT MAGNET',
+    x: 1428,
+    y: 178,
+    width: 28,
+    tilt: -5,
+  },
+  {
+    key: 'Ts',
+    label: 'TYPESCRIPT MAGNET',
+    x: 1463,
+    y: 180,
+    width: 28,
+    tilt: 4,
+  },
+  { key: 'Pixi', label: 'PIXI MAGNET', x: 1446, y: 247, width: 44, tilt: -3 },
+  {
+    key: 'Postgres',
+    label: 'POSTGRES MAGNET',
+    x: 1429,
+    y: 286,
+    width: 25,
+    tilt: 5,
+  },
+  { key: 'Java', label: 'JAVA MAGNET', x: 1464, y: 292, width: 26, tilt: -4 },
+] as const
+
+const fridgeMagnetObjects: WorldObject[] = FRIDGE_MAGNETS.map((magnet) => ({
+  id: `kitchen-fridge-magnet-${magnet.key.toLowerCase()}`,
+  asset: `kitchen.magnet${magnet.key}`,
+  label: magnet.label,
+  position: { x: magnet.x, y: magnet.y },
+  layer: 'object',
+  // No `collision`, no `interaction` — decor on the door; the fridge itself
+  // carries the collider and the Skills `[E]`.
+  transform: {
+    width: magnet.width,
+    rotation: (magnet.tilt * Math.PI) / 180,
+    anchor: { x: 0.5, y: 0.5 },
+  },
+}))
+
 export const kitchenObjects: WorldObject[] = [
   {
     ...kitchenObject(
@@ -356,10 +415,7 @@ export const kitchenObjects: WorldObject[] = [
       'kitchen.fridge',
       'REFRIGERATOR',
       // WORLD POSITION — SAFE TO TUNE — the fridge's visible base, leftmost, right after the main work desk.
-      // (360.67 reproduces the exact spot the old `y: -28` produced: that value
-      // was tuned by eye while this asset's natural width was mis-recorded as
-      // 400 instead of 2400, which inflated the padding offset; the width is
-      // now correct so the collider below lines up with the art.)
+      // (Moving it also means moving FRIDGE_MAGNETS above by the same amount.)
       { x: 1453, y: 360.67 },
       KITCHEN_ASSET_NATURAL_SIZE.fridge,
       KITCHEN_ASSET_CONTENT_BBOX.fridge,
@@ -370,17 +426,14 @@ export const kitchenObjects: WorldObject[] = [
     ),
     // `position` is the padded canvas anchor, well below the fridge's base
     // (y≈361); stand right in front of it.
+    // The Skills entry point: the magnets on the doors are what he works
+    // with, so `[E]` here opens the Skills panel (moved from the old
+    // standalone marker in skillsRoom.ts).
     interactionPoint: { x: 1453, y: 380 },
-    interaction: {
-      radius: 50,
-      action: 'WORLD_RESPONSE',
-      response: [
-        'STATUS: FOOD AVAILABLE.',
-        'DEVELOPER FUNCTIONALITY: QUESTIONABLE.',
-      ],
-    },
-    message: { type: 'interactive', text: 'Check the fridge?' },
+    interaction: { radius: 50, action: 'OPEN_SKILLS' },
+    message: { type: 'interactive', text: 'Curious what he works with?' },
   },
+  ...fridgeMagnetObjects,
   {
     ...kitchenObject(
       'kitchen-main-counter',

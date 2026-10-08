@@ -16,14 +16,22 @@ import { landingContactItems } from '../data/contact'
 import { RESUME_PDF_PATH } from '../data/resume'
 import App from './App'
 
-const { gameAppCreateSpy, behavior } = vi.hoisted(() => ({
-  gameAppCreateSpy: vi.fn(),
-  behavior: { current: 'success' as 'success' | 'error' | 'pending' },
-}))
+const { gameAppCreateSpy, behavior, pendingCanvas, preloadStartSpy } =
+  vi.hoisted(() => ({
+    gameAppCreateSpy: vi.fn(),
+    behavior: { current: 'success' as 'success' | 'error' | 'pending' },
+    /** The callbacks of a 'pending' mount, so a test can settle it later. */
+    pendingCanvas: {
+      ready: null as (() => void) | null,
+      fail: null as ((error: unknown) => void) | null,
+    },
+    preloadStartSpy: vi.fn(),
+  }))
 
 interface MockGameCanvasProps {
   onReady?: () => void
   onError?: (error: unknown) => void
+  initialCameraMode?: string
 }
 
 vi.mock('./GameCanvas', () => ({
@@ -32,20 +40,49 @@ vi.mock('./GameCanvas', () => ({
   // result via onReady/onError — never on every re-render.
   GameCanvas: (props: MockGameCanvasProps) => {
     useEffect(() => {
-      gameAppCreateSpy()
+      gameAppCreateSpy(props.initialCameraMode)
       if (behavior.current === 'success') props.onReady?.()
       else if (behavior.current === 'error')
         props.onError?.(new Error('simulated init failure'))
-      // 'pending': simulate an initialization that never resolves.
+      else {
+        // 'pending': an initialization that only settles when the test says so.
+        pendingCanvas.ready = () => props.onReady?.()
+        pendingCanvas.fail = (error) => props.onError?.(error)
+      }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
     return <div data-testid="game-canvas-stub" />
   },
 }))
 
+// The real preload pulls ~90 PNGs through Pixi's Assets loader, which has no
+// meaning in jsdom — it has its own unit test (preloadWorldAssets.test.ts).
+vi.mock('../game/world/preloadWorldAssets', () => {
+  const state = {
+    started: true,
+    total: 1,
+    settled: 1,
+    failed: 0,
+    characterReady: true,
+    coreReady: true,
+    complete: true,
+    coreError: null,
+  }
+  return {
+    gamePreloader: {
+      start: preloadStartSpy,
+      subscribe: () => () => {},
+      getState: () => state,
+    },
+  }
+})
+
 beforeEach(() => {
   gameAppCreateSpy.mockClear()
+  preloadStartSpy.mockClear()
   behavior.current = 'success'
+  pendingCanvas.ready = null
+  pendingCanvas.fail = null
   window.sessionStorage.clear()
   authManager.logout()
 })
@@ -56,59 +93,48 @@ afterEach(() => {
   authManager.logout()
 })
 
-async function startJourney(user: ReturnType<typeof userEvent.setup>) {
+type User = ReturnType<typeof userEvent.setup>
+
+const viewSelectHeading = () =>
+  screen.queryByRole('heading', { name: /select your view/i })
+const exitButton = () => screen.queryByRole('button', { name: /^exit$/i })
+
+/** LANDING -> VIEW_SELECT. Synchronous by design: the screen never waits on the game. */
+async function startJourney(user: User) {
   await user.click(screen.getByRole('button', { name: /start journey/i }))
+  expect(viewSelectHeading()).toBeInTheDocument()
 }
 
-/** Waits for BOOT to finish and the ACCESS panel to appear — the real engine must have actually reported ready. */
-async function waitForAccessPanel() {
-  await waitFor(
-    () => {
-      expect(
-        screen.getByRole('button', { name: /access system/i }),
-      ).toBeInTheDocument()
-    },
-    { timeout: 3000 },
-  )
-}
-
-/** Clicks ACCESS SYSTEM and waits through the (brief) guest-access animation into VIEW_SELECT. */
-async function passAccess(user: ReturnType<typeof userEvent.setup>) {
-  await user.click(screen.getByRole('button', { name: /access system/i }))
-  await waitFor(
-    () => {
-      expect(
-        screen.getByRole('heading', { name: /select your view/i }),
-      ).toBeInTheDocument()
-    },
-    { timeout: 3000 },
-  )
-}
-
-/** ACCESS -> VIEW_SELECT (picking `view`) -> GAME. */
-async function grantAccess(
-  user: ReturnType<typeof userEvent.setup>,
-  view: RegExp = /explore view/i,
-) {
-  await passAccess(user)
+/** Picks `view` on VIEW_SELECT and clicks ENTER DHAWAL.OS — without waiting for what follows. */
+async function pickViewAndEnter(user: User, view: RegExp = /explore view/i) {
   await user.click(screen.getByRole('radio', { name: view }))
   await user.click(screen.getByRole('button', { name: /enter dhawal\.os/i }))
-  await waitFor(
-    () => {
-      expect(
-        screen.getByRole('button', { name: /^exit$/i }),
-      ).toBeInTheDocument()
-    },
-    { timeout: 3000 },
-  )
 }
 
-/** Full LANDING -> START JOURNEY -> BOOT -> ACCESS -> GAME walk, for tests that just need to be in GAME. */
-async function enterGame(user: ReturnType<typeof userEvent.setup>) {
+async function waitForGame() {
+  await waitFor(() => expect(exitButton()).toBeInTheDocument(), {
+    timeout: 3000,
+  })
+}
+
+/** VIEW_SELECT (picking `view`) -> LOADING -> GAME. */
+async function enterFromViewSelect(user: User, view?: RegExp) {
+  await pickViewAndEnter(user, view)
+  await waitForGame()
+}
+
+/** Full LANDING -> START JOURNEY -> VIEW_SELECT -> LOADING -> GAME walk, for tests that just need to be in GAME. */
+async function enterGame(user: User) {
   render(<App />)
   await startJourney(user)
-  await waitForAccessPanel()
-  await grantAccess(user)
+  await enterFromViewSelect(user)
+}
+
+async function confirmExit(user: User) {
+  await user.click(screen.getByRole('button', { name: /^exit$/i }))
+  await user.click(
+    within(screen.getByRole('dialog')).getByRole('button', { name: /^exit$/i }),
+  )
 }
 
 describe('App lifecycle', () => {
@@ -137,33 +163,35 @@ describe('App lifecycle', () => {
     ).toBeInTheDocument()
   })
 
-  it('START JOURNEY moves the lifecycle to LOADING (boot screen) and triggers GameApp initialization', async () => {
-    const user = userEvent.setup()
-    behavior.current = 'pending'
-    render(<App />)
-
-    await startJourney(user)
-
-    expect(screen.getByRole('status')).toHaveTextContent(/initializing system/i)
-    expect(screen.getByTestId('game-canvas-stub')).toBeInTheDocument()
-    expect(gameAppCreateSpy).toHaveBeenCalledTimes(1)
-  })
-
-  it('a successful initialization transitions LOADING -> ACCESS, never reaching GAME on its own', async () => {
+  it('START JOURNEY only shows VIEW_SELECT — it never mounts or initializes the engine', async () => {
     const user = userEvent.setup()
     render(<App />)
 
     await startJourney(user)
-    await waitForAccessPanel()
 
+    expect(viewSelectHeading()).toBeInTheDocument()
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: /^exit$/i }),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByTestId('game-canvas-stub')).not.toBeInTheDocument()
+    expect(gameAppCreateSpy).not.toHaveBeenCalled()
+    expect(exitButton()).not.toBeInTheDocument()
     expect(authManager.isAuthenticated()).toBe(false)
+
+    // Picking a view still starts nothing — only ENTER does.
+    await user.click(screen.getByRole('radio', { name: /explore view/i }))
+    expect(gameAppCreateSpy).not.toHaveBeenCalled()
   })
 
-  it('clicking ACCESS SYSTEM on the guest-access panel completes ACCESS -> GAME', async () => {
+  it('START JOURNEY makes sure the asset download is under way, even if the page-load trigger has not fired yet', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    preloadStartSpy.mockClear()
+
+    await startJourney(user)
+
+    expect(preloadStartSpy).toHaveBeenCalled()
+  })
+
+  it('ENTER DHAWAL.OS goes through initialization into GAME, with no access screen and the guest session ensured automatically', async () => {
     const user = userEvent.setup()
     await enterGame(user)
 
@@ -174,6 +202,7 @@ describe('App lifecycle', () => {
     expect(
       screen.queryByRole('button', { name: /access system/i }),
     ).not.toBeInTheDocument()
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
     expect(authManager.isAuthenticated()).toBe(true)
     // The portfolio nav is reachable via the HUD's menu disclosure
     // (PHASE 09 GameHud), not shown expanded by default.
@@ -186,6 +215,29 @@ describe('App lifecycle', () => {
     ).toBeInTheDocument()
   })
 
+  it('ENTER DHAWAL.OS shows the initialization screen, initializes the engine behind it, and enters GAME the moment the engine is ready', async () => {
+    const user = userEvent.setup()
+    behavior.current = 'pending'
+    render(<App />)
+    await startJourney(user)
+
+    expect(gameAppCreateSpy).not.toHaveBeenCalled()
+
+    await pickViewAndEnter(user)
+
+    expect(screen.getByRole('status')).toHaveTextContent(/initializing system/i)
+    expect(screen.getByTestId('game-canvas-stub')).toBeInTheDocument()
+    expect(gameAppCreateSpy).toHaveBeenCalledTimes(1)
+    expect(viewSelectHeading()).not.toBeInTheDocument()
+    expect(exitButton()).not.toBeInTheDocument()
+
+    act(() => pendingCanvas.ready?.())
+
+    expect(exitButton()).toBeInTheDocument()
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(gameAppCreateSpy).toHaveBeenCalledTimes(1)
+  })
+
   it('a failed initialization transitions LOADING -> ERROR with a recovery action, not a raw error', async () => {
     const user = userEvent.setup()
     behavior.current = 'error'
@@ -193,35 +245,55 @@ describe('App lifecycle', () => {
     render(<App />)
 
     await startJourney(user)
+    await pickViewAndEnter(user)
 
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent(/unable to initialize/i)
     expect(
       screen.getByRole('button', { name: /try again/i }),
     ).toBeInTheDocument()
+    expect(exitButton()).not.toBeInTheDocument()
     expect(errorSpy).toHaveBeenCalled()
 
     errorSpy.mockRestore()
   })
 
-  it('TRY AGAIN retries and can recover, without creating more than one fresh attempt', async () => {
+  it('a failure arriving later, while the initialization screen is up, also transitions LOADING -> ERROR', async () => {
+    const user = userEvent.setup()
+    behavior.current = 'pending'
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    render(<App />)
+    await startJourney(user)
+    await pickViewAndEnter(user)
+    expect(screen.getByRole('status')).toBeInTheDocument()
+
+    act(() => pendingCanvas.fail?.(new Error('core asset missing')))
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/unable to initialize/i)
+    expect(exitButton()).not.toBeInTheDocument()
+  })
+
+  it('TRY AGAIN retries and can recover, without creating more than one fresh attempt — and keeps the chosen view', async () => {
     const user = userEvent.setup()
     behavior.current = 'error'
     vi.spyOn(console, 'error').mockImplementation(() => {})
     render(<App />)
 
     await startJourney(user)
+    await pickViewAndEnter(user, /overview/i)
     await screen.findByRole('alert')
     expect(gameAppCreateSpy).toHaveBeenCalledTimes(1)
 
     behavior.current = 'success'
     await user.click(screen.getByRole('button', { name: /try again/i }))
 
-    await waitForAccessPanel()
+    await waitForGame()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     expect(screen.getByTestId('game-canvas-stub')).toBeInTheDocument()
     // Exactly one new attempt was made on retry — not zero, not more than one.
     expect(gameAppCreateSpy).toHaveBeenCalledTimes(2)
+    // The fresh engine opens in the view picked before the failure.
+    expect(gameAppCreateSpy).toHaveBeenLastCalledWith('overview')
   })
 
   it('does not re-initialize GameApp because of unrelated React re-renders', async () => {
@@ -229,7 +301,7 @@ describe('App lifecycle', () => {
     const { rerender } = render(<App />)
 
     await startJourney(user)
-    await waitForAccessPanel()
+    await enterFromViewSelect(user)
     expect(gameAppCreateSpy).toHaveBeenCalledTimes(1)
 
     // Force additional renders of the same App instance/tree.
@@ -277,6 +349,35 @@ describe('App lifecycle', () => {
   })
 })
 
+describe('App background game preload', () => {
+  it('starts on LANDING, once the page is usable — before START JOURNEY, and without mounting the game', async () => {
+    render(<App />)
+
+    await waitFor(() => expect(preloadStartSpy).toHaveBeenCalled())
+
+    expect(
+      screen.getByRole('button', { name: /start journey/i }),
+    ).toBeInTheDocument()
+    expect(gameAppCreateSpy).not.toHaveBeenCalled()
+  })
+
+  it('waits for the page to finish loading before starting', async () => {
+    const readyState = vi
+      .spyOn(document, 'readyState', 'get')
+      .mockReturnValue('loading')
+    render(<App />)
+
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    expect(preloadStartSpy).not.toHaveBeenCalled()
+
+    readyState.mockReturnValue('complete')
+    window.dispatchEvent(new Event('load'))
+    await waitFor(() => expect(preloadStartSpy).toHaveBeenCalled())
+
+    readyState.mockRestore()
+  })
+})
+
 describe('App session persistence (refresh behavior)', () => {
   it('a fresh visit with no session flag starts in LANDING', () => {
     render(<App />)
@@ -287,40 +388,34 @@ describe('App session persistence (refresh behavior)', () => {
     expect(gameAppCreateSpy).not.toHaveBeenCalled()
   })
 
-  it('an active session flag but no guest-auth session (simulating a refresh mid-ACCESS) skips LANDING, bootstraps the engine, and still gates on ACCESS', async () => {
+  it('an active session flag (a refresh after entering the game) skips LANDING and VIEW_SELECT, bootstrapping straight into GAME', async () => {
     window.sessionStorage.setItem('dhawalos:game-session-active', 'true')
+    authManager.createGuestSession()
 
     render(<App />)
 
     expect(
       screen.queryByRole('button', { name: /start journey/i }),
     ).not.toBeInTheDocument()
+    expect(viewSelectHeading()).not.toBeInTheDocument()
     // Exactly one new GameApp is initialized for the new page session — the
     // old runtime is gone, so a real bootstrap still has to happen.
     expect(gameAppCreateSpy).toHaveBeenCalledTimes(1)
 
-    await waitForAccessPanel()
+    await waitForGame()
     expect(screen.getByTestId('game-canvas-stub')).toBeInTheDocument()
   })
 
-  it('an active session flag AND a persisted guest session (refresh after fully entering the game) skips LANDING and ACCESS, bootstrapping straight into GAME', async () => {
+  it('an active session flag without a guest session still goes straight to GAME — the session is re-created silently, never via an access screen', async () => {
     window.sessionStorage.setItem('dhawalos:game-session-active', 'true')
-    authManager.createGuestSession()
 
     render(<App />)
 
-    await waitFor(
-      () => {
-        expect(
-          screen.getByRole('button', { name: /^exit$/i }),
-        ).toBeInTheDocument()
-      },
-      { timeout: 3000 },
-    )
+    await waitForGame()
     expect(
       screen.queryByRole('button', { name: /access system/i }),
     ).not.toBeInTheDocument()
-    expect(screen.getByTestId('game-canvas-stub')).toBeInTheDocument()
+    expect(authManager.isAuthenticated()).toBe(true)
   })
 
   it('a malformed session flag value is treated as no active session (falls back to LANDING, never crashes)', () => {
@@ -332,29 +427,33 @@ describe('App session persistence (refresh behavior)', () => {
     ).toBeInTheDocument()
   })
 
-  it('the session flag is only set once the engine successfully becomes ready, not merely on START_JOURNEY', async () => {
+  it('the session flag is not set by START JOURNEY or by sitting on VIEW_SELECT — only by actually entering the game', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await startJourney(user)
+    expect(
+      window.sessionStorage.getItem('dhawalos:game-session-active'),
+    ).toBeNull()
+
+    await enterFromViewSelect(user)
+    expect(window.sessionStorage.getItem('dhawalos:game-session-active')).toBe(
+      'true',
+    )
+  })
+
+  it('the session flag is not set while the initialization screen is still waiting on the engine', async () => {
     const user = userEvent.setup()
     behavior.current = 'pending'
     render(<App />)
 
     await startJourney(user)
+    await pickViewAndEnter(user)
 
     expect(screen.getByRole('status')).toBeInTheDocument()
     expect(
       window.sessionStorage.getItem('dhawalos:game-session-active'),
     ).toBeNull()
-  })
-
-  it('the session flag is set once the engine reports ready, even before ACCESS completes', async () => {
-    const user = userEvent.setup()
-    render(<App />)
-
-    await startJourney(user)
-    await waitFor(() => {
-      expect(
-        window.sessionStorage.getItem('dhawalos:game-session-active'),
-      ).toBe('true')
-    })
   })
 
   it('a failed initialization never sets the session flag', async () => {
@@ -364,6 +463,7 @@ describe('App session persistence (refresh behavior)', () => {
     render(<App />)
 
     await startJourney(user)
+    await pickViewAndEnter(user)
     await screen.findByRole('alert')
 
     expect(
@@ -372,16 +472,17 @@ describe('App session persistence (refresh behavior)', () => {
   })
 })
 
-describe('App guest-access flow', () => {
-  it('the access panel requires no keyboard/typed input — clicking ACCESS SYSTEM alone is enough', async () => {
+describe('App guest access', () => {
+  it('never shows the access screen or asks for any input — the only clicks are START JOURNEY, a view, and ENTER', async () => {
     const user = userEvent.setup()
     render(<App />)
 
     await startJourney(user)
-    await waitForAccessPanel()
-
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
-    await grantAccess(user)
+    expect(screen.queryByText(/guest session/i)).not.toBeInTheDocument()
+
+    await enterFromViewSelect(user)
+    expect(screen.queryByText(/guest session/i)).not.toBeInTheDocument()
     expect(authManager.isAuthenticated()).toBe(true)
   })
 
@@ -398,16 +499,15 @@ describe('App exit flow', () => {
     const user = userEvent.setup()
     behavior.current = 'pending'
     render(<App />)
-    expect(
-      screen.queryByRole('button', { name: /^exit$/i }),
-    ).not.toBeInTheDocument()
+    expect(exitButton()).not.toBeInTheDocument()
 
     await startJourney(user)
-    // Still LOADING (the mocked init never resolves) — EXIT must not appear yet.
+    expect(exitButton()).not.toBeInTheDocument()
+
+    await pickViewAndEnter(user)
+    // Still LOADING (the mocked init hasn't resolved) — EXIT must not appear yet.
     expect(screen.getByRole('status')).toBeInTheDocument()
-    expect(
-      screen.queryByRole('button', { name: /^exit$/i }),
-    ).not.toBeInTheDocument()
+    expect(exitButton()).not.toBeInTheDocument()
   })
 
   it('EXIT appears once GAME is actually reached', async () => {
@@ -440,17 +540,9 @@ describe('App exit flow', () => {
     const user = userEvent.setup()
     const { container } = render(<App />)
     await startJourney(user)
-    await waitForAccessPanel()
-    await grantAccess(user)
+    await enterFromViewSelect(user)
 
-    await user.click(screen.getByRole('button', { name: /^exit$/i }))
-    const dialogExitButton = within(screen.getByRole('dialog')).getByRole(
-      'button',
-      {
-        name: /^exit$/i,
-      },
-    )
-    await user.click(dialogExitButton)
+    await confirmExit(user)
 
     // Still the same RTL-managed container/DOM node — a real reload would
     // tear down and rebuild the whole page, not just re-render this tree.
@@ -465,49 +557,39 @@ describe('App exit flow', () => {
     expect(authManager.isAuthenticated()).toBe(false)
   })
 
-  it('after EXIT, START JOURNEY works again, re-initializes exactly one new GameApp, and requires guest access again', async () => {
+  it('after EXIT, START JOURNEY works again, re-initializes exactly one new GameApp, and asks for the view again', async () => {
     const user = userEvent.setup()
     await enterGame(user)
 
-    await user.click(screen.getByRole('button', { name: /^exit$/i }))
-    const dialogExitButton = within(screen.getByRole('dialog')).getByRole(
-      'button',
-      {
-        name: /^exit$/i,
-      },
-    )
-    await user.click(dialogExitButton)
+    await confirmExit(user)
     expect(gameAppCreateSpy).toHaveBeenCalledTimes(1)
 
     await startJourney(user)
-    await waitForAccessPanel()
-    // A fresh visit after EXIT — guest access is required again, not
-    // silently skipped (the previous session was cleared on EXIT).
+    // A fresh visit after EXIT — nothing carries over from the previous
+    // session: no view is pre-selected, and the guest session is gone.
     expect(
-      screen.getByRole('button', { name: /access system/i }),
-    ).toBeInTheDocument()
+      screen.getByRole('button', { name: /select a view/i }),
+    ).toBeDisabled()
+    expect(authManager.isAuthenticated()).toBe(false)
 
-    await grantAccess(user)
+    await enterFromViewSelect(user)
 
     expect(screen.getByTestId('game-canvas-stub')).toBeInTheDocument()
     expect(gameAppCreateSpy).toHaveBeenCalledTimes(2)
     expect(window.sessionStorage.getItem('dhawalos:game-session-active')).toBe(
       'true',
     )
+    expect(authManager.isAuthenticated()).toBe(true)
   })
 })
 
 describe('App view selection', () => {
-  it('ACCESS leads to VIEW_SELECT — not straight into GAME — and there is no HUD VIEW control yet', async () => {
+  it('START JOURNEY leads to VIEW_SELECT — not straight into GAME — and there is no HUD VIEW control yet', async () => {
     const user = userEvent.setup()
     render(<App />)
     await startJourney(user)
-    await waitForAccessPanel()
-    await passAccess(user)
 
-    expect(
-      screen.queryByRole('button', { name: /^exit$/i }),
-    ).not.toBeInTheDocument()
+    expect(exitButton()).not.toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: /camera view/i }),
     ).not.toBeInTheDocument()
@@ -524,17 +606,37 @@ describe('App view selection', () => {
     const user = userEvent.setup()
     render(<App />)
     await startJourney(user)
-    await waitForAccessPanel()
-    await grantAccess(user, /overview/i)
+    await enterFromViewSelect(user, /overview/i)
     unsubscribe()
 
     expect(received).toContain('CAMERA_OVERVIEW')
-    expect(
-      screen.queryByRole('heading', { name: /select your view/i }),
-    ).not.toBeInTheDocument()
+    expect(received).not.toContain('CAMERA_EXPLORE')
+    expect(viewSelectHeading()).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /view/i }))
     expect(screen.getByRole('radio', { name: /overview/i })).toBeChecked()
+  })
+
+  it('the view picked on VIEW_SELECT is the mode the engine is created in', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await startJourney(user)
+    await enterFromViewSelect(user, /overview/i)
+    expect(gameAppCreateSpy).toHaveBeenLastCalledWith('overview')
+
+    await confirmExit(user)
+    await startJourney(user)
+    await enterFromViewSelect(user, /explore view/i)
+    expect(gameAppCreateSpy).toHaveBeenLastCalledWith('explore')
+  })
+
+  it('a refresh (which skips VIEW_SELECT) creates the engine in its default mode', async () => {
+    window.sessionStorage.setItem('dhawalos:game-session-active', 'true')
+
+    render(<App />)
+    await waitForGame()
+
+    expect(gameAppCreateSpy).toHaveBeenLastCalledWith(undefined)
   })
 
   it('switching from the HUD selector during GAME sends the new mode without leaving GAME', async () => {
@@ -561,39 +663,33 @@ describe('App background music', () => {
     vi.restoreAllMocks()
   })
 
-  it('stays silent through LANDING, LOADING and ACCESS, starts in GAME, stops on EXIT, and starts again on re-entry', async () => {
+  it('stays silent through LANDING, VIEW_SELECT and LOADING, starts in GAME, stops on EXIT, and starts again on re-entry', async () => {
     const playMusic = vi.spyOn(audioManager, 'playMusic')
     const stopMusic = vi.spyOn(audioManager, 'stopMusic')
     const user = userEvent.setup()
 
     render(<App />)
     await startJourney(user)
-    await waitForAccessPanel()
     expect(playMusic).not.toHaveBeenCalled()
 
-    await grantAccess(user)
+    await enterFromViewSelect(user)
     expect(playMusic).toHaveBeenCalledTimes(1)
     expect(playMusic).toHaveBeenCalledWith('house-theme')
     expect(stopMusic).not.toHaveBeenCalled()
 
-    await user.click(screen.getByRole('button', { name: /^exit$/i }))
-    await user.click(
-      within(screen.getByRole('dialog')).getByRole('button', {
-        name: /^exit$/i,
-      }),
-    )
+    await confirmExit(user)
     expect(stopMusic).toHaveBeenCalledTimes(1)
 
     await startJourney(user)
-    await waitForAccessPanel()
-    await grantAccess(user)
+    await enterFromViewSelect(user)
     expect(playMusic).toHaveBeenCalledTimes(2)
   })
 })
 
 describe('App — on-screen mobile controls', () => {
-  it('exist only in GAME — never on landing, boot, access or view select', async () => {
+  it('exist only in GAME — never on landing, view select or the initialization screen', async () => {
     const user = userEvent.setup()
+    behavior.current = 'pending'
     const controls = () => screen.queryByRole('button', { name: 'Interact' })
 
     render(<App />)
@@ -601,14 +697,12 @@ describe('App — on-screen mobile controls', () => {
 
     await startJourney(user)
     expect(controls()).toBeNull()
-    await waitForAccessPanel()
+
+    await pickViewAndEnter(user)
+    expect(screen.getByRole('status')).toBeInTheDocument()
     expect(controls()).toBeNull()
 
-    await passAccess(user)
-    expect(controls()).toBeNull()
-
-    await user.click(screen.getByRole('radio', { name: /explore view/i }))
-    await user.click(screen.getByRole('button', { name: /enter dhawal\.os/i }))
+    act(() => pendingCanvas.ready?.())
     await waitFor(() => expect(controls()).toBeInTheDocument())
     expect(
       screen.getByRole('group', { name: 'Movement joystick' }),

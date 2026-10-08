@@ -6,6 +6,10 @@ import { CertificatesPanel } from '../components/certificates-ui/CertificatesPan
 import { ContactPanel } from '../components/contact-ui/ContactPanel'
 import { EducationPanel } from '../components/education-ui/EducationPanel'
 import { ExperiencePanel } from '../components/experience-ui/ExperiencePanel'
+import {
+  GamePanel,
+  type GamePanelSize,
+} from '../components/game-panel/GamePanel'
 import { ProjectsPanel } from '../components/project-ui/ProjectsPanel'
 import { ResumePanel } from '../components/resume-ui/ResumePanel'
 import { SkillsPanel } from '../components/skills-ui/SkillsPanel'
@@ -43,10 +47,22 @@ const PANEL_BY_EVENT: Partial<Record<GameEvent, PanelContent>> = {
 }
 
 /**
+ * Which of the frame's three sizes each section opens in — chosen from what
+ * the section actually holds, not one universal width. Anything unlisted is
+ * MEDIUM.
+ */
+const SIZE_BY_EVENT: Partial<Record<GameEvent, GamePanelSize>> = {
+  OPEN_PROJECTS: 'large', // card grid, then a two-column detail view
+  OPEN_CONTACT: 'small', // a short list of links
+  OPEN_RESUME: 'small', // one line and a button
+  OPEN_CAT: 'small',
+}
+
+/**
  * Sections rendered in "window" mode: the panel draws its own system-window
  * frame and title bar (including Close), and the shell only supplies the
  * dialog semantics, focus trap, Escape, and pause/resume. Everything else
- * keeps the shared header + panel chrome.
+ * renders inside the shared `GamePanel` frame.
  */
 const WINDOW_EVENTS: ReadonlySet<GameEvent> = new Set<GameEvent>(['OPEN_ABOUT'])
 
@@ -82,6 +98,8 @@ export function InteractionOverlay() {
   const [openEvent, setOpenEvent] = useState<GameEvent | null>(null)
   const [header, setHeader] = useState<PanelHeader | null>(null)
   const dialogRef = useRef<HTMLDivElement | null>(null)
+  /** The frame's scrolling content area (GamePanel); null in window mode, where the dialog itself scrolls. */
+  const bodyRef = useRef<HTMLDivElement | null>(null)
   const isOpen = openEvent !== null
 
   useEffect(() => {
@@ -149,7 +167,7 @@ export function InteractionOverlay() {
   useEffect(() => {
     const node = dialogRef.current
     if (!node || headerTitle === undefined) return
-    node.scrollTop = 0
+    ;(bodyRef.current ?? node).scrollTop = 0
     node.focus()
   }, [headerTitle])
 
@@ -217,38 +235,22 @@ export function InteractionOverlay() {
 
   return (
     <div className="interaction-overlay">
-      <div
+      <GamePanel
         ref={dialogRef}
-        className="interaction-overlay-panel"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={TITLE_ID}
-        tabIndex={-1}
+        bodyRef={bodyRef}
+        size={SIZE_BY_EVENT[openEvent] ?? 'medium'}
+        title={title}
+        titleId={TITLE_ID}
+        onBack={onBack}
+        onClose={close}
       >
-        <div className={onBack ? 'panel-header has-back' : 'panel-header'}>
-          {onBack && (
-            <button
-              type="button"
-              className="panel-close panel-back"
-              onClick={onBack}
-            >
-              Back
-            </button>
-          )}
-          <h2 id={TITLE_ID}>{title}</h2>
-          <button type="button" className="panel-close" onClick={close}>
-            Close
-          </button>
-        </div>
-        <div className="panel-body">
-          <PanelContent
-            setHeader={setHeader}
-            title={defaultTitle}
-            titleId={TITLE_ID}
-            onClose={close}
-          />
-        </div>
-      </div>
+        <PanelContent
+          setHeader={setHeader}
+          title={defaultTitle}
+          titleId={TITLE_ID}
+          onClose={close}
+        />
+      </GamePanel>
     </div>
   )
 }

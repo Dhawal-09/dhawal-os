@@ -283,7 +283,6 @@ describe('GameScene contextual messages', () => {
       'kitchen-coffee-machine',
       'kitchen-cooktop',
       'kitchen-dining-table',
-      'kitchen-fridge',
       'kitchen-side-counter',
     ])
     for (const object of kitchenResponses) {
@@ -302,6 +301,30 @@ describe('GameScene contextual messages', () => {
           : undefined,
       )
     }
+  })
+
+  it('the fridge is the Skills entry point: its prompt shows in front of it and [E] opens the Skills panel', () => {
+    const fridge = worldObjects.find(
+      (object) => object.id === 'kitchen-fridge',
+    )!
+    expect(worldObjects.some((object) => object.id === 'skills')).toBe(false)
+    scene = new GameScene()
+    standAt(scene, fridge.interactionPoint!.x, fridge.interactionPoint!.y)
+    expect(scene.player.interactionTarget?.id).toBe('kitchen-fridge')
+    expect(scene.contextualMessage.current).toMatchObject({
+      type: 'interactive',
+      text: 'Curious what he works with?',
+    })
+
+    const received: string[] = []
+    const unsubscribe = gameEventBridge.subscribe((event) =>
+      received.push(event),
+    )
+    press('KeyE')
+    scene.update(16)
+    release('KeyE')
+    unsubscribe()
+    expect(received).toContain('OPEN_SKILLS')
   })
 
   it('moving between targets swaps the message (info -> interactive)', () => {

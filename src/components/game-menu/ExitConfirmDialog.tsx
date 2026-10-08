@@ -1,5 +1,6 @@
 import { gsap } from 'gsap'
 import { useEffect, useRef } from 'react'
+import { GamePanel } from '../game-panel/GamePanel'
 import './ExitConfirmDialog.css'
 
 export interface ExitConfirmDialogProps {
@@ -34,6 +35,10 @@ function prefersReducedMotion(): boolean {
  * No click-outside-to-close: consistent with `InteractionOverlay` (its
  * backdrop has no dismiss handler either), and deliberately so here — an
  * accidental outside click must never confirm leaving the game.
+ *
+ * Drawn in the same `GamePanel` frame as the information panels (SMALL),
+ * so it reads as part of the same in-game interface. The frame's X is one
+ * more way to cancel — never to confirm.
  */
 export function ExitConfirmDialog({
   onCancel,
@@ -99,36 +104,36 @@ export function ExitConfirmDialog({
 
   return (
     <div className="exit-confirm-overlay">
-      <div
+      <GamePanel
         ref={dialogRef}
-        className="exit-confirm-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="exit-confirm-title"
-        tabIndex={-1}
+        size="small"
+        title="EXIT DHAWAL.OS?"
+        titleId="exit-confirm-title"
+        onClose={onCancel}
       >
-        <h2 id="exit-confirm-title">EXIT DHAWAL.OS?</h2>
-        <p>
-          Your current game session will end and you&rsquo;ll return to the
-          landing screen.
-        </p>
-        <div className="exit-confirm-actions">
-          <button
-            type="button"
-            className="exit-confirm-cancel"
-            onClick={onCancel}
-          >
-            CANCEL
-          </button>
-          <button
-            type="button"
-            className="exit-confirm-confirm"
-            onClick={onConfirmExit}
-          >
-            EXIT
-          </button>
+        <div className="exit-confirm-content">
+          <p>
+            Your current game session will end and you&rsquo;ll return to the
+            landing screen.
+          </p>
+          <div className="exit-confirm-actions">
+            <button
+              type="button"
+              className="exit-confirm-cancel"
+              onClick={onCancel}
+            >
+              CANCEL
+            </button>
+            <button
+              type="button"
+              className="exit-confirm-confirm"
+              onClick={onConfirmExit}
+            >
+              EXIT
+            </button>
+          </div>
         </div>
-      </div>
+      </GamePanel>
     </div>
   )
 }
