@@ -1,22 +1,13 @@
 import type { Collider, WorldObject } from '../WorldObject'
-import { INTERACTION_RADIUS, centeredCollider } from './worldObjectHelpers'
 
 /**
- * MIDDLE-RIGHT: the "skills" content marker. Flanks the open center of the
- * room alongside "experience" on the opposite side.
+ * MIDDLE-RIGHT: formerly the standalone "skills" content marker (an
+ * invisible spot with its own collider at x1540, y720). The Skills `[E]`
+ * now lives on the kitchen fridge, whose door magnets are the skills (see
+ * `kitchen-fridge` in kitchen.ts) — so this room contributes no objects,
+ * only the nook's wall collider below.
  */
-export const skillsObjects: WorldObject[] = [
-  {
-    id: 'skills',
-    asset: 'content.skills',
-    label: 'SKILLS',
-    position: { x: 1540, y: 720 }, // WORLD POSITION — SAFE TO TUNE
-    layer: 'object',
-    collision: centeredCollider({ x: 1540, y: 720 }),
-    interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_SKILLS' },
-    message: { type: 'interactive', text: 'Curious what he works with?' },
-  },
-]
+export const skillsObjects: WorldObject[] = []
 
 /**
  * Invisible AABB collision for the vertical wall running along the right

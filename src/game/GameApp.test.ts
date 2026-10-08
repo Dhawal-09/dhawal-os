@@ -1,23 +1,37 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import '../test/stubPixiTextMetrics'
 import { GameApp } from './GameApp'
+import { CameraMode } from './world/cameraConstants'
 
-const { initMock, destroyMock, resizeMock, addChildMock, tickerAddMock } =
-  vi.hoisted(() => ({
-    initMock: vi.fn(async () => {}),
-    destroyMock: vi.fn(),
-    resizeMock: vi.fn(),
-    addChildMock: vi.fn(),
-    tickerAddMock: vi.fn(),
-  }))
+const {
+  initMock,
+  renderMock,
+  destroyMock,
+  resizeMock,
+  addChildMock,
+  tickerAddMock,
+} = vi.hoisted(() => ({
+  initMock: vi.fn(async () => {}),
+  renderMock: vi.fn(),
+  destroyMock: vi.fn(),
+  resizeMock: vi.fn(),
+  addChildMock: vi.fn(),
+  tickerAddMock: vi.fn(),
+}))
 
 interface Destroyable {
   destroy(options?: unknown): void
 }
 
-// The real preloader fetches ~70 PNGs through Pixi's Assets loader, which has
+const { startMock, whenReadyMock } = vi.hoisted(() => ({
+  startMock: vi.fn(),
+  whenReadyMock: vi.fn(async () => {}),
+}))
+
+// The real preloader fetches ~90 PNGs through Pixi's Assets loader, which has
 // no meaning in jsdom — it has its own unit test (preloadWorldAssets.test.ts).
 vi.mock('./world/preloadWorldAssets', () => ({
-  preloadWorldAssets: vi.fn(async () => {}),
+  gamePreloader: { start: startMock, whenReady: whenReadyMock },
 }))
 
 vi.mock('pixi.js', async (importOriginal) => {
@@ -36,6 +50,7 @@ vi.mock('pixi.js', async (importOriginal) => {
     renderer = { resize: resizeMock }
     canvas = document.createElement('canvas')
     init = initMock
+    render = renderMock
 
     // Mirrors real Pixi's Application.destroy -> stage.destroy(options)
     // cascade, so GameScene's own destroy() override (which tears down its
@@ -68,6 +83,81 @@ describe('GameApp', () => {
     expect(gameApp.scene.label).toBe('GameScene')
 
     gameApp.destroy()
+  })
+
+  it('ensures the asset preload is running and reports the renderer as soon as it is up', async () => {
+    const onRendererReady = vi.fn()
+
+    const gameApp = await GameApp.create({
+      width: 800,
+      height: 600,
+      onRendererReady,
+    })
+
+    expect(startMock).toHaveBeenCalled()
+    expect(onRendererReady).toHaveBeenCalledTimes(1)
+
+    gameApp.destroy()
+  })
+
+  it('rejects — tearing the renderer down, never mounting a scene — when a core asset fails', async () => {
+    whenReadyMock.mockRejectedValueOnce(new Error('core asset missing'))
+
+    await expect(GameApp.create({ width: 800, height: 600 })).rejects.toThrow(
+      'core asset missing',
+    )
+
+    expect(addChildMock).not.toHaveBeenCalled()
+    expect(destroyMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders once before reporting ready, so textures are uploaded behind the initialization screen', async () => {
+    renderMock.mockClear()
+
+    const gameApp = await GameApp.create({ width: 800, height: 600 })
+
+    expect(renderMock).toHaveBeenCalledTimes(1)
+
+    gameApp.destroy()
+  })
+
+  it('opens directly in OVERVIEW when asked — the camera is framed there from its first frame, with no transition left to run', async () => {
+    const overview = await GameApp.create({
+      width: 800,
+      height: 600,
+      initialCameraMode: CameraMode.OVERVIEW,
+    })
+    expect(overview.scene.cameraState.mode).toBe(CameraMode.OVERVIEW)
+    const framed = { ...overview.scene.cameraState }
+    overview.scene.update(16)
+    overview.scene.update(2000)
+    expect(overview.scene.cameraState).toMatchObject({
+      zoom: framed.zoom,
+      cameraX: framed.cameraX,
+      cameraY: framed.cameraY,
+    })
+    overview.destroy()
+
+    const explore = await GameApp.create({ width: 800, height: 600 })
+    expect(explore.scene.cameraState.mode).toBe(CameraMode.EXPLORE)
+    explore.destroy()
+  })
+
+  it('an attempt aborted straight away never initializes a renderer or builds a scene', async () => {
+    initMock.mockClear()
+    const controller = new AbortController()
+    const creation = GameApp.create({
+      width: 800,
+      height: 600,
+      signal: controller.signal,
+    })
+    controller.abort()
+
+    await expect(creation).rejects.toBeDefined()
+
+    expect(initMock).not.toHaveBeenCalled()
+    expect(addChildMock).not.toHaveBeenCalled()
+    expect(destroyMock).not.toHaveBeenCalled()
   })
 
   it('resizes the renderer to the given dimensions', async () => {

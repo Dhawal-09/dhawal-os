@@ -50,10 +50,32 @@
   color: var(--green, #39f27a);
 }
 
+.boot-progress-label {
+  margin: 8px 0 0;
+  font-family: var(--font-pixel);
+  font-size: 0.7rem;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #91a9c8);
+}
+
+.boot-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.boot-progress-value {
+  min-width: 4ch;
+  font-family: var(--font-pixel);
+  font-size: 0.7rem;
+  text-align: right;
+  color: var(--cyan-bright, #57e8ff);
+}
+
 .boot-progress {
   width: 220px;
   height: 8px;
-  margin-top: 8px;
   border: 1px solid var(--pixel-border, #1e5fa8);
   border-radius: 2px;
   background: var(--panel-dark, #06142d);

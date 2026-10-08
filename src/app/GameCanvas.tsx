@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { GameApp } from '../game/GameApp'
+import type { CameraMode } from '../game/world/cameraConstants'
 import './GameCanvas.css'
 
 type Status = 'loading' | 'ready' | 'error'
@@ -9,6 +10,10 @@ export interface GameCanvasProps {
   onReady?: () => void
   /** Called exactly once if GameApp initialization fails. Never called for a StrictMode phantom double-invoke. */
   onError?: (error: unknown) => void
+  /** Called once the Pixi renderer is up — earlier than `onReady`, which also waits on the asset preload and the scene. */
+  onRendererReady?: () => void
+  /** The camera mode the world opens in — read once, at mount. Later changes go over the event bridge. */
+  initialCameraMode?: CameraMode
 }
 
 /**
@@ -19,7 +24,12 @@ export interface GameCanvasProps {
  * drive its own application-lifecycle state (PHASE-08.5) — GameCanvas
  * itself remains the single owner of GameApp creation/teardown.
  */
-export function GameCanvas({ onReady, onError }: GameCanvasProps = {}) {
+export function GameCanvas({
+  onReady,
+  onError,
+  onRendererReady,
+  initialCameraMode,
+}: GameCanvasProps = {}) {
   const hostRef = useRef<HTMLDivElement | null>(null)
   const [status, setStatus] = useState<Status>('loading')
 
@@ -28,9 +38,12 @@ export function GameCanvas({ onReady, onError }: GameCanvasProps = {}) {
   // Synced in an effect (not during render) to keep the render pure.
   const onReadyRef = useRef(onReady)
   const onErrorRef = useRef(onError)
+  const onRendererReadyRef = useRef(onRendererReady)
+  const initialCameraModeRef = useRef(initialCameraMode)
   useEffect(() => {
     onReadyRef.current = onReady
     onErrorRef.current = onError
+    onRendererReadyRef.current = onRendererReady
   })
 
   useEffect(() => {
@@ -38,6 +51,9 @@ export function GameCanvas({ onReady, onError }: GameCanvasProps = {}) {
     if (!host) return
 
     let cancelled = false
+    // Lets a cancelled attempt (unmount, or StrictMode's phantom mount) stop
+    // before it builds anything, rather than build a whole game to destroy.
+    const abortController = new AbortController()
     let gameApp: GameApp | null = null
     let resizeObserver: ResizeObserver | null = null
     let resizeFrame: number | null = null
@@ -70,6 +86,11 @@ export function GameCanvas({ onReady, onError }: GameCanvasProps = {}) {
         const app = await GameApp.create({
           width: host.clientWidth || 1,
           height: host.clientHeight || 1,
+          initialCameraMode: initialCameraModeRef.current,
+          signal: abortController.signal,
+          onRendererReady: () => {
+            if (!cancelled) onRendererReadyRef.current?.()
+          },
         })
 
         if (cancelled) {
@@ -99,6 +120,7 @@ export function GameCanvas({ onReady, onError }: GameCanvasProps = {}) {
 
     return () => {
       cancelled = true
+      abortController.abort()
       if (resizeFrame !== null) cancelAnimationFrame(resizeFrame)
       resizeObserver?.disconnect()
       host.removeEventListener('pointerdown', handlePointerDown)

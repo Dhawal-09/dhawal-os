@@ -5,7 +5,12 @@ import bedUrl from '../../../assets/world/structural/Double_bed.png'
 import floorUrl from '../../../assets/world/structural/Background2.png'
 import kitchenMainCounterUrl from '../../../assets/world/Kitchen/MainTable.png'
 import kitchenSideCounterUrl from '../../../assets/world/Kitchen/Vertical-Coridor.png'
-import kitchenFridgeUrl from '../../../assets/world/Kitchen/Fridge1.png'
+import kitchenFridgeUrl from '../../../assets/world/Kitchen/Fridge2.png'
+import magnetJsUrl from '../../../assets/world/Icons/js.png'
+import magnetTsUrl from '../../../assets/world/Icons/ts.png'
+import magnetPixiUrl from '../../../assets/world/Icons/pixi.png'
+import magnetPostgresUrl from '../../../assets/world/Icons/postgresql.png'
+import magnetJavaUrl from '../../../assets/world/Icons/java.png'
 import kitchenCooktopUrl from '../../../assets/world/Kitchen/Stove.png'
 import kitchenCoffeeMachineUrl from '../../../assets/world/Kitchen/coffee-Makaer.png'
 import kitchenHangingPansUrl from '../../../assets/world/Kitchen/Hanging Pans.png'
@@ -115,6 +120,12 @@ export const ASSET_MANIFEST: Record<string, string> = {
   'kitchen.mainCounter': kitchenMainCounterUrl,
   'kitchen.sideCounter': kitchenSideCounterUrl,
   'kitchen.fridge': kitchenFridgeUrl,
+  // Skill magnets stuck on the fridge doors (assets/world/Icons/*) — see kitchen.ts.
+  'kitchen.magnetJs': magnetJsUrl,
+  'kitchen.magnetTs': magnetTsUrl,
+  'kitchen.magnetPixi': magnetPixiUrl,
+  'kitchen.magnetPostgres': magnetPostgresUrl,
+  'kitchen.magnetJava': magnetJavaUrl,
   'kitchen.cooktop': kitchenCooktopUrl,
   'kitchen.coffeeMachine': kitchenCoffeeMachineUrl,
   'kitchen.hangingPans': kitchenHangingPansUrl,

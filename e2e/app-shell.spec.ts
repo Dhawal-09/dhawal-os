@@ -1,12 +1,11 @@
 import { expect, test, type Page } from 'playwright/test'
 
-/** LANDING -> BOOT -> ACCESS -> VIEW SELECT (EXPLORE) -> GAME. */
+/** LANDING -> VIEW SELECT (EXPLORE) -> INITIALIZING -> GAME. */
 async function startJourney(page: Page): Promise<void> {
   await page.getByRole('button', { name: /start journey/i }).click()
-  await page.locator('.game-canvas-host canvas').waitFor()
-  await page.getByRole('button', { name: /access system/i }).click()
   await page.getByText('EXPLORE VIEW', { exact: true }).click()
   await page.getByRole('button', { name: /enter dhawal\.os/i }).click()
+  await page.locator('.game-canvas-host canvas').waitFor()
   await expect(page.getByRole('status')).toHaveCount(0)
   await expect(page.getByRole('button', { name: /^exit$/i })).toBeVisible()
 }
@@ -29,14 +28,23 @@ test('landing screen is the entry point: branding and START JOURNEY are visible,
   await expect(page.locator('.game-canvas-host canvas')).toHaveCount(0)
 })
 
-test('clicking START JOURNEY shows a loading state, then the game', async ({
+test('clicking START JOURNEY shows the view selection straight away, then initialization, then the game', async ({
   page,
 }) => {
   await page.goto('/')
 
   await page.getByRole('button', { name: /start journey/i }).click()
-  // The loading state is real but may be very brief locally — assert it
-  // resolves into the game rather than asserting on its exact duration.
+  await expect(
+    page.getByRole('heading', { name: /select your view/i }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: /access system/i }),
+  ).toHaveCount(0)
+
+  await page.getByText('EXPLORE VIEW', { exact: true }).click()
+  await page.getByRole('button', { name: /enter dhawal\.os/i }).click()
+  // The initialization state is real but may be very brief locally — assert
+  // it resolves into the game rather than asserting on its exact duration.
   await page.locator('.game-canvas-host canvas').waitFor()
 
   await expect(page.getByRole('status')).toHaveCount(0)
