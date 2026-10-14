@@ -663,6 +663,19 @@ describe('App background music', () => {
     vi.restoreAllMocks()
   })
 
+  it('START JOURNEY plays the same interaction chime as an in-world [E], exactly once', async () => {
+    const playInteractOpen = vi
+      .spyOn(audioManager, 'playInteractOpen')
+      .mockImplementation(() => {})
+    const user = userEvent.setup()
+    render(<App />)
+    expect(playInteractOpen).not.toHaveBeenCalled()
+
+    await startJourney(user)
+
+    expect(playInteractOpen).toHaveBeenCalledTimes(1)
+  })
+
   it('stays silent through LANDING, VIEW_SELECT and LOADING, starts in GAME, stops on EXIT, and starts again on re-entry', async () => {
     const playMusic = vi.spyOn(audioManager, 'playMusic')
     const stopMusic = vi.spyOn(audioManager, 'stopMusic')

@@ -4,6 +4,7 @@ import linkedinIconUrl from '../../../assets/world/Icons/Contacts/linkdin.png'
 import resumeIconUrl from '../../../assets/world/Icons/Contacts/resume.png'
 import { about } from '../../data/about'
 import { landingContactItems } from '../../data/contact'
+import { GameFrame } from '../game-panel/GamePanel'
 import './LandingScreen.css'
 
 /**
@@ -29,6 +30,10 @@ export interface LandingScreenProps {
  * Copy is taken verbatim from `docs/DESIGN_SYSTEM.md` "Landing experience"
  * (not invented); the supporting introduction reuses the already-verified
  * `src/data/about.ts` summary rather than duplicating/inventing content.
+ *
+ * The intro sits in the same pixel HUD frame as the in-game panels
+ * (`GameFrame`), so the first screen already looks like part of DHAWAL.OS,
+ * and START JOURNEY gently pulses to draw the eye.
  */
 export function LandingScreen({ onStartJourney }: LandingScreenProps) {
   return (
@@ -40,7 +45,7 @@ export function LandingScreen({ onStartJourney }: LandingScreenProps) {
       {/* Leaves the cover art (the screen's background) showing through. */}
       <div className="landing-world" aria-hidden="true" />
 
-      <div className="landing-intro">
+      <GameFrame size="small" className="landing-intro">
         <h1>
           Hi,I&rsquo;M DHAWAL <span aria-hidden="true"></span>
         </h1>
@@ -53,6 +58,7 @@ export function LandingScreen({ onStartJourney }: LandingScreenProps) {
             className="landing-cta"
             onClick={onStartJourney}
           >
+            <span className="landing-cta-arrow" aria-hidden="true" />
             START JOURNEY
           </button>
         </div>
@@ -87,7 +93,7 @@ export function LandingScreen({ onStartJourney }: LandingScreenProps) {
           </svg>
           {about.location}
         </p>
-      </div>
+      </GameFrame>
     </div>
   )
 }
