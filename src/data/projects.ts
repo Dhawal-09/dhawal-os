@@ -39,9 +39,10 @@ function roleFrom(experienceId: string): { role: string; period: string } {
  * Transcribed only from `docs/CONTENT.md` "Professional experience",
  * "FocusGuard" and "DHAWAL.OS" sections — no employer names, links, or
  * metrics are added beyond what that document states. `company` is left
- * undefined because CONTENT.md names no employer. FocusGuard is `category:
- * "personal"` and must never be merged with the experience entries
- * (CONTENT.md "must appear only under PERSONAL PROJECTS").
+ * undefined because CONTENT.md names no employer. FocusGuard, NexCRM and
+ * DHAWAL.OS are `category: "personal"` and must never be merged with the
+ * experience entries (CONTENT.md "must appear only under PERSONAL
+ * PROJECTS"). The Apprentice role's product is AIRVISION, not NexCRM.
  */
 export const projects: Project[] = [
   {
@@ -72,12 +73,30 @@ export const projects: Project[] = [
     featured: true,
   },
   {
-    id: 'nexcrm',
+    id: 'airvision',
     category: 'experience',
+    name: 'AIRVISION',
+    subtitle: 'Real-Time Air Quality Monitoring System',
+    // 16:9 art shown through the detail view's 4:3 frame: the right-hand
+    // 4:3 slice, which holds the sensor kit and the AQI dashboard.
+    icon: icon('Airvision.png', 2752, 1536, [704, 0, 2048, 1536]),
+    ...roleFrom('apprentice'),
+    description:
+      'Public-facing web application displaying real-time Air Quality Index (AQI) data by location, collected from IoT sensor kits deployed on plants.',
+    technologies: [],
+    contributions: [
+      'Contributed to a public-facing web application',
+      'Real-time Air Quality Index (AQI) data by location',
+      'Data collected from IoT sensor kits deployed on plants',
+      'Hands-on exposure to full-stack development, version control, and Agile feature delivery in a production team environment',
+    ],
+  },
+  {
+    id: 'nexcrm',
+    category: 'personal',
     name: 'NexCRM',
     subtitle: 'Lead Nurturing & Management Platform',
     icon: icon('Leads-Photoroom.png', 431, 443, [19, 31, 389, 392]),
-    ...roleFrom('apprentice'),
     description:
       'Full-stack multi-tenant CRM with RBAC, JWT authentication, lead scoring, automated email sequences, and rule-based lead assignment.',
     technologies: [
@@ -96,20 +115,6 @@ export const projects: Project[] = [
       'Lead scoring based on user behavior',
       'Automated email sequences',
       'Rule-based lead assignment',
-    ],
-  },
-  {
-    id: 'airvision',
-    category: 'experience',
-    name: 'AIRVISION',
-    subtitle: 'Real-Time Air Quality Monitoring System',
-    description:
-      'Public-facing web application displaying real-time AQI by location, using data from IoT sensor kits deployed on plants.',
-    technologies: [],
-    contributions: [
-      'Public-facing web application',
-      'Real-time AQI by location',
-      'Data sourced from IoT sensor kits deployed on plants',
     ],
   },
   {
@@ -156,6 +161,9 @@ export const projects: Project[] = [
     category: 'personal',
     name: 'DHAWAL.OS',
     subtitle: 'Interactive Game-World Developer Portfolio',
+    // The whole house in the game's Overview camera — the same capture as the
+    // OVERVIEW card on the view-selection screen.
+    icon: icon('dhawal-os-overview.png', 960, 720),
     description:
       'An interactive 2D pixel-art portfolio presented as a playable developer workspace: visitors explore a small game world and interact with objects that reveal portfolio information.',
     technologies: [

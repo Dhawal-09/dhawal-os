@@ -1,7 +1,73 @@
-import type { ReactNode, Ref } from 'react'
+import type { HTMLAttributes, ReactNode, Ref } from 'react'
 import './GamePanel.css'
 
 export type GamePanelSize = 'small' | 'medium' | 'large'
+
+export interface GameFrameProps extends HTMLAttributes<HTMLDivElement> {
+  /** SMALL / MEDIUM / LARGE — three proportions of the one frame, not a scaled copy. */
+  size?: GamePanelSize
+  /**
+   * The header row's contents, after the slanted stripes. Without one the
+   * header is just the stripes — a slim top bar.
+   */
+  header?: ReactNode
+  /** Adds the header's Back-button layout (title wraps below on phones). */
+  headerHasBack?: boolean
+  ref?: Ref<HTMLDivElement>
+  /** The content area. */
+  bodyRef?: Ref<HTMLDivElement>
+  children: ReactNode
+}
+
+/**
+ * The DHAWAL.OS pixel HUD frame on its own — the stepped-corner,
+ * multi-layer border, the header strip, the content screen and the footer
+ * strip — with no dialog behaviour. `GamePanel` wraps it for the
+ * information panels; anything else that should look like part of the same
+ * game interface (the Landing intro) uses it directly. Extra attributes
+ * (role, aria-*, tabIndex, className) land on the root element.
+ */
+export function GameFrame({
+  size = 'medium',
+  header,
+  headerHasBack = false,
+  ref,
+  bodyRef,
+  className,
+  children,
+  ...rest
+}: GameFrameProps) {
+  const classes = ['game-panel', `game-panel--${size}`]
+  if (className) classes.push(className)
+  const headerClasses = ['game-panel-header']
+  if (headerHasBack) headerClasses.push('has-back')
+  if (!header) headerClasses.push('is-bare')
+
+  return (
+    <div ref={ref} className={classes.join(' ')} {...rest}>
+      <div className="game-panel-shell">
+        <div className={headerClasses.join(' ')}>
+          <span className="game-panel-stripes" aria-hidden="true" />
+          {header}
+        </div>
+
+        <div className="game-panel-screen">
+          <div className="game-panel-surface">
+            <div ref={bodyRef} className="game-panel-body">
+              {children}
+            </div>
+            <span className="game-panel-dither" aria-hidden="true" />
+          </div>
+        </div>
+
+        <div className="game-panel-footer" aria-hidden="true">
+          <span className="game-panel-segments" />
+          <span className="game-panel-dots" />
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export interface GamePanelProps {
   /** SMALL / MEDIUM / LARGE — three proportions of the one frame, not a scaled copy. */
@@ -52,12 +118,11 @@ function PixelArrow() {
 }
 
 /**
- * The DHAWAL.OS in-game panel frame: the one outer container every
- * information panel renders inside (InteractionOverlay.tsx). Purely the
- * frame — a stepped-corner, multi-layer pixel HUD border with a header
- * (stripes, optional Back, optional icon, title, X) around a clean,
- * scrolling content area. It knows nothing about what it holds, and all of
- * the open/close/focus logic stays with the shell that renders it.
+ * The DHAWAL.OS in-game panel: `GameFrame` as a modal dialog, with a header
+ * of optional Back, optional icon, title and X, around a clean, scrolling
+ * content area. The one outer container every information panel renders
+ * inside (InteractionOverlay.tsx). It knows nothing about what it holds, and
+ * all of the open/close/focus logic stays with the shell that renders it.
  *
  * Built entirely from CSS (clip-path polygons + layered backgrounds) and
  * two tiny inline SVG glyphs — no raster artwork — so it scales cleanly.
@@ -74,21 +139,17 @@ export function GamePanel({
   children,
 }: GamePanelProps) {
   return (
-    <div
+    <GameFrame
       ref={ref}
-      className={`game-panel game-panel--${size}`}
+      bodyRef={bodyRef}
+      size={size}
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
       tabIndex={-1}
-    >
-      <div className="game-panel-shell">
-        <div
-          className={
-            onBack ? 'game-panel-header has-back' : 'game-panel-header'
-          }
-        >
-          <span className="game-panel-stripes" aria-hidden="true" />
+      headerHasBack={Boolean(onBack)}
+      header={
+        <>
           {onBack && (
             <button type="button" className="game-panel-back" onClick={onBack}>
               <PixelArrow />
@@ -107,22 +168,10 @@ export function GamePanel({
           >
             <PixelCross />
           </button>
-        </div>
-
-        <div className="game-panel-screen">
-          <div className="game-panel-surface">
-            <div ref={bodyRef} className="game-panel-body">
-              {children}
-            </div>
-            <span className="game-panel-dither" aria-hidden="true" />
-          </div>
-        </div>
-
-        <div className="game-panel-footer" aria-hidden="true">
-          <span className="game-panel-segments" />
-          <span className="game-panel-dots" />
-        </div>
-      </div>
-    </div>
+        </>
+      }
+    >
+      {children}
+    </GameFrame>
   )
 }

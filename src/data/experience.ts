@@ -4,9 +4,9 @@ import type { ExperienceEntry } from './types'
  * Transcribed only from `docs/CONTENT.md` "Professional experience". The
  * project write-ups live in `projects.ts` (`category: "experience"`), which
  * reads each project's role/period from here by id (Unifi → Software
- * Engineer, NexCRM → Apprentice) rather than duplicating them; `projectId`
- * is the reverse link the Experience panel uses to name each role's
- * product.
+ * Engineer, AIRVISION → Apprentice) rather than duplicating them;
+ * `projectId` is the reverse link the Experience panel uses to name each
+ * role's product.
  *
  * Ordered newest first — the Experience panel renders this array as-is, so
  * the order here IS the reverse-chronological timeline order.
@@ -40,18 +40,13 @@ export const experience: ExperienceEntry[] = [
     role: 'Apprentice',
     period: 'Nov 2024 – Jun 2025',
     company: 'Haptiq Lab',
-    projectId: 'nexcrm',
+    projectId: 'airvision',
+    // From the resume. It names no technologies for this role, so none are
+    // listed (the panel omits the Technologies section).
     responsibilities: [
-      'Full-stack multi-tenant CRM development',
-      'JWT authentication and REST APIs',
-      'Lead scoring and automated email sequences',
-    ],
-    technologies: [
-      'TypeScript',
-      'Material UI',
-      'PostgreSQL',
-      'Sequelize ORM',
-      'Nodemailer',
+      'Contributed to a public-facing web application displaying real-time Air Quality Index (AQI) data by location',
+      'AQI data collected from IoT sensor kits deployed on plants',
+      'Hands-on exposure to full-stack development, version control, and Agile feature delivery in a production team environment',
     ],
   },
 ]

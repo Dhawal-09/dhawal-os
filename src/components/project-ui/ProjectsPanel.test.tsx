@@ -145,9 +145,7 @@ describe('ProjectsPanel', () => {
 
   it('Escape closes the panel from a nested view', async () => {
     const user = openProjects()
-    await user.click(
-      screen.getByRole('button', { name: /experience projects/i }),
-    )
+    await user.click(screen.getByRole('button', { name: /personal projects/i }))
     await user.click(screen.getByRole('button', { name: /^NexCRM/ }))
 
     await user.keyboard('{Escape}')

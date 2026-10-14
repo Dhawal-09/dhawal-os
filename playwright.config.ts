@@ -8,6 +8,9 @@ export default defineConfig({
   reporter: 'list',
   use: {
     baseURL: 'http://localhost:5173',
+    // Tests run with reduced motion: Playwright only clicks an element once it
+    // stops moving, and START JOURNEY otherwise pulses forever (LandingScreen.css).
+    reducedMotion: 'reduce',
     trace: 'on-first-retry',
   },
   webServer: {

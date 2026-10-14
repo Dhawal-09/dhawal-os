@@ -171,8 +171,8 @@ export const ASSET_MANIFEST: Record<string, string> = {
   'living.tv': livingTvUrl,
   'living.bigPlant': livingBigPlantUrl,
   // Hanging plant (assets/world/special/Hangingplant.png) — a second,
-  // ceiling/wall-mounted plant style, instantiated twice across the house
-  // (see bedroomRoom.ts / kitchen.ts) — never a second file/manifest entry.
+  // ceiling/wall-mounted plant style, used in the bedroom (see
+  // bedroomRoom.ts) — never a second file/manifest entry.
   'special.hangingPlant': hangingPlantUrl,
   // The CHARACTER ID card lying on the lounge's round side table — the
   // "About Me" marker's real art (aboutRoom.ts). Cropped from

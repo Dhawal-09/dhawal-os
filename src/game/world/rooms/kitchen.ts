@@ -611,15 +611,6 @@ export const kitchenObjects: WorldObject[] = [
     transform: { width: 100 },
     // No `collision` — wall-mounted decor, visual placement pass only.
   },
-  {
-    id: 'kitchen-hanging-plant',
-    asset: 'special.hangingPlant',
-    label: 'HANGING PLANT',
-    position: { x: 1650, y: 85 }, // WORLD POSITION — SAFE TO TUNE — high on the back wall, above the wall-shelf/hanging-pans cluster
-    layer: 'object',
-    transform: { width: 55 },
-    // No `collision` — wall/ceiling-mounted decor, visual placement pass only.
-  },
   // Dining set — four separate chairs first, then the table LAST so it draws
   // on top of all of them (World.ts draws array order, not a Y-sort).
   kitchenObject(

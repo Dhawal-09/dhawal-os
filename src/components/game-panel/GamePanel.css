@@ -225,6 +225,13 @@
   padding: 0 2px 6px 10px;
 }
 
+/* No title row (GameFrame without a header): just the stripes, as a slim
+   top bar. */
+.game-panel-header.is-bare {
+  min-height: 24px;
+  padding-bottom: 8px;
+}
+
 /* Three slanted bars — hard stops, no anti-aliased gradient ramp. */
 .game-panel-stripes {
   flex-shrink: 0;

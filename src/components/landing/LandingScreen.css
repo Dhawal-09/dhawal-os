@@ -126,13 +126,23 @@
   min-height: 220px;
 }
 
-.landing-intro {
+/* The intro is a GameFrame (the in-game panels' pixel HUD frame — see
+   GamePanel.css), so these rules only place it and lay out its content.
+   Prefixed with .landing-screen to win over the frame's own sizing. */
+.landing-screen .landing-intro {
   flex-shrink: 0;
-  padding: 24px clamp(16px, 4vw, 32px) 32px;
-  background: rgba(5, 11, 26, 0.8);
+  width: auto;
+  max-height: none;
+  margin: 0 12px 16px;
+}
+
+.landing-screen .landing-intro .game-panel-body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  /* The page scrolls, not the card — and the pulsing button must never
+     spawn a scrollbar inside it. */
+  overflow: visible;
 }
 
 .landing-intro h1 {
@@ -165,26 +175,156 @@
   margin-top: 8px;
 }
 
+/* START JOURNEY as a chunky arcade button: a dark stepped-corner outline
+   (the button's own background, showing around the face), a purple face
+   with a light top bevel and a dark bottom lip (::before), a pixel ▶, and
+   text with a hard drop shadow. Clip-path keeps every corner stepped, so
+   all the depth is drawn with inset shadows, never outer ones. */
 .landing-cta {
-  min-height: 44px;
-  padding: 8px 16px;
-  border: 1px solid var(--blue, #147bff);
-  border-radius: 4px;
-  background: var(--blue, #147bff);
-  color: var(--text, #eaf4ff);
+  --cta-face: #7b3ff2;
+  --cta-face-hover: #9256ff;
+  --cta-light: #b88cff;
+  --cta-dark: #4a1fa6;
+  --cta-edge: #160936;
+  --cta-step: 4px;
+
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 10px 22px 12px;
+  border: 0;
+  border-radius: 0;
+  background: var(--cta-edge);
+  color: #fff;
+  text-shadow: 2px 2px 0 var(--cta-edge);
   font-family: var(--font-pixel);
   font-size: 0.7rem;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-align: center;
   cursor: pointer;
+  clip-path: polygon(
+    0 calc(var(--cta-step) * 2),
+    var(--cta-step) calc(var(--cta-step) * 2),
+    var(--cta-step) var(--cta-step),
+    calc(var(--cta-step) * 2) var(--cta-step),
+    calc(var(--cta-step) * 2) 0,
+    calc(100% - var(--cta-step) * 2) 0,
+    calc(100% - var(--cta-step) * 2) var(--cta-step),
+    calc(100% - var(--cta-step)) var(--cta-step),
+    calc(100% - var(--cta-step)) calc(var(--cta-step) * 2),
+    100% calc(var(--cta-step) * 2),
+    100% calc(100% - var(--cta-step) * 2),
+    calc(100% - var(--cta-step)) calc(100% - var(--cta-step) * 2),
+    calc(100% - var(--cta-step)) calc(100% - var(--cta-step)),
+    calc(100% - var(--cta-step) * 2) calc(100% - var(--cta-step)),
+    calc(100% - var(--cta-step) * 2) 100%,
+    calc(var(--cta-step) * 2) 100%,
+    calc(var(--cta-step) * 2) calc(100% - var(--cta-step)),
+    var(--cta-step) calc(100% - var(--cta-step)),
+    var(--cta-step) calc(100% - var(--cta-step) * 2),
+    0 calc(100% - var(--cta-step) * 2)
+  );
 }
 
-.landing-cta:hover {
-  background: var(--cyan, #27d7ff);
-  border-color: var(--cyan, #27d7ff);
+/* The face: inset 3px inside the dark outline, same stepped shape. */
+.landing-cta::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  z-index: -1;
+  background: var(--cta-face);
+  box-shadow:
+    inset 0 4px 0 var(--cta-light),
+    inset 0 -5px 0 var(--cta-dark),
+    inset 4px 0 0 rgba(255, 255, 255, 0.12),
+    inset -4px 0 0 rgba(0, 0, 0, 0.18);
+  clip-path: inherit;
 }
 
-.landing-cta:focus-visible,
+/* Pixel play triangle (▶), drawn with a stepped clip so it stays crisp. */
+.landing-cta-arrow {
+  flex-shrink: 0;
+  width: 8px;
+  height: 12px;
+  background: #fff;
+  filter: drop-shadow(2px 2px 0 var(--cta-edge));
+  clip-path: polygon(
+    0 0,
+    25% 0,
+    25% 12.5%,
+    50% 12.5%,
+    50% 25%,
+    75% 25%,
+    75% 37.5%,
+    100% 37.5%,
+    100% 62.5%,
+    75% 62.5%,
+    75% 75%,
+    50% 75%,
+    50% 87.5%,
+    25% 87.5%,
+    25% 100%,
+    0 100%
+  );
+}
+
+@media (hover: hover) {
+  .landing-cta:hover::before {
+    background: var(--cta-face-hover);
+  }
+}
+
+/* Pressed: the face drops onto its lip. */
+.landing-cta:active::before {
+  background: var(--cta-dark);
+  box-shadow:
+    inset 0 5px 0 var(--cta-edge),
+    inset 0 -2px 0 var(--cta-face);
+}
+
+/* A clipped button can't show an outline: focus is a cyan ring drawn
+   inside the face instead. */
+.landing-cta:focus-visible {
+  outline: none;
+}
+
+.landing-cta:focus-visible::before {
+  box-shadow:
+    inset 0 0 0 2px var(--cyan-bright, #57e8ff),
+    inset 0 4px 0 var(--cta-light),
+    inset 0 -5px 0 var(--cta-dark);
+}
+
+/* START JOURNEY breathes — slowly growing and shrinking — so it is the
+   first thing the eye lands on. It holds still (at full size) while
+   hovered or focused, and not at all under reduced motion. */
+@keyframes landing-cta-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .landing-cta {
+    animation: landing-cta-pulse 1.6s ease-in-out infinite;
+    transform-origin: center;
+  }
+
+  .landing-cta:hover,
+  .landing-cta:focus-visible {
+    animation: none;
+    transform: scale(1.08);
+  }
+}
+
 .landing-social a:focus-visible {
   outline: 2px solid var(--cyan-bright, #57e8ff);
   outline-offset: 2px;
@@ -244,19 +384,18 @@
    sitting in plain document flow underneath it.
    `.landing-screen` (position: fixed) is the positioned ancestor here. */
 @media (min-width: 768px) {
-  .landing-intro {
+  .landing-screen .landing-intro {
     position: absolute;
     right: clamp(16px, 4vw, 48px);
     bottom: clamp(16px, 4vw, 48px);
-    max-width: 560px;
-    padding: 32px;
+    width: 100%;
+    max-width: 580px;
+    margin: 0;
+  }
+
+  .landing-screen .landing-intro .game-panel-body {
     gap: 14px;
-    border: 1px solid var(--pixel-border, #1e5fa8);
-    border-radius: 6px;
-    /* Translucent, with whatever art is behind the panel blurred. */
-    background: rgba(11, 33, 68, 0.72);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
+    padding: 24px 28px 26px;
   }
 
   /* The card's contents scale up with it. */
@@ -273,8 +412,8 @@
   }
 
   .landing-cta {
-    min-height: 50px;
-    padding: 10px 22px;
+    min-height: 54px;
+    padding: 12px 26px 14px;
     font-size: 0.82rem;
   }
 

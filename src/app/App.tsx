@@ -128,6 +128,9 @@ function App() {
   }, [inGame])
 
   const handleStartJourney = useCallback(() => {
+    // The same chime as an in-world [E] interaction. Played inside the click
+    // itself, which is what lets the browser start audio at all.
+    audioManager.playInteractOpen()
     // In case the visitor beat the page's own load event — the download
     // must be under way by VIEW_SELECT at the latest. Idempotent.
     gamePreloader.start()
