@@ -19,12 +19,19 @@ describe('PortfolioNav', () => {
       'Experience',
       'Skills',
       'Education',
-      'Certificates',
       'Contact',
       'Resume',
     ]) {
       expect(screen.getByRole('button', { name: label })).toBeInTheDocument()
     }
+  })
+
+  it('keeps Certificates out of the menu while it is temporarily hidden', () => {
+    render(<PortfolioNav />)
+
+    expect(
+      screen.queryByRole('button', { name: 'Certificates' }),
+    ).not.toBeInTheDocument()
   })
 
   it('emits the matching OPEN_* event through the existing GameEventBridge — no second event system', async () => {

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { about } from '../../data/about'
 import { landingContactItems } from '../../data/contact'
+import { RESUME_PDF_PATH } from '../../data/resume'
 import { LandingScreen } from './LandingScreen'
 
 afterEach(() => {
@@ -49,7 +50,7 @@ describe('LandingScreen', () => {
     render(<LandingScreen onStartJourney={vi.fn()} />)
 
     const link = screen.getByRole('link', { name: /view resume/i })
-    expect(link).toHaveAttribute('href', '/resume.pdf')
+    expect(link).toHaveAttribute('href', RESUME_PDF_PATH)
     expect(link).toHaveAttribute('target', '_blank')
     expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'))
   })

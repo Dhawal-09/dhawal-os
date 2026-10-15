@@ -450,8 +450,9 @@ const booksPosition = educationPositionForFloorPoint(
  * the "education" marker (starts x≈252 — the box ends before that too) and
  * well above the marker's own collider (starts y≈1132).
  */
+const FILES_FLOOR_POINT = { x: 285, y: 1055 } // WORLD POSITION — SAFE TO TUNE
 const filesPosition = educationPositionForFloorPoint(
-  { x: 285, y: 1055 }, // WORLD POSITION — SAFE TO TUNE
+  FILES_FLOOR_POINT,
   FILES_NATURAL_SIZE,
   FILES_CONTENT_BBOX,
   FILES_SCALE,
@@ -563,6 +564,11 @@ export const educationObjects: WorldObject[] = [
     layer: 'object',
     transform: { width: FILES_TARGET_WIDTH },
     // No `collision` — a small floor storage box, never a player obstacle.
+    // The Resume entry point: his papers are filed in here. `position` is
+    // the padded canvas anchor, so the trigger follows the box's floor spot.
+    interactionPoint: FILES_FLOOR_POINT,
+    interaction: { radius: INTERACTION_RADIUS, action: 'OPEN_RESUME' },
+    message: { type: 'interactive', text: 'View Resume' },
   },
   {
     id: 'education-table-with-books',
