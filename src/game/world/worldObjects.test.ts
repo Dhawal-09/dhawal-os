@@ -802,16 +802,24 @@ describe('PHASE 10B.1 CLEANUP — no redundant overlap with the room boundary, r
     expect(nearest?.id).toBe('education')
   })
 
-  it('RESUME is still reachable via the open-floor (west) side, approaching after the bottom-edge clip', () => {
+  it('RESUME opens from the Education room file box — its only world entry point — reachable walking west from EDUCATION', () => {
+    const resumeTriggers = worldObjects.filter(
+      (object) => object.interaction?.action === 'OPEN_RESUME',
+    )
+    expect(resumeTriggers.map((object) => object.id)).toEqual([
+      'education-files',
+    ])
+
     const final = walkUntilBlocked(
       combined,
-      { x: 1220, y: 1180 },
-      { dx: 1, dy: 0 },
+      { x: 600, y: 1060 },
+      { dx: -1, dy: 0 },
       10,
       100,
     )
     const nearest = interactionSystem.findNearestInRange(final)
-    expect(nearest?.id).toBe('resume')
+    expect(nearest?.id).toBe('education-files')
+    expect(nearest?.message?.text).toBe('View Resume')
   })
 
   it('every other interaction zone (projects, experience, skills) remains reachable too', () => {

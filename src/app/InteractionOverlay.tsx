@@ -54,7 +54,7 @@ const PANEL_BY_EVENT: Partial<Record<GameEvent, PanelContent>> = {
 const SIZE_BY_EVENT: Partial<Record<GameEvent, GamePanelSize>> = {
   OPEN_PROJECTS: 'large', // card grid, then a two-column detail view
   OPEN_CONTACT: 'small', // a short list of links
-  OPEN_RESUME: 'small', // one line and a button
+  OPEN_RESUME: 'large', // the PDF itself, shown inline
   OPEN_CAT: 'small',
 }
 

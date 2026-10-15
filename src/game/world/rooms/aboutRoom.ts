@@ -40,7 +40,8 @@ export const aboutObjects: WorldObject[] = [
     message: { type: 'interactive', text: 'Wanna see his ID card?' },
   },
   // TEMPORARILY HIDDEN — the Certificates panel has no content yet, and the
-  // Resume marker is out of the house for now. Both objects are removed
+  // Resume marker is superseded: OPEN_RESUME now lives on the Education
+  // room's file box (educationRoom.ts) — don't restore both. Both objects are removed
   // whole (prompt, interaction and collider); the panels stay reachable from
   // the HUD menu. To restore: uncomment the two objects below and the
   // helper imports at the top of this file.

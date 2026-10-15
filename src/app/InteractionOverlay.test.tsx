@@ -1,12 +1,26 @@
 import { act, cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { audioManager } from '../game/audio/AudioManager'
 import { gameEventBridge } from '../game/events/GameEventBridge'
 import { InteractionOverlay } from './InteractionOverlay'
 
+// The Resume panel checks its PDF is served before offering it; answer
+// that check like a real static host would.
+beforeEach(() => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(() =>
+      Promise.resolve(
+        new Response(null, { headers: { 'content-type': 'application/pdf' } }),
+      ),
+    ),
+  )
+})
+
 afterEach(() => {
   cleanup()
+  vi.unstubAllGlobals()
 })
 
 describe('InteractionOverlay', () => {
@@ -187,13 +201,14 @@ describe('InteractionOverlay', () => {
         gameEventBridge.emit('OPEN_RESUME')
       })
 
-      // DOM order inside the panel is [Close button, Resume link] — the
-      // Resume link is the last focusable element for this section.
+      // DOM order inside the panel is [Close button, Download, Open in New
+      // Tab] — the PDF preview is kept out of the Tab order, so Open in New
+      // Tab is the last focusable element for this section.
       const closeButton = screen.getByRole('button', { name: /close/i })
-      const resumeLink = screen.getByRole('link', { name: /resume/i })
+      const lastLink = screen.getByRole('link', { name: /open pdf/i })
 
-      resumeLink.focus()
-      expect(resumeLink).toHaveFocus()
+      lastLink.focus()
+      expect(lastLink).toHaveFocus()
 
       await user.tab()
 
@@ -209,14 +224,14 @@ describe('InteractionOverlay', () => {
       })
 
       const closeButton = screen.getByRole('button', { name: /close/i })
-      const resumeLink = screen.getByRole('link', { name: /resume/i })
+      const lastLink = screen.getByRole('link', { name: /open pdf/i })
 
       closeButton.focus()
       expect(closeButton).toHaveFocus()
 
       await user.tab({ shift: true })
 
-      expect(resumeLink).toHaveFocus()
+      expect(lastLink).toHaveFocus()
     })
   })
 

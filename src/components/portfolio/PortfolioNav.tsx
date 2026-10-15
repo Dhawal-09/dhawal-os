@@ -10,7 +10,9 @@ const SECTIONS: Array<{ event: GameEvent; label: string }> = [
   { event: 'OPEN_EXPERIENCE', label: 'Experience' },
   { event: 'OPEN_SKILLS', label: 'Skills' },
   { event: 'OPEN_EDUCATION', label: 'Education' },
-  { event: 'OPEN_CERTIFICATES', label: 'Certificates' },
+  // TEMPORARILY HIDDEN — the Certificates panel has no content yet (its
+  // world marker is hidden too, see aboutRoom.ts). To restore: uncomment.
+  // { event: 'OPEN_CERTIFICATES', label: 'Certificates' },
   { event: 'OPEN_CONTACT', label: 'Contact' },
   { event: 'OPEN_RESUME', label: 'Resume' },
 ]
